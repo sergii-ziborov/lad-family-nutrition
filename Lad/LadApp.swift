@@ -52,9 +52,13 @@ struct SectionHeading: View {
     var trailing: String? = nil
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).font(.system(size: 23, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
-            Spacer()
-            if let trailing { Text(trailing).font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.muted) }
+            Text(title).font(.system(size: 23, weight: .semibold, design: .serif))
+                .lineLimit(1).minimumScaleFactor(0.8).foregroundStyle(Palette.ink)
+            Spacer(minLength: 6)
+            if let trailing {
+                Text(trailing).font(.system(size: 12, weight: .medium))
+                    .lineLimit(1).minimumScaleFactor(0.8).foregroundStyle(Palette.muted)
+            }
         }
     }
 }
@@ -79,20 +83,25 @@ struct PersonDots: View {
 struct DayPicker: View {
     @EnvironmentObject var store: LadStore
     var body: some View {
-        HStack(spacing: 5) {
-            ForEach(0..<7, id: \.self) { day in
-                Button { withAnimation(.easeInOut(duration: 0.2)) { store.selectedDay = day } } label: {
-                    VStack(spacing: 9) {
-                        Text(store.dayLabels[day]).font(.system(size: 11, weight: .medium))
-                        Text(store.dayNumber(day)).font(.system(size: 18, weight: .semibold, design: .rounded))
-                        Circle().fill(day == store.selectedDay ? .white : (day == 0 ? Palette.terracotta : .clear)).frame(width: 4, height: 4)
+        GeometryReader { geometry in
+            let cellWidth = max(0, (geometry.size.width - 30) / 7)
+            HStack(spacing: 5) {
+                ForEach(0..<7, id: \.self) { day in
+                    Button { withAnimation(.easeInOut(duration: 0.2)) { store.selectedDay = day } } label: {
+                        VStack(spacing: 9) {
+                            Text(store.dayLabels[day]).font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+                            Text(store.dayNumber(day)).font(.system(size: 18, weight: .semibold, design: .rounded))
+                            Circle().fill(day == store.selectedDay ? .white : (day == 0 ? Palette.terracotta : .clear)).frame(width: 4, height: 4)
+                        }
+                        .foregroundStyle(day == store.selectedDay ? .white : Palette.ink)
+                        .frame(width: cellWidth, height: 76)
+                        .background(day == store.selectedDay ? Palette.sage : .white, in: RoundedRectangle(cornerRadius: 17))
                     }
-                    .foregroundStyle(day == store.selectedDay ? .white : Palette.ink)
-                    .frame(maxWidth: .infinity).frame(height: 76)
-                    .background(day == store.selectedDay ? Palette.sage : .white, in: RoundedRectangle(cornerRadius: 17))
-                }.buttonStyle(.plain)
+                    .buttonStyle(.plain)
+                }
             }
         }
+        .frame(height: 76)
     }
 }
 
@@ -101,45 +110,59 @@ struct TodayView: View {
     @State private var showPersonPicker = false
     private var dinner: MealSlot { store.slot(store.selectedDay, 2) }
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 25) {
-                HStack(alignment: .top) {
-                    PageTitle(eyebrow: "ЛАД · ЕДИМ ВМЕСТЕ", title: store.selectedDay == store.currentDay ? "Хороший день\nначинается дома" : "План на \(store.dateLabel(store.selectedDay))")
-                    Button { showPersonPicker = true } label: {
-                        Text(store.currentMember.initials).font(.system(size: 18, weight: .bold, design: .serif))
-                            .foregroundStyle(Palette.sage).frame(width: 43, height: 43)
-                            .background(Palette.paleSage, in: Circle())
-                    }.accessibilityLabel("Выбрать человека")
+        GeometryReader { screen in
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 25) {
+                VStack(alignment: .leading, spacing: 7) {
+                    HStack {
+                        Text("ЛАД · ЕДИМ ВМЕСТЕ").font(.system(size: 11, weight: .bold, design: .rounded))
+                            .tracking(2.1).foregroundStyle(Palette.terracotta)
+                        Spacer(minLength: 8)
+                        Button { showPersonPicker = true } label: {
+                            Text(store.currentMember.initials).font(.system(size: 18, weight: .bold, design: .serif))
+                                .foregroundStyle(Palette.sage).frame(width: 43, height: 43)
+                                .background(Palette.paleSage, in: Circle())
+                        }.accessibilityLabel("Выбрать человека")
+                    }
+                    Text(store.selectedDay == store.currentDay ? "Хороший день\nначинается дома" : "План на \(store.dateLabel(store.selectedDay))")
+                        .font(.system(size: 34, weight: .semibold, design: .serif)).tracking(-1.1)
+                        .lineLimit(2).minimumScaleFactor(0.75).foregroundStyle(Palette.ink)
                 }
                 DayPicker()
-                HStack(spacing: 11) {
-                    Image(systemName: "heart.text.clipboard").font(.system(size: 19)).foregroundStyle(Palette.sage)
-                    VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 11) {
+                        Image(systemName: "heart.text.clipboard").font(.system(size: 19)).foregroundStyle(Palette.sage)
                         Text("Одна кухня — разные порции").font(.system(size: 14, weight: .semibold))
-                        Text("Сегодня готовим для \(store.state.members.count) человек").font(.system(size: 12)).foregroundStyle(Palette.muted)
+                            .lineLimit(2).minimumScaleFactor(0.85)
                     }
-                    Spacer()
-                    PersonDots(members: store.state.members, size: 27)
+                    HStack {
+                        Text("Сегодня готовим для \(store.state.members.count) человек").font(.system(size: 12)).foregroundStyle(Palette.muted)
+                        Spacer(minLength: 8)
+                        PersonDots(members: store.state.members, size: 27)
+                    }
                 }.foregroundStyle(Palette.ink).padding(16).background(Palette.paleSage.opacity(0.7), in: RoundedRectangle(cornerRadius: 19))
 
                 VStack(alignment: .leading, spacing: 14) {
                     SectionHeading(title: "В центре стола", trailing: "СЕГОДНЯ НА УЖИН")
                     NavigationLink { RecipeDetailView(recipe: store.recipe(dinner), slot: dinner) } label: {
                         ZStack(alignment: .bottomLeading) {
-                            RecipePicture(recipe: store.recipe(dinner)).frame(height: 260).frame(maxWidth: .infinity).clipped()
+                            RecipePicture(recipe: store.recipe(dinner))
+                                .frame(width: max(0, screen.size.width - 42), height: 260).clipped()
                             LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .center, endPoint: .bottom)
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack(spacing: 6) { Image(systemName: "clock"); Text("\(store.recipe(dinner).minutes) минут") }
                                     .font(.system(size: 12, weight: .medium)).padding(.horizontal, 11).padding(.vertical, 7)
                                     .background(.ultraThinMaterial, in: Capsule()).environment(\.colorScheme, .dark)
                                 Text(store.recipe(dinner).title).font(.system(size: 27, weight: .semibold, design: .serif))
+                                    .lineLimit(2).minimumScaleFactor(0.85)
                                 HStack {
                                     Text("\(store.participating(dinner).count) порции · \(store.recipe(dinner).cuisine)").font(.system(size: 13))
                                     Spacer()
                                     Image(systemName: "arrow.up.right").font(.system(size: 15, weight: .semibold))
                                 }
                             }.foregroundStyle(.white).padding(20)
-                        }.frame(height: 260).clipShape(RoundedRectangle(cornerRadius: 25))
+                        }.frame(width: max(0, screen.size.width - 42), height: 260)
+                            .clipShape(RoundedRectangle(cornerRadius: 25))
                     }.buttonStyle(.plain)
                 }
 
@@ -152,7 +175,10 @@ struct TodayView: View {
                     Text("План и съеденное отмечаются отдельно. Пищевая ценность в этой демоверсии приблизительная.")
                         .font(.system(size: 11)).foregroundStyle(Palette.muted).padding(.top, 3)
                 }
-            }.padding(.horizontal, 21).padding(.top, 20).padding(.bottom, 35)
+                }
+                .frame(width: max(0, screen.size.width - 42), alignment: .leading)
+                .padding(.horizontal, 21).padding(.top, 20).padding(.bottom, 35)
+            }
         }
         .background(Palette.canvas.ignoresSafeArea())
         .sheet(isPresented: $showPersonPicker) { PersonPickerSheet() .presentationDetents([.medium]) }

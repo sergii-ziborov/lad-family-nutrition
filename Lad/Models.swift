@@ -67,7 +67,17 @@ struct FamilyMember: Identifiable, Codable {
     var goal: String
     var portion: Double
     var allergies: [String]
+    var ageYears: Int? = nil
     var initials: String { String(name.prefix(1)) }
+    var ageLabel: String? {
+        guard let ageYears else { return nil }
+        let suffix: String
+        if (11...14).contains(ageYears % 100) { suffix = "лет" }
+        else if ageYears % 10 == 1 { suffix = "год" }
+        else if (2...4).contains(ageYears % 10) { suffix = "года" }
+        else { suffix = "лет" }
+        return "\(ageYears) \(suffix)"
+    }
 }
 
 struct MealSlot: Identifiable, Codable {
@@ -113,9 +123,18 @@ struct DemoState: Codable {
     @Published var selectedDay: Int = 0
     @Published private(set) var privateRecipes: [Recipe] = []
     @Published private(set) var privateCatalogStatus: String = "Не подключён"
+    @Published private(set) var familyCloudStatus: String = "Не подключено"
+    let localAccountID: String
     let kinds = ["Завтрак", "Обед", "Ужин"]
 
     init() {
+        if let savedID = UserDefaults.standard.string(forKey: "lad.localAccountID") {
+            localAccountID = savedID
+        } else {
+            let newID = UUID().uuidString
+            localAccountID = newID
+            UserDefaults.standard.set(newID, forKey: "lad.localAccountID")
+        }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--screenshots") {
             state = .initial()
@@ -133,6 +152,9 @@ struct DemoState: Codable {
                 fresh.pantryNames = decoded.pantryNames
                 fresh.extraShopping = decoded.extraShopping
                 fresh.supplementsByMember = decoded.supplementsByMember
+                for index in fresh.slots.indices {
+                    fresh.slots[index].memberIDs = decoded.members.map(\.id)
+                }
                 state = fresh
             } else {
                 state = decoded
@@ -146,7 +168,17 @@ struct DemoState: Codable {
             state.favorites.remove(favorite)
             state.favorites.insert("\(state.selectedMemberID)|\(favorite)")
         }
-        if PrivateRecipeAccess.isConfigured { Task { await refreshPrivateRecipes() } }
+        #if DEBUG
+        if let issue = PrivateRecipeAccess.importPilotProvisioning() {
+            familyCloudStatus = issue
+        }
+        #endif
+        if PrivateRecipeAccess.isConfigured {
+            Task {
+                await refreshPrivateRecipes()
+                await refreshFamily()
+            }
+        }
     }
 
     var currentMember: FamilyMember { state.members.first { $0.id == state.selectedMemberID } ?? state.members[0] }
@@ -226,6 +258,49 @@ struct DemoState: Codable {
         let member = FamilyMember(id: UUID().uuidString, name: name, goal: "Без цели по весу", portion: 1.0, allergies: [])
         state.members.append(member)
     }
+    func refreshFamily() async {
+        familyCloudStatus = "Загружаем…"
+        do {
+            let remoteMembers = try await PrivateRecipeAccess.fetchFamily()
+            let localMembers = Dictionary(uniqueKeysWithValues: state.members.map { ($0.id, $0) })
+            let members = remoteMembers.map { remote in
+                var merged = remote
+                if let local = localMembers[remote.id] {
+                    merged.goal = local.goal
+                    merged.portion = local.portion
+                    merged.allergies = local.allergies
+                }
+                return merged
+            }
+            let wasDemo = Set(state.members.map(\.id)) == Set(["anna", "igor", "mila"])
+            if wasDemo {
+                for index in state.slots.indices {
+                    state.slots[index].memberIDs = members.map(\.id)
+                }
+                state.selectedMemberID = members[0].id
+                state.eatenIDs = []
+                state.favorites = []
+                state.supplementsByMember = [:]
+                state.takenSupplements = []
+                state.members = members
+            } else {
+                let remoteIDs = Set(members.map(\.id))
+                let localOnly = state.members.filter { !remoteIDs.contains($0.id) && UUID(uuidString: $0.id) != nil }
+                state.members = members + localOnly
+            }
+            let validIDs = Set(state.members.map(\.id))
+            for index in state.slots.indices {
+                state.slots[index].memberIDs.removeAll { !validIDs.contains($0) }
+                if state.slots[index].memberIDs.isEmpty {
+                    state.slots[index].memberIDs = members.map(\.id)
+                }
+            }
+            if !validIDs.contains(state.selectedMemberID) { state.selectedMemberID = members[0].id }
+            familyCloudStatus = "Имена и возраст обновлены с Hetzner · настройки остаются на этом iPhone"
+        } catch {
+            familyCloudStatus = "Не удалось обновить: \(error.localizedDescription). Локальные данные сохранены."
+        }
+    }
     func refreshPrivateRecipes() async {
         privateCatalogStatus = "Загружаем…"
         do {
@@ -240,14 +315,17 @@ struct DemoState: Codable {
         do {
             try PrivateRecipeAccess.save(url: url, token: token)
             await refreshPrivateRecipes()
+            await refreshFamily()
         } catch {
             privateCatalogStatus = error.localizedDescription
+            familyCloudStatus = error.localizedDescription
         }
     }
     func disconnectPrivateCatalog() {
         PrivateRecipeAccess.clear()
         privateRecipes = []
         privateCatalogStatus = "Не подключён"
+        familyCloudStatus = "Облако отключено · семья остаётся на этом iPhone"
     }
     func save() { if let data = try? JSONEncoder().encode(state) { UserDefaults.standard.set(data, forKey: "lad-demo-v3") } }
 }

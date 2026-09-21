@@ -122,38 +122,59 @@ struct FamilyView: View {
     @State private var selectedPerson: FamilyMember?
     @State private var supplementName = ""
     @State private var showSupplement = false
+    @State private var showCloud = false
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 18) {
                 PageTitle(eyebrow: "КАЖДОМУ СВОЁ", title: "Наш круг")
                 VStack(alignment: .leading, spacing: 7) {
-                    Text("За одним столом").font(.system(size: 22, weight: .semibold, design: .serif))
-                    Text("Отдельные цели и порции, общая готовка. Для детей цель по весу не назначается автоматически.")
-                        .font(.system(size: 13)).foregroundStyle(Palette.muted).fixedSize(horizontal: false, vertical: true)
-                }.padding(20).frame(maxWidth: .infinity, alignment: .leading)
+                    Text("За одним столом").font(.system(size: 20, weight: .semibold, design: .serif))
+                    Text("Одна готовка, личные настройки. Порции здесь примерные и задаются вручную; детям цели по весу не назначаются.")
+                        .font(.system(size: 12)).foregroundStyle(Palette.muted).fixedSize(horizontal: false, vertical: true)
+                }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Palette.paleSage.opacity(0.7), in: RoundedRectangle(cornerRadius: 20))
                 SectionHeading(title: "Люди", trailing: "\(store.state.members.count) ПРОФИЛЯ")
                 ForEach(Array(store.state.members.enumerated()), id: \.element.id) { index, member in
                     Button { selectedPerson = member } label: {
                         HStack(spacing: 14) {
-                            Text(member.initials).font(.system(size: 24, weight: .semibold, design: .serif))
-                                .frame(width: 57, height: 57)
+                            Text(member.initials).font(.system(size: 22, weight: .semibold, design: .serif))
+                                .frame(width: 50, height: 50)
                                 .background([Palette.paleSage, Palette.peach, Color(red: 0.87, green: 0.84, blue: 0.73)][index % 3], in: Circle())
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(member.name).font(.system(size: 18, weight: .semibold, design: .serif))
-                                Text("\(member.goal) · \(Int(member.portion * 100))% базовой порции")
+                                Text([member.ageLabel, member.goal].compactMap { $0 }.joined(separator: " · "))
                                     .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                Text("Ручная порция: \(Int(member.portion * 100))% базовой")
+                                    .font(.system(size: 11)).foregroundStyle(Palette.muted)
                                 if !member.allergies.isEmpty { Text("Исключить: \(member.allergies.joined(separator: ", "))").font(.system(size: 11)).foregroundStyle(Palette.terracotta) }
                             }
                             Spacer()
                             Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Palette.muted)
-                        }.padding(15).foregroundStyle(Palette.ink).background(.white, in: RoundedRectangle(cornerRadius: 19))
+                        }.padding(12).foregroundStyle(Palette.ink).background(.white, in: RoundedRectangle(cornerRadius: 19))
                     }.buttonStyle(.plain)
                 }
                 Button { showAdd = true } label: {
                     Label("Добавить человека", systemImage: "plus.circle.fill")
                         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.sage)
                 }
+                VStack(alignment: .leading, spacing: 9) {
+                    HStack {
+                        Image(systemName: "iphone.gen3").foregroundStyle(Palette.sage)
+                        Text("Локальный аккаунт").font(.system(size: 16, weight: .semibold))
+                    }
+                    Text("Семейные профили хранятся на этом iPhone. Временное облако Hetzner только обновляет их по защищённому соединению; в GitHub личные данные не отправляются.")
+                        .font(.system(size: 12)).foregroundStyle(Palette.muted).fixedSize(horizontal: false, vertical: true)
+                    Text(store.familyCloudStatus).font(.system(size: 11)).foregroundStyle(Palette.sage)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack {
+                        Button("Настроить облако") { showCloud = true }
+                        Spacer()
+                        if PrivateRecipeAccess.isConfigured {
+                            Button("Обновить") { Task { await store.refreshFamily() } }
+                        }
+                    }.font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
+                }.padding(17).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 19))
                 VStack(alignment: .leading, spacing: 14) {
                     SectionHeading(title: "Сегодня у \(store.currentMember.name)")
                     let eaten = (0..<3).filter { store.isEaten(store.slot(store.currentDay, $0)) }.count
@@ -188,6 +209,7 @@ struct FamilyView: View {
             }.padding(.horizontal, 21).padding(.top, 20).padding(.bottom, 35)
         }.background(Palette.canvas.ignoresSafeArea())
             .sheet(item: $selectedPerson) { member in MemberEditor(member: member) }
+            .sheet(isPresented: $showCloud) { PrivateCatalogSheet() }
             .alert("Новый профиль", isPresented: $showAdd) {
                 TextField("Имя", text: $newName)
                 Button("Добавить") {
@@ -215,6 +237,7 @@ struct MemberEditor: View {
     @EnvironmentObject var store: LadStore
     @Environment(\.dismiss) private var dismiss
     @State var member: FamilyMember
+    @State private var ageText = ""
     private let goals = ["Баланс", "Поддержание", "Снижение", "Набор", "Без цели по весу"]
     private let allergens = ["Молоко", "Яйцо", "Рыба", "Пшеница"]
     var body: some View {
@@ -222,6 +245,7 @@ struct MemberEditor: View {
             Form {
                 Section("Личные настройки") {
                     TextField("Имя", text: $member.name)
+                    TextField("Возраст, полных лет", text: $ageText).keyboardType(.numberPad)
                     Picker("Ориентир", selection: $member.goal) {
                         ForEach(goals, id: \.self) { Text($0) }
                     }
@@ -253,8 +277,14 @@ struct MemberEditor: View {
                 .navigationTitle(member.name).navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) { Button("Отмена") { dismiss() } }
-                    ToolbarItem(placement: .topBarTrailing) { Button("Сохранить") { store.updateMember(member); dismiss() }.bold() }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Сохранить") {
+                            member.ageYears = Int(ageText).flatMap { (0...120).contains($0) ? $0 : nil }
+                            store.updateMember(member)
+                            dismiss()
+                        }.bold()
+                    }
                 }
-        }
+        }.onAppear { ageText = member.ageYears.map(String.init) ?? "" }
     }
 }

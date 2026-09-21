@@ -15,8 +15,10 @@ class PrivateCatalogTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.catalog = Path(self.temporary.name) / "private-recipes.json"
         self.catalog.write_text(json.dumps({"recipes": []}), encoding="utf-8")
+        self.family = Path(self.temporary.name) / "private-family.json"
+        self.family.write_text(json.dumps({"members": [{"id": "member1", "name": "Тест", "goal": "Без цели по весу", "portion": 1.0, "allergies": [], "ageYears": 30}]}), encoding="utf-8")
         self.token = "a-long-random-test-token"
-        self.server = make_server("127.0.0.1", 0, hashlib.sha256(self.token.encode()).hexdigest(), self.catalog)
+        self.server = make_server("127.0.0.1", 0, hashlib.sha256(self.token.encode()).hexdigest(), self.catalog, self.family)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.base = f"http://127.0.0.1:{self.server.server_port}"
@@ -42,6 +44,16 @@ class PrivateCatalogTests(unittest.TestCase):
             self.assertEqual(response.status, 200)
             self.assertEqual(response.headers["Cache-Control"], "no-store")
             self.assertEqual(json.load(response), {"recipes": []})
+
+    def test_family_requires_token_and_stays_private(self):
+        with self.assertRaises(urllib.error.HTTPError) as result:
+            urllib.request.urlopen(self.base + "/v1/family", timeout=3)
+        self.assertEqual(result.exception.code, 401)
+        result.exception.close()
+        request = urllib.request.Request(self.base + "/v1/family", headers={"Authorization": "Bearer " + self.token})
+        with urllib.request.urlopen(request, timeout=3) as response:
+            self.assertEqual(response.headers["Cache-Control"], "no-store")
+            self.assertEqual(json.load(response)["members"][0]["name"], "Тест")
 
     def test_other_paths_do_not_expose_file(self):
         with self.assertRaises(urllib.error.HTTPError) as result:

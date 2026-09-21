@@ -4,6 +4,7 @@ xcuserdata/
 build/
 DerivedData/
 .derived-iphone/
+.derived-layout/
 __pycache__/
 *.pyc
 .env
@@ -11,6 +12,9 @@ __pycache__/
 api/private-recipes.json
 api/private-recipes.*.json
 !api/private-recipes.schema.json
+api/private-family.json
+api/private-family.*.json
+!api/private-family.schema.json
 api/*.token
 *.mobileprovision
 *.p12

@@ -143,13 +143,16 @@ struct RecipesView: View {
                     }
                 }.contentMargins(.trailing, 21)
                 SectionHeading(title: "Идеи для первых недель", trailing: "\(results.count) БЛЮДА")
+                Text("Открытые блюда пока демонстрационные: состав и пищевая ценность требуют проверки. Авторские рецепты будут храниться отдельно в закрытой библиотеке.")
+                    .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    .fixedSize(horizontal: false, vertical: true)
                 ForEach(results) { recipe in
                     ZStack(alignment: .bottomTrailing) {
                         NavigationLink { RecipeDetailView(recipe: recipe) } label: {
                             VStack(alignment: .leading, spacing: 0) {
                                 RecipePicture(recipe: recipe).frame(height: 190).frame(maxWidth: .infinity).clipped()
                                 VStack(alignment: .leading, spacing: 6) {
-                                    Text((recipe.isPrivate ? "ЗАКРЫТАЯ · " : "") + recipe.cuisine.uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
+                                    Text((recipe.isPrivate ? "ЗАКРЫТАЯ · " : "ДЕМО · ") + recipe.cuisine.uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
                                     Text(recipe.title).font(.system(size: 21, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
                                     Text("\(recipe.minutes) минут · ~\(recipe.kcal) ккал на базовую порцию")
                                         .font(.system(size: 12)).foregroundStyle(Palette.muted)
@@ -296,11 +299,11 @@ struct PrivateCatalogSheet: View {
                     Image(systemName: "lock.shield.fill")
                         .font(.system(size: 34)).foregroundStyle(Palette.sage)
                         .frame(width: 68, height: 68).background(Palette.paleSage, in: RoundedRectangle(cornerRadius: 20))
-                    Text("Рецепты только для вас").font(.system(size: 27, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
-                    Text("Открытые рецепты уже в приложении. Закрытые загружаются по HTTPS после проверки ключа. Ключ хранится в Keychain этого iPhone; рецепты не входят в публичный репозиторий.")
+                    Text("Облако для семьи").font(.system(size: 27, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
+                    Text("Семейный профиль и закрытые рецепты загружаются по HTTPS после проверки ключа. Профиль сохраняется в локальном аккаунте этого iPhone, ключ — в Keychain. Личные данные не входят в публичный репозиторий.")
                         .font(.system(size: 14)).foregroundStyle(Palette.muted)
                     VStack(alignment: .leading, spacing: 12) {
-                        TextField("https://recipes.example.com", text: $serverURL)
+                        TextField("https://адрес-сервера", text: $serverURL)
                             .textInputAutocapitalization(.never).autocorrectionDisabled()
                             .keyboardType(.URL).textContentType(.URL)
                             .padding(15).background(.white, in: RoundedRectangle(cornerRadius: 13))
@@ -309,6 +312,7 @@ struct PrivateCatalogSheet: View {
                             .padding(15).background(.white, in: RoundedRectangle(cornerRadius: 13))
                     }
                     Text(store.privateCatalogStatus).font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    Text(store.familyCloudStatus).font(.system(size: 12)).foregroundStyle(Palette.muted)
                     Button {
                         busy = true
                         Task {
@@ -317,13 +321,18 @@ struct PrivateCatalogSheet: View {
                             busy = false
                         }
                     } label: {
-                        Text(busy ? "Подключаем…" : "Подключить библиотеку")
+                        Text(busy ? "Подключаем…" : "Подключить облако")
                             .font(.system(size: 15, weight: .semibold)).frame(maxWidth: .infinity).padding(17)
                             .foregroundStyle(.white).background(Palette.sage, in: RoundedRectangle(cornerRadius: 15))
                     }.disabled(busy)
                     if PrivateRecipeAccess.isConfigured {
                         HStack {
-                            Button("Обновить") { Task { await store.refreshPrivateRecipes() } }
+                            Button("Обновить") {
+                                Task {
+                                    await store.refreshPrivateRecipes()
+                                    await store.refreshFamily()
+                                }
+                            }
                             Spacer()
                             Button("Отключить", role: .destructive) { store.disconnectPrivateCatalog(); token = "" }
                         }.font(.system(size: 14, weight: .semibold)).padding(.top, 4)
@@ -332,7 +341,7 @@ struct PrivateCatalogSheet: View {
                         .font(.system(size: 11)).foregroundStyle(Palette.muted).padding(.top, 12)
                 }.padding(21)
             }.background(Palette.canvas.ignoresSafeArea())
-                .navigationTitle("Закрытый каталог").navigationBarTitleDisplayMode(.inline)
+                .navigationTitle("Облако Лада").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
         }.onAppear { serverURL = store.privateCatalogURL }
     }
