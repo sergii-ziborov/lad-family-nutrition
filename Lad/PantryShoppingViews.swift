@@ -7,6 +7,7 @@ struct ShoppingView: View {
     @State private var editorItem: PantryItem?
     @State private var manualName = ""
     @State private var showManual = false
+    @State private var visibleSuggestionCount = 24
 
     init() {
         #if DEBUG
@@ -22,12 +23,17 @@ struct ShoppingView: View {
     }
     private var suggestions: [Ingredient] {
         PlanningCore.ingredientSuggestions(recipes: store.allRecipes, pantry: store.pantry, query: search)
+            .sorted {
+                if $0.category != $1.category { return $0.category.localizedStandardCompare($1.category) == .orderedAscending }
+                return $0.name.localizedStandardCompare($1.name) == .orderedAscending
+            }
     }
+    private var visibleSuggestions: [Ingredient] { Array(suggestions.prefix(visibleSuggestionCount)) }
     private var toBuy: [ShoppingNeed] { store.shoppingNeeds.filter { $0.missing > 0.001 } }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: 18) {
                 PageTitle(eyebrow: "ПРОДУКТЫ ДОМА И ДЛЯ МЕНЮ", title: "Наша кухня")
                 Picker("Раздел", selection: $section) {
                     Text("Холодильник").tag(0)
@@ -36,6 +42,8 @@ struct ShoppingView: View {
                 if section == 0 { pantryContent } else { shoppingContent }
             }.padding(.horizontal, 21).padding(.top, 20).padding(.bottom, 35)
         }.background(Palette.canvas.ignoresSafeArea())
+            .onChange(of: search) { _, _ in visibleSuggestionCount = 24 }
+            .onChange(of: store.allRecipes.count) { _, _ in visibleSuggestionCount = 24 }
             .sheet(item: $editorItem) { item in PantryEditor(item: item) }
             .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
             .alert("Добавить вручную", isPresented: $showManual) {
@@ -94,10 +102,10 @@ struct ShoppingView: View {
                 Text("Ингредиенты из \(Recipe.all.count) открытых и \(store.privateRecipes.count) загруженных закрытых рецептов.\(store.privateRecipes.isEmpty ? " Закрытый каталог пока не загружен." : "")")
                     .font(.system(size: 11)).foregroundStyle(Palette.muted)
                 SectionHeading(title: "Добавить из рецептов", trailing: "\(suggestions.count) ПОЗ.")
-                ForEach(Array(Set(suggestions.map(\.category))).sorted(), id: \.self) { category in
+                ForEach(Array(Set(visibleSuggestions.map(\.category))).sorted(), id: \.self) { category in
                     Text(category.uppercased())
                         .font(.system(size: 11, weight: .bold)).tracking(1.2).foregroundStyle(Palette.muted)
-                    ForEach(suggestions.filter { $0.category == category }) { ingredient in
+                    ForEach(visibleSuggestions.filter { $0.category == category }) { ingredient in
                         Button {
                             editorItem = PantryItem(name: ingredient.name, quantity: nil, unit: ingredient.unit, category: ingredient.category)
                         } label: {
@@ -109,6 +117,14 @@ struct ShoppingView: View {
                             }.font(.system(size: 14)).padding(13).background(.white, in: RoundedRectangle(cornerRadius: 13))
                         }.buttonStyle(.plain)
                     }
+                }
+                if visibleSuggestionCount < suggestions.count {
+                    HStack { Spacer(); ProgressView(); Text("Загружаем ещё продукты…"); Spacer() }
+                        .font(.system(size: 12)).foregroundStyle(Palette.muted).padding(12)
+                        .onAppear {
+                            visibleSuggestionCount = CatalogPaging.nextLimit(current: visibleSuggestionCount,
+                                                                            total: suggestions.count, step: 24)
+                        }
                 }
             }
             if store.pantry.isEmpty { Text("Добавьте продукты — подбор блюд покажет, что уже можно приготовить и чего не хватает.")
@@ -266,7 +282,7 @@ struct ReplanPreviewSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(preview.explanation).font(.system(size: 14)).foregroundStyle(Palette.muted)
                     if preview.changes.isEmpty {
-                        Text("Безопасной замены с меньшим числом недостающих продуктов не нашлось. Текущее меню остаётся, список покупок уже обновлён.")
+                        Text(preview.emptyMessage)
                             .font(.system(size: 15)).foregroundStyle(Palette.ink)
                             .padding(17).background(.white, in: RoundedRectangle(cornerRadius: 17))
                     }

@@ -155,3 +155,9 @@ enum PlanningCore {
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 }
+
+enum CatalogPaging {
+    static func nextLimit(current: Int, total: Int, step: Int) -> Int {
+        min(total, max(0, current) + max(1, step))
+    }
+}

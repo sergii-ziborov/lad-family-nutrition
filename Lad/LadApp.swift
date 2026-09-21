@@ -182,6 +182,7 @@ struct TodayView: View {
         }
         .background(Palette.canvas.ignoresSafeArea())
         .sheet(isPresented: $showPersonPicker) { PersonPickerSheet() .presentationDetents([.medium]) }
+        .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
     }
 }
 
@@ -190,22 +191,32 @@ struct MealRow: View {
     let slot: MealSlot
     var body: some View {
         let recipe = store.recipe(slot)
-        HStack(spacing: 13) {
-            NavigationLink { RecipeDetailView(recipe: recipe, slot: slot) } label: {
-                RecipePicture(recipe: recipe).frame(width: 72, height: 72).clipped().clipShape(RoundedRectangle(cornerRadius: 14))
-            }.buttonStyle(.plain)
-            VStack(alignment: .leading, spacing: 5) {
-                Text(store.kinds[slot.kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
-                Text(recipe.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink).lineLimit(1)
-                Text(recipe.isUnavailable ? "Подключите закрытый каталог" :
-                    (recipe.kcal.map { "~\(Int(Double($0) * store.currentMember.portion)) ккал · \(recipe.minutes) мин" } ?? "Калорийность неизвестна · \(recipe.minutes) мин"))
-                    .font(.system(size: 11)).foregroundStyle(Palette.muted)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 13) {
+                NavigationLink { RecipeDetailView(recipe: recipe, slot: slot) } label: {
+                    RecipePicture(recipe: recipe).frame(width: 72, height: 72).clipped().clipShape(RoundedRectangle(cornerRadius: 14))
+                }.buttonStyle(.plain)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(store.kinds[slot.kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
+                    Text(recipe.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink).lineLimit(1)
+                    Text(recipe.isUnavailable ? "Подключите закрытый каталог" :
+                        (recipe.kcal.map { "~\(Int(Double($0) * store.currentMember.portion)) ккал · \(recipe.minutes) мин" } ?? "Калорийность неизвестна · \(recipe.minutes) мин"))
+                        .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                }
+                Spacer(minLength: 0)
+                Button { store.toggleEaten(slot) } label: {
+                    Image(systemName: store.isEaten(slot) ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 26, weight: .light)).foregroundStyle(store.isEaten(slot) ? Palette.sage : Palette.line)
+                }.accessibilityLabel(store.isEaten(slot) ? "Убрать отметку о съеденном" : "Отметить как съеденное")
             }
-            Spacer(minLength: 0)
-            Button { store.toggleEaten(slot) } label: {
-                Image(systemName: store.isEaten(slot) ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 26, weight: .light)).foregroundStyle(store.isEaten(slot) ? Palette.sage : Palette.line)
-            }.accessibilityLabel(store.isEaten(slot) ? "Убрать отметку о съеденном" : "Отметить как съеденное")
+            Button {
+                store.proposeNotToday(slot)
+            } label: {
+                Label(slot.day == store.currentDay ? "Сегодня не хочу — подобрать другое" : "В этот день не хочу — подобрать другое",
+                      systemImage: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 3)
+            }.buttonStyle(.plain)
         }.padding(10).background(.white, in: RoundedRectangle(cornerRadius: 20))
     }
 }

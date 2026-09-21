@@ -62,6 +62,9 @@ struct WeekView: View {
                             Button("Изменить блюдо") { editingSlot = slot }
                                 .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
                         }
+                        Button("Не хочу в этот день — подобрать другое") { store.proposeNotToday(slot) }
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
+                            .padding(.top, 11)
                         HStack(spacing: 8) {
                             ForEach(store.state.members) { person in
                                 Button { warning = store.toggleParticipant(person.id, in: slot) } label: {
@@ -99,6 +102,7 @@ struct RecipeChooser: View {
     @Environment(\.dismiss) private var dismiss
     let slot: MealSlot
     let onChoose: (Recipe) -> Void
+    @State private var visibleCount = 12
     private var candidates: [Recipe] {
         store.allRecipes.filter { $0.mealKinds.contains(slot.kind) }
             .sorted {
@@ -110,8 +114,8 @@ struct RecipeChooser: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(candidates) { recipe in
+                LazyVStack(spacing: 12) {
+                    ForEach(Array(candidates.prefix(visibleCount))) { recipe in
                         Button { onChoose(recipe) } label: {
                             HStack(spacing: 12) {
                                 RecipePicture(recipe: recipe).frame(width: 75, height: 75).clipped().clipShape(RoundedRectangle(cornerRadius: 13))
@@ -128,6 +132,11 @@ struct RecipeChooser: View {
                             }.foregroundStyle(Palette.ink).padding(10).background(.white, in: RoundedRectangle(cornerRadius: 18))
                         }.buttonStyle(.plain)
                     }
+                    if visibleCount < candidates.count {
+                        ProgressView("Загружаем ещё блюда…")
+                            .padding(12)
+                            .onAppear { visibleCount = CatalogPaging.nextLimit(current: visibleCount, total: candidates.count, step: 12) }
+                    }
                 }.padding(20)
             }.background(Palette.canvas.ignoresSafeArea()).navigationTitle("Выбрать блюдо")
                 .navigationBarTitleDisplayMode(.inline)
@@ -141,6 +150,7 @@ struct RecipesView: View {
     @State private var query = ""
     @State private var filter = "Все"
     @State private var showPrivateAccess = false
+    @State private var visibleCount = 12
     private let filters = ["Все", "Есть дома", "Не хватает", "Любимые", "Закрытые", "Домашняя", "Средиземноморская"]
     private var results: [Recipe] {
         store.allRecipes.filter { recipe in
@@ -153,7 +163,7 @@ struct RecipesView: View {
     }
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
+            LazyVStack(alignment: .leading, spacing: 20) {
                 PageTitle(eyebrow: "ИДЕИ ДЛЯ СТОЛА", title: "Готовить с радостью")
                 Button { showPrivateAccess = true } label: {
                     HStack(spacing: 12) {
@@ -186,7 +196,9 @@ struct RecipesView: View {
                 Text("Открытые блюда демонстрационные, а закрытый каталог берётся с Hetzner. Состав и пищевая ценность требуют проверки перед использованием как рекомендаций.")
                     .font(.system(size: 12)).foregroundStyle(Palette.muted)
                     .fixedSize(horizontal: false, vertical: true)
-                ForEach(results) { recipe in
+                Text("♥ — нравится; 👎 — не нравится для \(store.currentMember.name). Неподходящие блюда исключаются из нового подбора, а не удаляются из каталога.")
+                    .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                ForEach(Array(results.prefix(visibleCount))) { recipe in
                     ZStack(alignment: .bottomTrailing) {
                         NavigationLink { RecipeDetailView(recipe: recipe) } label: {
                             VStack(alignment: .leading, spacing: 0) {
@@ -200,18 +212,33 @@ struct RecipesView: View {
                                     Text(match.missing.isEmpty && match.uncertain.isEmpty ? "Можно приготовить из запасов" : "Не хватает: \((match.missing + match.uncertain).joined(separator: ", "))")
                                         .font(.system(size: 11)).foregroundStyle(match.missing.isEmpty && match.uncertain.isEmpty ? Palette.sage : Palette.terracotta)
                                         .lineLimit(2)
-                                }.frame(maxWidth: .infinity, alignment: .leading).padding(16).padding(.trailing, 30)
+                                }.frame(maxWidth: .infinity, alignment: .leading).padding(16).padding(.trailing, 62)
                             }.background(.white, in: RoundedRectangle(cornerRadius: 22)).clipShape(RoundedRectangle(cornerRadius: 22))
                         }.buttonStyle(.plain)
-                        Button { store.toggleFavorite(recipe.id) } label: {
-                            Image(systemName: store.isFavorite(recipe.id) ? "heart.fill" : "heart")
-                                .font(.system(size: 20)).foregroundStyle(Palette.terracotta).frame(width: 44, height: 44)
-                        }.buttonStyle(.plain).padding(8).accessibilityLabel("Избранное")
+                        VStack(spacing: 2) {
+                            Button { store.toggleFavorite(recipe.id) } label: {
+                                Image(systemName: store.isFavorite(recipe.id) ? "heart.fill" : "heart")
+                                    .font(.system(size: 19)).foregroundStyle(Palette.terracotta).frame(width: 44, height: 44)
+                            }.buttonStyle(.plain).accessibilityLabel(store.isFavorite(recipe.id) ? "Убрать из любимых" : "Нравится")
+                            Button { store.toggleDislike(recipe.id) } label: {
+                                Image(systemName: store.isDisliked(recipe.id) ? "hand.thumbsdown.fill" : "hand.thumbsdown")
+                                    .font(.system(size: 18)).foregroundStyle(store.isDisliked(recipe.id) ? Palette.terracotta : Palette.muted)
+                                    .frame(width: 44, height: 44)
+                            }.buttonStyle(.plain).accessibilityLabel(store.isDisliked(recipe.id) ? "Убрать отметку не нравится" : "Не нравится")
+                        }.padding(8)
                     }
+                }
+                if visibleCount < results.count {
+                    ProgressView("Загружаем ещё рецепты…")
+                        .frame(maxWidth: .infinity).padding(14)
+                        .onAppear { visibleCount = CatalogPaging.nextLimit(current: visibleCount, total: results.count, step: 12) }
                 }
                 if results.isEmpty { Text(filter == "Закрытые" ? "Подключите закрытую библиотеку или обновите каталог." : "Пока ничего не нашли. Попробуйте другой запрос.").foregroundStyle(Palette.muted) }
             }.padding(.horizontal, 21).padding(.top, 20).padding(.bottom, 35)
         }.background(Palette.canvas.ignoresSafeArea())
+            .onChange(of: query) { _, _ in visibleCount = 12 }
+            .onChange(of: filter) { _, _ in visibleCount = 12 }
+            .onChange(of: store.allRecipes.count) { _, _ in visibleCount = 12 }
             .sheet(isPresented: $showPrivateAccess) { PrivateCatalogSheet() }
     }
 }
@@ -232,6 +259,14 @@ struct RecipeDetailView: View {
                     Text(recipe.title).font(.system(size: 33, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
                     Text(recipe.caption).font(.system(size: 15)).foregroundStyle(Palette.muted)
                 }
+                HStack(spacing: 18) {
+                    Button { store.toggleFavorite(recipe.id) } label: {
+                        Label(store.isFavorite(recipe.id) ? "Нравится" : "Нравится?", systemImage: store.isFavorite(recipe.id) ? "heart.fill" : "heart")
+                    }
+                    Button { store.toggleDislike(recipe.id) } label: {
+                        Label(store.isDisliked(recipe.id) ? "Не нравится" : "Не нравится?", systemImage: store.isDisliked(recipe.id) ? "hand.thumbsdown.fill" : "hand.thumbsdown")
+                    }
+                }.font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
                 HStack(spacing: 0) {
                     detailMetric("ВРЕМЯ", "\(recipe.minutes) мин")
                     Spacer()
@@ -251,6 +286,9 @@ struct RecipeDetailView: View {
                             }
                         }
                     }.padding(18).background(Palette.paleSage.opacity(0.65), in: RoundedRectangle(cornerRadius: 19))
+                    Button("Не хочу это блюдо в выбранный день — подобрать другое") {
+                        store.proposeNotToday(slot)
+                    }.font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.terracotta)
                 }
                 if !recipe.allergens.isEmpty {
                     Label("Указаны аллергены: \(recipe.allergens.joined(separator: ", "))", systemImage: "exclamationmark.circle")
@@ -323,6 +361,7 @@ struct RecipeDetailView: View {
             }.padding(.horizontal, 21).padding(.top, 12).padding(.bottom, 38)
         }.background(Palette.canvas.ignoresSafeArea()).navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showCooking) { CookingView(recipe: recipe, portions: portions) }
+            .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
     }
     private func detailMetric(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {

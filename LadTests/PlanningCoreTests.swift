@@ -3,6 +3,78 @@ import UIKit
 @testable import Lad
 
 final class PlanningCoreTests: XCTestCase {
+    func testCatalogPagesAdvanceAndStopAtEnd() {
+        XCTAssertEqual(CatalogPaging.nextLimit(current: 0, total: 50, step: 24), 24)
+        XCTAssertEqual(CatalogPaging.nextLimit(current: 24, total: 50, step: 24), 48)
+        XCTAssertEqual(CatalogPaging.nextLimit(current: 48, total: 50, step: 24), 50)
+        XCTAssertEqual(CatalogPaging.nextLimit(current: 50, total: 50, step: 24), 50)
+    }
+
+    @MainActor
+    func testDislikeIsPersonalPersistsAcrossWeekAndExcludesRecipeFromReplan() throws {
+        let store = LadStore()
+        store.state = .initial()
+        let breakfast = store.slot(0, 0).recipeID
+        XCTAssertTrue(store.isFavorite("salmon"))
+        store.toggleDislike("salmon")
+        XCTAssertTrue(store.isDisliked("salmon"))
+        XCTAssertFalse(store.isFavorite("salmon"))
+        store.toggleDislike(breakfast)
+        store.proposeDayMenu(0)
+        let preview = try XCTUnwrap(store.replanPreview)
+        XCTAssertNotEqual(preview.changes.first { $0.slotID == "0-0" }?.nextID, breakfast)
+        let saved = try JSONEncoder().encode(store.state)
+        let restored = try JSONDecoder().decode(DemoState.self, from: saved)
+        XCTAssertTrue(restored.dislikes?.contains("anna|salmon") == true)
+        store.toggleFavorite("salmon")
+        XCTAssertTrue(store.isFavorite("salmon"))
+        XCTAssertFalse(store.isDisliked("salmon"))
+        store.state.selectedMemberID = "igor"
+        XCTAssertFalse(store.isDisliked(breakfast))
+    }
+
+    @MainActor
+    func testNotTodayOnlyAppliesAfterConfirmationAndUndoRestores() throws {
+        let store = LadStore()
+        store.state = .initial()
+        let slot = store.slot(0, 2)
+        store.proposeNotToday(slot)
+        let preview = try XCTUnwrap(store.replanPreview)
+        let replacement = try XCTUnwrap(preview.changes.first?.nextID)
+        XCTAssertNotEqual(replacement, slot.recipeID)
+        XCTAssertEqual(store.slot(0, 2).recipeID, slot.recipeID)
+        XCTAssertTrue(store.state.avoidedRecipesBySlot?.isEmpty ?? true)
+        store.applyReplan(preview)
+        XCTAssertEqual(store.slot(0, 2).recipeID, replacement)
+        XCTAssertTrue(store.state.avoidedRecipesBySlot?["0-2|anna"]?.contains(slot.recipeID) == true)
+        store.proposeDayMenu(0)
+        XCTAssertNotEqual(store.replanPreview?.changes.first { $0.slotID == slot.id }?.nextID, slot.recipeID)
+        store.undoReplan()
+        XCTAssertEqual(store.slot(0, 2).recipeID, slot.recipeID)
+        XCTAssertFalse(store.state.avoidedRecipesBySlot?["0-2|anna"]?.contains(slot.recipeID) == true)
+    }
+
+    @MainActor
+    func testNotTodayDoesNotReplaceEatenMeal() throws {
+        let store = LadStore()
+        store.state = .initial()
+        let slot = store.slot(0, 1)
+        store.toggleEaten(slot)
+        store.proposeNotToday(slot)
+        XCTAssertTrue(try XCTUnwrap(store.replanPreview).changes.isEmpty)
+    }
+
+    @MainActor
+    func testSharedMealAvoidsRecipesDislikedByAnotherParticipant() throws {
+        let store = LadStore()
+        store.state = .initial()
+        store.state.dislikes = Set(Recipe.all.filter { $0.mealKinds.contains(2) && $0.id != "lentil-stew" }
+            .map { "igor|\($0.id)" })
+        store.proposeNotToday(store.slot(0, 2))
+        let proposed = try XCTUnwrap(store.replanPreview?.changes.first?.nextID)
+        XCTAssertEqual(proposed, "lentil-stew")
+    }
+
     func testIngredientCatalogIncludesEveryRecipeIngredientBeyondTwelveRows() {
         let privateDraft = Recipe(id: "private:test", title: "Черновик", caption: "", image: "", cuisine: "Домашняя", minutes: 10, kcal: nil, protein: nil, allergens: [], ingredients: [
             Ingredient(name: "Свёкла", amount: 100, unit: "г", category: "Овощи и зелень")

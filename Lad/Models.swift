@@ -150,6 +150,8 @@ struct DemoState: Codable {
     var pantryNames: Set<String>
     var pantryItems: [PantryItem]? = nil
     var favorites: Set<String>
+    var dislikes: Set<String>? = nil
+    var avoidedRecipesBySlot: [String: Set<String>]? = nil
     var extraShopping: [String]
     var supplementsByMember: [String: [String]]
     var takenSupplements: Set<String>
@@ -187,6 +189,15 @@ struct ReplanPreview: Identifiable {
     let explanation: String
     let changes: [PlannedChange]
     let shoppingDelta: [String]
+    let pendingAvoid: AvoidedRecipe?
+    let emptyMessage: String
+}
+
+struct AvoidedRecipe: Equatable {
+    let slotID: String
+    let memberID: String
+    let recipeID: String
+    var key: String { "\(slotID)|\(memberID)" }
 }
 
 @MainActor final class LadStore: ObservableObject {
@@ -198,6 +209,7 @@ struct ReplanPreview: Identifiable {
     @Published var replanPreview: ReplanPreview?
     @Published private(set) var canUndoReplan = false
     private var lastAppliedChanges: [PlannedChange] = []
+    private var lastAppliedAvoid: AvoidedRecipe?
     let localAccountID: String
     let kinds = ["Завтрак", "Обед", "Ужин"]
 
@@ -223,6 +235,7 @@ struct ReplanPreview: Identifiable {
                 fresh.members = decoded.members
                 fresh.selectedMemberID = decoded.selectedMemberID
                 fresh.favorites = decoded.favorites
+                fresh.dislikes = decoded.dislikes
                 fresh.pantryNames = decoded.pantryNames
                 fresh.pantryItems = decoded.pantryItems
                 fresh.extraShopping = decoded.extraShopping
@@ -348,7 +361,7 @@ struct ReplanPreview: Identifiable {
         var value = Double(match.covered * 7 - match.missing.count * 10 - match.uncertain.count * 3)
         if usedToday.contains(recipe.id) { value -= 25 }
         if state.slots.contains(where: { $0.day == slot.day - 1 && $0.recipeID == recipe.id }) { value -= 14 }
-        if isFavorite(recipe.id) { value += 5 }
+        value += Double(participating(slot).filter { state.favorites.contains("\($0.id)|\(recipe.id)") }.count * 5)
         if let target = currentMember.dailyEnergyTarget, let kcal = recipe.kcal, (currentMember.ageYears ?? 0) >= 18 {
             value -= abs(Double(kcal) * currentMember.portion - Double(target) / 3) / 65
         }
@@ -356,9 +369,18 @@ struct ReplanPreview: Identifiable {
         return value
     }
     private func eligibleRecipes(for slot: MealSlot) -> [Recipe] {
-        allRecipes.filter { $0.mealKinds.contains(slot.kind) && incompatibility(slot, recipe: $0) == nil }
+        let people = participating(slot)
+        let excluded = Set(people.flatMap { person in
+            state.avoidedRecipesBySlot?["\(slot.id)|\(person.id)"] ?? []
+        })
+        return allRecipes.filter { recipe in
+            recipe.mealKinds.contains(slot.kind) && incompatibility(slot, recipe: recipe) == nil &&
+            !excluded.contains(recipe.id) &&
+            !people.contains { state.dislikes?.contains("\($0.id)|\(recipe.id)") == true }
+        }
     }
-    private func makePreview(title: String, explanation: String, changes: [PlannedChange]) -> ReplanPreview {
+    private func makePreview(title: String, explanation: String, changes: [PlannedChange], pendingAvoid: AvoidedRecipe? = nil,
+                             emptyMessage: String = "Подходящей замены с меньшим числом недостающих продуктов не нашлось. Текущее меню остаётся, список покупок уже обновлён.") -> ReplanPreview {
         var proposedSlots = state.slots
         for change in changes {
             if let index = proposedSlots.firstIndex(where: { $0.id == change.slotID }) {
@@ -376,7 +398,8 @@ struct ReplanPreview: Identifiable {
             let new = newAmount.formatted(.number.precision(.fractionLength(0...1)))
             return "\(item.name): \(old) → \(new) \(item.unit)"
         }
-        return ReplanPreview(title: title, explanation: explanation, changes: changes, shoppingDelta: delta)
+        return ReplanPreview(title: title, explanation: explanation, changes: changes, shoppingDelta: delta,
+                             pendingAvoid: pendingAvoid, emptyMessage: emptyMessage)
     }
     func proposeDayMenu(_ day: Int) {
         var used: Set<String> = []
@@ -390,6 +413,24 @@ struct ReplanPreview: Identifiable {
             if choice.id != slot.recipeID { changes.append(PlannedChange(slotID: slot.id, previousID: slot.recipeID, nextID: choice.id)) }
         }
         replanPreview = makePreview(title: "Подбор на \(dateLabel(day))", explanation: "Учитываем запасы, известные аллергены, разнообразие и ваш ручной ориентир по калориям, если он задан. Пищевая ценность демо-блюд приблизительная; микроэлементы без исходных данных не рассчитываются.", changes: changes)
+    }
+    func proposeNotToday(_ slot: MealSlot) {
+        guard !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) else {
+            replanPreview = makePreview(title: "Другое блюдо", explanation: "Этот приём пищи уже отмечен съеденным.", changes: [],
+                                        emptyMessage: "Отмените отметку о съеденном, если хотите поменять блюдо.")
+            return
+        }
+        let used = Set(state.slots.filter { $0.day == slot.day && $0.id != slot.id }.map(\.recipeID))
+        let choice = eligibleRecipes(for: slot)
+            .filter { $0.id != slot.recipeID }
+            .sorted { score($0, slot: slot, usedToday: used) > score($1, slot: slot, usedToday: used) }
+            .first
+        let changes = choice.map { [PlannedChange(slotID: slot.id, previousID: slot.recipeID, nextID: $0.id)] } ?? []
+        let avoid = choice.map { _ in AvoidedRecipe(slotID: slot.id, memberID: state.selectedMemberID, recipeID: slot.recipeID) }
+        replanPreview = makePreview(title: "Другое блюдо на \(dateLabel(slot.day))",
+                                    explanation: "Учтём, что \(currentMember.name) не хочет это блюдо в выбранный день. Замена учитывает продукты дома и ограничения всех за столом; предпочтение сохранится только для этого приёма пищи.",
+                                    changes: changes, pendingAvoid: avoid,
+                                    emptyMessage: "Пока нет другого совместимого блюда для этого приёма пищи. Меню не меняется.")
     }
     func proposeReplan(affectedBy ingredientName: String) {
         var changes: [PlannedChange] = []
@@ -418,6 +459,15 @@ struct ReplanPreview: Identifiable {
             }
         }
         lastAppliedChanges = preview.changes
+        lastAppliedAvoid = nil
+        if let avoid = preview.pendingAvoid, !preview.changes.isEmpty {
+            var all = state.avoidedRecipesBySlot ?? [:]
+            if !all[avoid.key, default: []].contains(avoid.recipeID) {
+                all[avoid.key, default: []].insert(avoid.recipeID)
+                state.avoidedRecipesBySlot = all
+                lastAppliedAvoid = avoid
+            }
+        }
         canUndoReplan = !preview.changes.isEmpty
         replanPreview = nil
     }
@@ -428,7 +478,12 @@ struct ReplanPreview: Identifiable {
             }
         }
         lastAppliedChanges = []
+        if let avoid = lastAppliedAvoid {
+            state.avoidedRecipesBySlot?[avoid.key]?.remove(avoid.recipeID)
+        }
+        lastAppliedAvoid = nil
         canUndoReplan = false
+        replanPreview = nil
     }
     func assign(_ recipe: Recipe, to slot: MealSlot) -> String? {
         if recipe.isUnavailable { return "Этот рецепт сейчас недоступен. Подключите закрытый каталог." }
@@ -462,9 +517,22 @@ struct ReplanPreview: Identifiable {
     }
     func toggleFavorite(_ id: String) {
         let key = "\(state.selectedMemberID)|\(id)"
-        if state.favorites.contains(key) { state.favorites.remove(key) } else { state.favorites.insert(key) }
+        if state.favorites.contains(key) { state.favorites.remove(key) }
+        else {
+            state.favorites.insert(key)
+            state.dislikes?.remove(key)
+        }
     }
     func isFavorite(_ id: String) -> Bool { state.favorites.contains("\(state.selectedMemberID)|\(id)") }
+    func toggleDislike(_ id: String) {
+        let key = "\(state.selectedMemberID)|\(id)"
+        if state.dislikes?.contains(key) == true { state.dislikes?.remove(key) }
+        else {
+            state.dislikes = (state.dislikes ?? []).union([key])
+            state.favorites.remove(key)
+        }
+    }
+    func isDisliked(_ id: String) -> Bool { state.dislikes?.contains("\(state.selectedMemberID)|\(id)") == true }
     func updateMember(_ member: FamilyMember) {
         guard let index = state.members.firstIndex(where: { $0.id == member.id }) else { return }
         state.members[index] = member
@@ -495,6 +563,8 @@ struct ReplanPreview: Identifiable {
                 state.selectedMemberID = members[0].id
                 state.eatenIDs = []
                 state.favorites = []
+                state.dislikes = []
+                state.avoidedRecipesBySlot = [:]
                 state.supplementsByMember = [:]
                 state.takenSupplements = []
                 state.members = members
