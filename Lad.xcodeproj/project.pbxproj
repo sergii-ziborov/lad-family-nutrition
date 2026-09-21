@@ -8,16 +8,33 @@
 
 /* Begin PBXBuildFile section */
 		3FCBA5EA08AD55CC6EDD7916 /* PrivateRecipes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771AFA1CAE7FFB760A4E4047 /* PrivateRecipes.swift */; };
+		5460FA1A748961D7C0F39F77 /* PlanningCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EC9B287E7DAFD2026279AA0 /* PlanningCoreTests.swift */; };
 		61E3A08A47218F8692B7B117 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B5FEDF2079982A77F11FE7 /* Models.swift */; };
+		65344FDD23EBA6EED927EA1C /* PlanningCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4623EF829C48DC96B4A68E91 /* PlanningCore.swift */; };
 		6701D9E68DA0409E358B9494 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30D7B3F16164271BDB590DDD /* Assets.xcassets */; };
 		9B1906B5B67673182496FEF0 /* LadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC94D7A6F19A46FE100887 /* LadApp.swift */; };
 		E2B0FA662A5659107AEC1604 /* PlanningViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7A89682C45A9A37DD989FC /* PlanningViews.swift */; };
+		E600592C1357FDDADD45A5A3 /* PantryShoppingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55F050FE7C9068806AC41BE6 /* PantryShoppingViews.swift */; };
 		F877A76BBB7A6608615989B6 /* HouseholdViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D72C869EFC096975D43A1F /* HouseholdViews.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		A7D6E18C3B1D4BCF4261B01B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DEC8D4483A9F6D5DC16DD624 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5FCFCB0DA48985BE4894A3B7;
+			remoteInfo = Lad;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		30D7B3F16164271BDB590DDD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3EC9B287E7DAFD2026279AA0 /* PlanningCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningCoreTests.swift; sourceTree = "<group>"; };
 		42EED19FD4008AC9B3F23923 /* Lad.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Lad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4623EF829C48DC96B4A68E91 /* PlanningCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningCore.swift; sourceTree = "<group>"; };
+		4801382B23D574244F3F3BC3 /* LadTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LadTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		55F050FE7C9068806AC41BE6 /* PantryShoppingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PantryShoppingViews.swift; sourceTree = "<group>"; };
 		771AFA1CAE7FFB760A4E4047 /* PrivateRecipes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivateRecipes.swift; sourceTree = "<group>"; };
 		78B5FEDF2079982A77F11FE7 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		91D72C869EFC096975D43A1F /* HouseholdViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdViews.swift; sourceTree = "<group>"; };
@@ -30,8 +47,17 @@
 			isa = PBXGroup;
 			children = (
 				42EED19FD4008AC9B3F23923 /* Lad.app */,
+				4801382B23D574244F3F3BC3 /* LadTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		ACF0F24232FC3EFEBEC187D0 /* LadTests */ = {
+			isa = PBXGroup;
+			children = (
+				3EC9B287E7DAFD2026279AA0 /* PlanningCoreTests.swift */,
+			);
+			path = LadTests;
 			sourceTree = "<group>";
 		};
 		E86CCDE5754D9A142D7F3027 = {
@@ -39,6 +65,7 @@
 			children = (
 				30D7B3F16164271BDB590DDD /* Assets.xcassets */,
 				FFD200B0B48694B2D546C967 /* Lad */,
+				ACF0F24232FC3EFEBEC187D0 /* LadTests */,
 				8BF6080FC17AAE4EB2BFCE46 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -49,6 +76,8 @@
 				91D72C869EFC096975D43A1F /* HouseholdViews.swift */,
 				CEFC94D7A6F19A46FE100887 /* LadApp.swift */,
 				78B5FEDF2079982A77F11FE7 /* Models.swift */,
+				55F050FE7C9068806AC41BE6 /* PantryShoppingViews.swift */,
+				4623EF829C48DC96B4A68E91 /* PlanningCore.swift */,
 				BC7A89682C45A9A37DD989FC /* PlanningViews.swift */,
 				771AFA1CAE7FFB760A4E4047 /* PrivateRecipes.swift */,
 			);
@@ -75,6 +104,24 @@
 			productName = Lad;
 			productReference = 42EED19FD4008AC9B3F23923 /* Lad.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C856060407310DD376743A4C /* LadTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 932B64F54A79C2E29CE60D33 /* Build configuration list for PBXNativeTarget "LadTests" */;
+			buildPhases = (
+				F9FAB3D0E909B7365FE937BD /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				72BE9F12A3E470AC7EBE819A /* PBXTargetDependency */,
+			);
+			name = LadTests;
+			packageProductDependencies = (
+			);
+			productName = LadTests;
+			productReference = 4801382B23D574244F3F3BC3 /* LadTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -106,6 +153,7 @@
 			projectRoot = "";
 			targets = (
 				5FCFCB0DA48985BE4894A3B7 /* Lad */,
+				C856060407310DD376743A4C /* LadTests */,
 			);
 		};
 /* End PBXProject section */
@@ -129,14 +177,48 @@
 				F877A76BBB7A6608615989B6 /* HouseholdViews.swift in Sources */,
 				9B1906B5B67673182496FEF0 /* LadApp.swift in Sources */,
 				61E3A08A47218F8692B7B117 /* Models.swift in Sources */,
+				E600592C1357FDDADD45A5A3 /* PantryShoppingViews.swift in Sources */,
+				65344FDD23EBA6EED927EA1C /* PlanningCore.swift in Sources */,
 				E2B0FA662A5659107AEC1604 /* PlanningViews.swift in Sources */,
 				3FCBA5EA08AD55CC6EDD7916 /* PrivateRecipes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F9FAB3D0E909B7365FE937BD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5460FA1A748961D7C0F39F77 /* PlanningCoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		72BE9F12A3E470AC7EBE819A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5FCFCB0DA48985BE4894A3B7 /* Lad */;
+			targetProxy = A7D6E18C3B1D4BCF4261B01B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		1452C14929576CC2B387EDDF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.lad.LadTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lad.app/Lad";
+			};
+			name = Debug;
+		};
 		5BAD1C860FB74B07F001F25D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -241,6 +323,22 @@
 			};
 			name = Release;
 		};
+		B029C1708CF8233496BC80BF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.lad.LadTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lad.app/Lad";
+			};
+			name = Release;
+		};
 		D68242DCD850EDBDE96C3E9B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -312,6 +410,15 @@
 			buildConfigurations = (
 				5FE41FF144890E52A40FB345 /* Debug */,
 				931A834E5A8C696C4F654AB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		932B64F54A79C2E29CE60D33 /* Build configuration list for PBXNativeTarget "LadTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1452C14929576CC2B387EDDF /* Debug */,
+				B029C1708CF8233496BC80BF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

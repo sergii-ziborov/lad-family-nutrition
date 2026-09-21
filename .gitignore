@@ -5,6 +5,7 @@ build/
 DerivedData/
 .derived-iphone/
 .derived-layout/
+.derived-signedsim/
 __pycache__/
 *.pyc
 .env
@@ -20,3 +21,4 @@ api/*.token
 *.p12
 *.key
 /preview-today.png
+/private-assets/

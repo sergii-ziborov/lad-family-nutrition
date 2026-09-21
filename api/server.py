@@ -6,15 +6,18 @@ import hashlib
 import hmac
 import json
 import os
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 MAX_CATALOG_BYTES = 2_000_000
 MAX_FAMILY_BYTES = 50_000
+MAX_IMAGE_BYTES = 1_500_000
 
 
 def make_server(
-    host: str, port: int, token_sha256: str, catalog_path: Path, family_path: Path | None = None
+    host: str, port: int, token_sha256: str, catalog_path: Path, family_path: Path | None = None,
+    image_dir: Path | None = None,
 ) -> ThreadingHTTPServer:
     if host not in {"127.0.0.1", "::1"}:
         raise ValueError("The recipe API must listen only on loopback behind HTTPS")
@@ -24,13 +27,16 @@ def make_server(
         raise ValueError("LAD_PRIVATE_RECIPES_FILE must be an absolute path outside the repo")
     if family_path is not None and not family_path.is_absolute():
         raise ValueError("LAD_PRIVATE_FAMILY_FILE must be an absolute path outside the repo")
+    if image_dir is not None and not image_dir.is_absolute():
+        raise ValueError("LAD_PRIVATE_IMAGES_DIR must be an absolute path outside the repo")
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             if self.path == "/healthz":
                 self._reply(200, b"ok", "text/plain; charset=utf-8")
                 return
-            if self.path not in {"/v1/recipes", "/v1/family"}:
+            image_match = re.fullmatch(r"/v1/recipe-images/([A-Za-z0-9_-]{1,80})", self.path)
+            if self.path not in {"/v1/recipes", "/v1/family"} and image_match is None:
                 self._reply(404, b"not found", "text/plain; charset=utf-8")
                 return
             auth = self.headers.get("Authorization", "")
@@ -40,6 +46,21 @@ def make_server(
             supplied = hashlib.sha256(auth.removeprefix("Bearer ").encode("utf-8")).hexdigest()
             if not hmac.compare_digest(supplied, token_sha256):
                 self._reply(401, b"unauthorized", "text/plain; charset=utf-8")
+                return
+            if image_match is not None:
+                try:
+                    if image_dir is None:
+                        raise ValueError("image directory unavailable")
+                    image_path = image_dir / (image_match.group(1) + ".jpg")
+                    if image_path.stat().st_size > MAX_IMAGE_BYTES:
+                        raise ValueError("private image too large")
+                    body = image_path.read_bytes()
+                    if not body.startswith(b"\xff\xd8\xff") or len(body) > MAX_IMAGE_BYTES:
+                        raise ValueError("invalid private image")
+                except (OSError, ValueError):
+                    self._reply(404, b"image unavailable", "text/plain; charset=utf-8")
+                    return
+                self._reply(200, body, "image/jpeg")
                 return
             path, limit, field = (
                 (catalog_path, MAX_CATALOG_BYTES, "recipes")
@@ -84,7 +105,8 @@ def main() -> None:
     catalog = Path(os.environ["LAD_PRIVATE_RECIPES_FILE"])
     family = Path(os.environ["LAD_PRIVATE_FAMILY_FILE"])
     port = int(os.environ.get("LAD_PORT", "9823"))
-    server = make_server("127.0.0.1", port, token_hash, catalog, family)
+    images = Path(os.environ.get("LAD_PRIVATE_IMAGES_DIR", "/var/lib/lad/private-images"))
+    server = make_server("127.0.0.1", port, token_hash, catalog, family, images)
     server.serve_forever(poll_interval=0.5)
 
 

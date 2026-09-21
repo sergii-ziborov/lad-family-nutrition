@@ -10,23 +10,30 @@ private struct FamilyCloudResponse: Decodable {
     let members: [FamilyMember]
 }
 
-private struct PrivateRecipePayload: Decodable {
+struct PrivateRecipePayload: Decodable {
     let id: String
     let title: String
     let caption: String
     let cuisine: String
     let minutes: Int
-    let kcal: Int
-    let protein: Int
+    let kcal: Int?
+    let protein: Int?
     let allergens: [String]
     let ingredients: [Ingredient]
     let steps: [String]
     let allergensVerified: Bool
+    let mealKinds: [Int]?
+    let nutrients: [String: NutrientValue]?
+    let imageId: String?
 
     func recipe() -> Recipe? {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil,
               !title.isEmpty, minutes > 0, steps.count > 0 else { return nil }
-        return Recipe(id: "private:\(id)", title: title, caption: caption, image: "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients, steps: steps, allergensVerified: allergensVerified)
+        guard (kcal.map { $0 >= 0 } ?? true), (protein.map { $0 >= 0 } ?? true),
+              mealKinds?.allSatisfy({ (0...2).contains($0) }) ?? true,
+              imageId.map({ $0.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil }) ?? true,
+              nutrients?.values.allSatisfy({ $0.amount.isFinite && $0.amount >= 0 && $0.coverage.isFinite && (0...1).contains($0.coverage) && !$0.unit.isEmpty && !$0.source.isEmpty }) ?? true else { return nil }
+        return Recipe(id: "private:\(id)", title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients, steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:])
     }
 }
 
@@ -140,11 +147,18 @@ enum PrivateRecipeAccess {
         return profile.members
     }
 
-    private static func request(path: String, maxBytes: Int) async throws -> Data {
+    static func fetchImage(id: String) async throws -> UIImage {
+        guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil else { throw PrivateCatalogError.invalidURL }
+        let data = try await request(path: "/v1/recipe-images/\(id)", maxBytes: 1_500_000, accept: "image/jpeg")
+        guard data.starts(with: [0xff, 0xd8, 0xff]), let image = UIImage(data: data) else { throw PrivateCatalogError.invalidResponse }
+        return image
+    }
+
+    private static func request(path: String, maxBytes: Int, accept: String = "application/json") async throws -> Data {
         guard let base = savedURL, let token = token(), let url = URL(string: base + path) else { throw PrivateCatalogError.invalidURL }
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(accept, forHTTPHeaderField: "Accept")
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw PrivateCatalogError.invalidResponse }
         if response.statusCode == 401 || response.statusCode == 403 { throw PrivateCatalogError.unauthorized }
@@ -156,9 +170,12 @@ enum PrivateRecipeAccess {
 
 struct RecipePicture: View {
     let recipe: Recipe
+    @State private var privateImage: UIImage?
     var body: some View {
         Group {
-            if recipe.isPrivate || recipe.isUnavailable {
+            if recipe.isPrivate, let privateImage {
+                Image(uiImage: privateImage).resizable().scaledToFill()
+            } else if recipe.image.isEmpty || recipe.isPrivate || recipe.isUnavailable {
                 ZStack {
                     LinearGradient(colors: [Palette.paleSage, Palette.peach], startPoint: .topLeading, endPoint: .bottomTrailing)
                     Image(systemName: recipe.isUnavailable ? "lock.slash" : "fork.knife")
@@ -167,6 +184,10 @@ struct RecipePicture: View {
             } else {
                 Image(recipe.image).resizable().scaledToFill()
             }
+        }
+        .task(id: recipe.image) {
+            guard recipe.isPrivate, !recipe.image.isEmpty else { return }
+            privateImage = try? await PrivateRecipeAccess.fetchImage(id: recipe.image)
         }
     }
 }

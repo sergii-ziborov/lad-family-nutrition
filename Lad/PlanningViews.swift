@@ -17,6 +17,26 @@ struct WeekView: View {
                     }
                 }.padding(17).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Palette.paleSage.opacity(0.7), in: RoundedRectangle(cornerRadius: 18))
+                VStack(alignment: .leading, spacing: 9) {
+                    let dayRecipes = (0..<3).map { store.recipe(store.slot(store.selectedDay, $0)) }
+                    let energy = dayRecipes.compactMap(\.kcal).reduce(0) { $0 + Int(Double($1) * store.currentMember.portion) }
+                    let protein = dayRecipes.compactMap(\.protein).reduce(0) { $0 + Int(Double($1) * store.currentMember.portion) }
+                    Text(dayRecipes.allSatisfy { $0.kcal != nil && $0.protein != nil } ?
+                         "План для \(store.currentMember.name): ~\(energy) ккал · белок ~\(protein) г" :
+                         "План для \(store.currentMember.name): нутриенты известны не для всех блюд")
+                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
+                    if let target = store.currentMember.dailyEnergyTarget, dayRecipes.allSatisfy({ $0.kcal != nil }), (store.currentMember.ageYears ?? 0) >= 18 {
+                        Text("Ручной ориентир: \(target) ккал/день · разница \(energy - target) ккал")
+                            .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    }
+                    Text("Калории и белок демо-блюд приблизительные. Для жиров, углеводов и микронутриентов пока нет проверенных исходных данных — неизвестно не означает ноль.")
+                        .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                    HStack {
+                        Button("Подобрать меню") { store.proposeDayMenu(store.selectedDay) }
+                        Spacer()
+                        if store.canUndoReplan { Button("Отменить подбор") { store.undoReplan() } }
+                    }.font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
+                }.padding(16).background(.white, in: RoundedRectangle(cornerRadius: 18))
                 SectionHeading(title: store.dateLabel(store.selectedDay).capitalized, trailing: "3 ПРИЁМА ПИЩИ")
                 ForEach(0..<3, id: \.self) { kind in
                     let slot = store.slot(store.selectedDay, kind)
@@ -28,6 +48,10 @@ struct WeekView: View {
                                 Text(store.kinds[kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.4).foregroundStyle(Palette.terracotta)
                                 Text(recipe.title).font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
                                 Text("\(recipe.minutes) мин · \(store.participating(slot).count) за столом").font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                let match = store.readiness(recipe, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
+                                Text(match.missing.isEmpty && match.uncertain.isEmpty ? "Продукты есть дома" : "Не хватает: \((match.missing + match.uncertain).joined(separator: ", "))")
+                                    .font(.system(size: 11)).foregroundStyle(match.missing.isEmpty && match.uncertain.isEmpty ? Palette.sage : Palette.terracotta)
+                                    .lineLimit(2)
                             }
                             Spacer(minLength: 0)
                         }
@@ -59,6 +83,7 @@ struct WeekView: View {
                     .font(.system(size: 12)).foregroundStyle(Palette.muted)
             }.padding(.horizontal, 21).padding(.top, 20).padding(.bottom, 35)
         }.background(Palette.canvas.ignoresSafeArea())
+            .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
             .sheet(item: $editingSlot) { slot in RecipeChooser(slot: slot) { recipe in
                 warning = store.assign(recipe, to: slot)
                 if warning == nil { editingSlot = nil }
@@ -74,17 +99,29 @@ struct RecipeChooser: View {
     @Environment(\.dismiss) private var dismiss
     let slot: MealSlot
     let onChoose: (Recipe) -> Void
+    private var candidates: [Recipe] {
+        store.allRecipes.filter { $0.mealKinds.contains(slot.kind) }
+            .sorted {
+                let left = store.readiness($0, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
+                let right = store.readiness($1, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
+                return left.missing.count + left.uncertain.count < right.missing.count + right.uncertain.count
+            }
+    }
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 12) {
-                    ForEach(store.allRecipes) { recipe in
+                    ForEach(candidates) { recipe in
                         Button { onChoose(recipe) } label: {
                             HStack(spacing: 12) {
                                 RecipePicture(recipe: recipe).frame(width: 75, height: 75).clipped().clipShape(RoundedRectangle(cornerRadius: 13))
                                 VStack(alignment: .leading, spacing: 5) {
                                     Text(recipe.title).font(.system(size: 16, weight: .semibold))
                                     Text("\(recipe.minutes) мин · \(recipe.cuisine)").font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                    let match = store.readiness(recipe, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
+                                    Text(match.missing.isEmpty && match.uncertain.isEmpty ? "Всё есть дома" : "Не хватает: \((match.missing + match.uncertain).joined(separator: ", "))")
+                                        .font(.system(size: 11)).foregroundStyle(match.missing.isEmpty && match.uncertain.isEmpty ? Palette.sage : Palette.terracotta)
+                                        .lineLimit(2)
                                 }
                                 Spacer()
                                 Image(systemName: "plus.circle.fill").foregroundStyle(Palette.sage)
@@ -104,11 +141,14 @@ struct RecipesView: View {
     @State private var query = ""
     @State private var filter = "Все"
     @State private var showPrivateAccess = false
-    private let filters = ["Все", "Любимые", "Закрытые", "Домашняя", "Средиземноморская"]
+    private let filters = ["Все", "Есть дома", "Не хватает", "Любимые", "Закрытые", "Домашняя", "Средиземноморская"]
     private var results: [Recipe] {
         store.allRecipes.filter { recipe in
             (query.isEmpty || recipe.title.localizedCaseInsensitiveContains(query)) &&
-            (filter == "Все" || (filter == "Любимые" ? store.isFavorite(recipe.id) : (filter == "Закрытые" ? recipe.isPrivate : recipe.cuisine == filter)))
+            (filter == "Все" || (filter == "Любимые" ? store.isFavorite(recipe.id) :
+                (filter == "Закрытые" ? recipe.isPrivate :
+                (filter == "Есть дома" ? store.readiness(recipe).missing.isEmpty && store.readiness(recipe).uncertain.isEmpty :
+                (filter == "Не хватает" ? !store.readiness(recipe).missing.isEmpty || !store.readiness(recipe).uncertain.isEmpty : recipe.cuisine == filter)))))
         }
     }
     var body: some View {
@@ -143,7 +183,7 @@ struct RecipesView: View {
                     }
                 }.contentMargins(.trailing, 21)
                 SectionHeading(title: "Идеи для первых недель", trailing: "\(results.count) БЛЮДА")
-                Text("Открытые блюда пока демонстрационные: состав и пищевая ценность требуют проверки. Авторские рецепты будут храниться отдельно в закрытой библиотеке.")
+                Text("Открытые блюда демонстрационные, а закрытый каталог берётся с Hetzner. Состав и пищевая ценность требуют проверки перед использованием как рекомендаций.")
                     .font(.system(size: 12)).foregroundStyle(Palette.muted)
                     .fixedSize(horizontal: false, vertical: true)
                 ForEach(results) { recipe in
@@ -154,8 +194,12 @@ struct RecipesView: View {
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text((recipe.isPrivate ? "ЗАКРЫТАЯ · " : "ДЕМО · ") + recipe.cuisine.uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
                                     Text(recipe.title).font(.system(size: 21, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
-                                    Text("\(recipe.minutes) минут · ~\(recipe.kcal) ккал на базовую порцию")
+                                    Text(recipe.kcal.map { "\(recipe.minutes) минут · ~\($0) ккал на базовую порцию" } ?? "\(recipe.minutes) минут · калорийность не рассчитана")
                                         .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                    let match = store.readiness(recipe)
+                                    Text(match.missing.isEmpty && match.uncertain.isEmpty ? "Можно приготовить из запасов" : "Не хватает: \((match.missing + match.uncertain).joined(separator: ", "))")
+                                        .font(.system(size: 11)).foregroundStyle(match.missing.isEmpty && match.uncertain.isEmpty ? Palette.sage : Palette.terracotta)
+                                        .lineLimit(2)
                                 }.frame(maxWidth: .infinity, alignment: .leading).padding(16).padding(.trailing, 30)
                             }.background(.white, in: RoundedRectangle(cornerRadius: 22)).clipShape(RoundedRectangle(cornerRadius: 22))
                         }.buttonStyle(.plain)
@@ -191,9 +235,9 @@ struct RecipeDetailView: View {
                 HStack(spacing: 0) {
                     detailMetric("ВРЕМЯ", "\(recipe.minutes) мин")
                     Spacer()
-                    detailMetric("НА ПОРЦИЮ", recipe.isUnavailable ? "—" : "~\(recipe.kcal) ккал")
+                    detailMetric("НА ПОРЦИЮ", recipe.kcal.map { "~\($0) ккал" } ?? "нет данных")
                     Spacer()
-                    detailMetric("БЕЛОК", recipe.isUnavailable ? "—" : "~\(recipe.protein) г")
+                    detailMetric("БЕЛОК", recipe.protein.map { "~\($0) г" } ?? "нет данных")
                 }.padding(19).background(.white, in: RoundedRectangle(cornerRadius: 19))
                 if let slot {
                     VStack(alignment: .leading, spacing: 12) {
@@ -202,7 +246,7 @@ struct RecipeDetailView: View {
                             HStack {
                                 Text(member.name).font(.system(size: 14))
                                 Spacer()
-                                Text("\(Int(member.portion * 100))% · ~\(Int(Double(recipe.kcal) * member.portion)) ккал")
+                                Text(recipe.kcal.map { "\(Int(member.portion * 100))% · ~\(Int(Double($0) * member.portion)) ккал" } ?? "\(Int(member.portion * 100))% · ккал неизвестны")
                                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.sage)
                             }
                         }
@@ -221,11 +265,37 @@ struct RecipeDetailView: View {
                         .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.terracotta)
                         .padding(15).background(Palette.peach.opacity(0.7), in: RoundedRectangle(cornerRadius: 15))
                 }
+                VStack(alignment: .leading, spacing: 10) {
+                    SectionHeading(title: "Нутриенты")
+                    if recipe.nutrients.isEmpty {
+                        Text("Жиры, углеводы, клетчатка, витамины и минералы: данных пока нет. Неизвестное значение не считается нулём.")
+                            .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    } else {
+                        ForEach(recipe.nutrients.keys.sorted(), id: \.self) { key in
+                            if let value = recipe.nutrients[key] {
+                                HStack {
+                                    Text(nutrientLabel(key)).foregroundStyle(Palette.ink)
+                                    Spacer()
+                                    Text("\((value.amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(value.unit)")
+                                        .foregroundStyle(Palette.sage)
+                                }.font(.system(size: 13))
+                                Text("Источник: \(value.source) · полнота \(Int(value.coverage * 100))%")
+                                    .font(.system(size: 10)).foregroundStyle(Palette.muted)
+                            }
+                        }
+                    }
+                }.padding(17).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 18))
                 VStack(alignment: .leading, spacing: 14) {
                     SectionHeading(title: "Ингредиенты", trailing: slot == nil ? "1 ПОРЦИЯ" : "НА ВСЕХ")
                     ForEach(recipe.ingredients) { ingredient in
                         HStack {
-                            Text(ingredient.name).font(.system(size: 15))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(ingredient.name).font(.system(size: 15))
+                                let stock = PlanningCore.stock(for: ingredient, pantry: store.pantry)
+                                Text(stock.known >= ingredient.amount * portions ? "Есть дома" : (stock.uncertain ? "Есть, проверьте количество" : "Нужно докупить"))
+                                    .font(.system(size: 11)).foregroundStyle(stock.known >= ingredient.amount * portions ? Palette.sage : Palette.terracotta)
+                            }
                             Spacer()
                             Text("\((ingredient.amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(ingredient.unit)")
                                 .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.sage)
@@ -250,6 +320,9 @@ struct RecipeDetailView: View {
             Text(title).font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(Palette.muted)
             Text(value).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
         }
+    }
+    private func nutrientLabel(_ id: String) -> String {
+        ["fat": "Жиры", "carbohydrate": "Углеводы", "fiber": "Клетчатка", "iron": "Железо", "calcium": "Кальций", "vitamin_d": "Витамин D", "potassium": "Калий", "sodium": "Натрий"][id] ?? id
     }
 }
 

@@ -28,7 +28,7 @@ struct AppShell: View {
             NavigationStack { TodayView() }.tabItem { Label("Сегодня", systemImage: "sun.max") }.tag(0)
             NavigationStack { WeekView() }.tabItem { Label("Неделя", systemImage: "calendar") }.tag(1)
             NavigationStack { RecipesView() }.tabItem { Label("Рецепты", systemImage: "book.closed") }.tag(2)
-            NavigationStack { ShoppingView() }.tabItem { Label("Покупки", systemImage: "basket") }.tag(3)
+            NavigationStack { ShoppingView() }.tabItem { Label("Продукты", systemImage: "refrigerator") }.tag(3)
             NavigationStack { FamilyView() }.tabItem { Label("Семья", systemImage: "person.2") }.tag(4)
         }
         .toolbarBackground(.visible, for: .tabBar)
@@ -197,7 +197,8 @@ struct MealRow: View {
             VStack(alignment: .leading, spacing: 5) {
                 Text(store.kinds[slot.kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
                 Text(recipe.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink).lineLimit(1)
-                Text(recipe.isUnavailable ? "Подключите закрытый каталог" : "~\(Int(Double(recipe.kcal) * store.currentMember.portion)) ккал · \(recipe.minutes) мин")
+                Text(recipe.isUnavailable ? "Подключите закрытый каталог" :
+                    (recipe.kcal.map { "~\(Int(Double($0) * store.currentMember.portion)) ккал · \(recipe.minutes) мин" } ?? "Калорийность неизвестна · \(recipe.minutes) мин"))
                     .font(.system(size: 11)).foregroundStyle(Palette.muted)
             }
             Spacer(minLength: 0)

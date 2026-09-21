@@ -26,4 +26,12 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ''
     scheme:
-      testTargets: []
+      testTargets:
+        - LadTests
+  LadTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: LadTests
+    dependencies:
+      - target: Lad
