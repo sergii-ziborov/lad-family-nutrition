@@ -42,19 +42,25 @@ struct WeekView: View {
                     let slot = store.slot(store.selectedDay, kind)
                     let recipe = store.recipe(slot)
                     VStack(alignment: .leading, spacing: 0) {
-                        HStack(spacing: 14) {
-                            RecipePicture(recipe: recipe).frame(width: 94, height: 94).clipped().clipShape(RoundedRectangle(cornerRadius: 15))
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(store.kinds[kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.4).foregroundStyle(Palette.terracotta)
-                                Text(recipe.title).font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
-                                Text("\(recipe.minutes) мин · \(store.participating(slot).count) за столом").font(.system(size: 12)).foregroundStyle(Palette.muted)
-                                let match = store.readiness(recipe, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
-                                Text(match.missing.isEmpty && match.uncertain.isEmpty ? "Продукты есть дома" : "Не хватает: \((match.missing + match.uncertain).joined(separator: ", "))")
-                                    .font(.system(size: 11)).foregroundStyle(match.missing.isEmpty && match.uncertain.isEmpty ? Palette.sage : Palette.terracotta)
-                                    .lineLimit(2)
+                        NavigationLink { RecipeDetailView(recipe: recipe, slot: slot) } label: {
+                            HStack(spacing: 14) {
+                                RecipePicture(recipe: recipe).frame(width: 94, height: 94).clipped().clipShape(RoundedRectangle(cornerRadius: 15))
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(store.kinds[kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.4).foregroundStyle(Palette.terracotta)
+                                    Text(recipe.title).font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
+                                    Text("\(recipe.minutes) мин · \(store.participating(slot).count) за столом").font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                    let match = store.readiness(recipe, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
+                                    Text(match.missing.isEmpty && match.uncertain.isEmpty ? "Продукты есть дома" : "Не хватает: \((match.missing + match.uncertain).joined(separator: ", "))")
+                                        .font(.system(size: 11)).foregroundStyle(match.missing.isEmpty && match.uncertain.isEmpty ? Palette.sage : Palette.terracotta)
+                                        .lineLimit(2)
+                                }
+                                Spacer(minLength: 0)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
                             }
-                            Spacer(minLength: 0)
-                        }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }.buttonStyle(.plain).accessibilityLabel("Открыть рецепт: \(recipe.title)")
                         Rectangle().fill(Palette.line).frame(height: 1).padding(.vertical, 15)
                         HStack {
                             PersonDots(members: store.participating(slot))
