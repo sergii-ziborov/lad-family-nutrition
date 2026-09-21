@@ -14,10 +14,10 @@ enum Palette {
 
 struct Ingredient: Identifiable, Codable {
     var name: String
-    var amount: Double
+    var amount: Double?
     var unit: String
     var category: String
-    var id: String { name }
+    var id: String { "\(name)|\(unit)" }
 }
 
 struct NutrientValue: Codable {
@@ -269,6 +269,7 @@ struct ReplanPreview: Identifiable {
         }
         #endif
         if PrivateRecipeAccess.isConfigured {
+            privateRecipes = PrivateRecipeAccess.cached()
             Task {
                 await refreshPrivateRecipes()
                 await refreshFamily()
@@ -394,12 +395,12 @@ struct ReplanPreview: Identifiable {
         var changes: [PlannedChange] = []
         for slot in state.slots where slot.day >= currentDay {
             let original = recipe(slot)
-            guard original.ingredients.contains(where: { $0.name.localizedCaseInsensitiveCompare(ingredientName) == .orderedSame }) else { continue }
+            guard original.ingredients.contains(where: { ProductNames.canonical($0.name) == ProductNames.canonical(ingredientName) }) else { continue }
             if state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) { continue }
             let originalMatch = readiness(original, portions: participating(slot).reduce(0) { $0 + $1.portion })
             let used = Set(state.slots.filter { $0.day == slot.day && $0.id != slot.id }.map(\.recipeID))
             let candidates = eligibleRecipes(for: slot).filter { candidate in
-                candidate.id != original.id && !candidate.ingredients.contains { $0.name.localizedCaseInsensitiveCompare(ingredientName) == .orderedSame }
+                candidate.id != original.id && !candidate.ingredients.contains { ProductNames.canonical($0.name) == ProductNames.canonical(ingredientName) }
             }.sorted { score($0, slot: slot, usedToday: used) > score($1, slot: slot, usedToday: used) }
             if let choice = candidates.first {
                 let candidateMatch = readiness(choice, portions: participating(slot).reduce(0) { $0 + $1.portion })
@@ -521,13 +522,19 @@ struct ReplanPreview: Identifiable {
             privateRecipes = try await PrivateRecipeAccess.fetch()
             privateCatalogStatus = "Загружено закрытых рецептов: \(privateRecipes.count)"
         } catch {
-            privateRecipes = []
-            privateCatalogStatus = error.localizedDescription
+            if case PrivateCatalogError.unauthorized = error {
+                PrivateRecipeAccess.discardCached()
+                privateRecipes = []
+            }
+            privateCatalogStatus = privateRecipes.isEmpty
+                ? error.localizedDescription
+                : "Нет связи: показаны \(privateRecipes.count) сохранённых закрытых рецептов. \(error.localizedDescription)"
         }
     }
     func connectPrivateCatalog(url: String, token: String) async {
         do {
             try PrivateRecipeAccess.save(url: url, token: token)
+            privateRecipes = PrivateRecipeAccess.cached()
             await refreshPrivateRecipes()
             await refreshFamily()
         } catch {

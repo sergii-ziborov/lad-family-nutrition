@@ -20,19 +20,87 @@ struct RecipeReadiness {
     let uncertain: [String]
 }
 
+enum ProductNames {
+    // Only interchangeable product names belong here. Related but different foods
+    // (for example mushrooms and champignons, or lemon and lemon juice) stay separate.
+    private static let equivalents: [[String]] = [
+        ["томат", "томаты", "помидор", "помидоры"],
+        ["кабачок", "кабачки", "цуккини"],
+        ["картофель", "картошка", "картофелина", "картофелины"],
+        ["морковь", "морковка", "морковки"],
+        ["огурец", "огурцы"],
+        ["яблоко", "яблоки"],
+        ["яйцо", "яйца"],
+        ["лук", "лук репчатый", "репчатый лук"],
+        ["зеленый лук", "лук зеленый"],
+        ["перец сладкий", "сладкий перец", "болгарский перец"],
+        ["сушеный чеснок", "сухой чеснок", "чеснок сушеный", "чеснок сухой"],
+        ["капуста белокочанная", "белокочанная капуста"],
+        ["капуста цветная", "цветная капуста"],
+        ["йогурт натуральный", "натуральный йогурт"],
+        ["куриное филе", "филе курицы"],
+        ["гречка", "гречневая крупа"]
+    ].map { group in group.map { normalized($0) } }
+
+    static func normalized(_ value: String) -> String {
+        value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "ru_RU"))
+            .replacingOccurrences(of: "ё", with: "е")
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+    }
+
+    static func canonical(_ name: String) -> String {
+        let value = normalized(name)
+        if let known = equivalents.first(where: { $0.contains(value) })?.first { return known }
+        return value.split(separator: " ").map { word in
+            let token = String(word)
+            return equivalents.first { $0.contains(token) }?.first ?? token
+        }.joined(separator: " ")
+    }
+
+    static func matches(_ name: String, query: String) -> Bool {
+        let label = normalized(name)
+        let term = normalized(query)
+        guard !term.isEmpty else { return true }
+        if label.contains(term) { return true }
+        let canonicalLabel = canonical(name)
+        let canonicalTerm = canonical(query)
+        if canonicalLabel == canonicalTerm || canonicalLabel.hasPrefix(canonicalTerm + " ") { return true }
+        guard term.count >= 3 else { return false }
+        return equivalents.contains { group in
+            group.contains(where: { $0.contains(term) }) &&
+            (group.contains(label) || label.split(separator: " ").contains { group.contains(String($0)) })
+        }
+    }
+}
+
 enum PlanningCore {
     static func key(_ name: String, _ unit: String) -> String {
-        name.trimmingCharacters(in: .whitespacesAndNewlines)
-            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "ru_RU"))
-        + "|" + unit.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        ProductNames.canonical(name) + "|" + ProductNames.normalized(unit)
+    }
+
+    static func ingredientSuggestions(recipes: [Recipe], pantry: [PantryItem], query: String) -> [Ingredient] {
+        let stocked = Set(pantry.map { key($0.name, $0.unit) })
+        var unique: [String: Ingredient] = [:]
+        for ingredient in recipes.flatMap(\.ingredients) {
+            let id = key(ingredient.name, ingredient.unit)
+            if !stocked.contains(id) && ProductNames.matches(ingredient.name, query: query) && unique[id] == nil {
+                unique[id] = ingredient
+            }
+        }
+        return unique.values.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     static func stock(for ingredient: Ingredient, pantry: [PantryItem], now: Date = .now) -> (known: Double, uncertain: Bool) {
-        let matching = pantry.filter {
-            key($0.name, $0.unit) == key(ingredient.name, ingredient.unit) &&
+        let active = pantry.filter {
+            ProductNames.canonical($0.name) == ProductNames.canonical(ingredient.name) &&
             ($0.expiresOn.map { Calendar.current.startOfDay(for: $0) >= Calendar.current.startOfDay(for: now) } ?? true)
         }
-        return (matching.compactMap(\.quantity).reduce(0, +), matching.contains { $0.quantity == nil })
+        let matching = active.filter { key($0.name, $0.unit) == key(ingredient.name, ingredient.unit) }
+        let incomparable = active.contains {
+            key($0.name, $0.unit) != key(ingredient.name, ingredient.unit) && ($0.quantity ?? 1) > 0
+        }
+        return (matching.compactMap(\.quantity).reduce(0, +), matching.contains { $0.quantity == nil } || incomparable)
     }
 
     static func readiness(_ recipe: Recipe, portions: Double, pantry: [PantryItem]) -> RecipeReadiness {
@@ -40,8 +108,12 @@ enum PlanningCore {
         var missing: [String] = []
         var uncertain: [String] = []
         for ingredient in recipe.ingredients {
+            guard let amount = ingredient.amount, amount > 0 else {
+                uncertain.append(ingredient.name)
+                continue
+            }
             let stock = stock(for: ingredient, pantry: pantry)
-            let required = ingredient.amount * portions
+            let required = amount * portions
             if stock.known >= required {
                 covered += 1
             } else if stock.uncertain {
@@ -65,10 +137,11 @@ enum PlanningCore {
         for slot in slots {
             guard let recipe = recipesByID[slot.recipeID] else { continue }
             let portions = slot.memberIDs.compactMap { membersByID[$0]?.portion }.reduce(0, +)
-            for ingredient in recipe.ingredients where ingredient.amount > 0 {
+            for ingredient in recipe.ingredients {
+                guard let amount = ingredient.amount, amount > 0 else { continue }
                 let id = key(ingredient.name, ingredient.unit)
                 var entry = totals[id] ?? Aggregate(ingredient: ingredient, required: 0, sourceSlots: [])
-                entry.required += ingredient.amount * portions
+                entry.required += amount * portions
                 if !entry.sourceSlots.contains(slot.id) { entry.sourceSlots.append(slot.id) }
                 totals[id] = entry
             }

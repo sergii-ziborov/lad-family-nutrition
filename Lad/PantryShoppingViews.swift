@@ -17,19 +17,11 @@ struct ShoppingView: View {
     }
 
     private var filteredPantry: [PantryItem] {
-        store.pantry.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) }
+        store.pantry.filter { ProductNames.matches($0.name, query: search) }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
     private var suggestions: [Ingredient] {
-        let names = Set(store.pantry.map { PlanningCore.key($0.name, $0.unit) })
-        var unique: [String: Ingredient] = [:]
-        for ingredient in store.allRecipes.flatMap(\.ingredients) {
-            let id = PlanningCore.key(ingredient.name, ingredient.unit)
-            if !names.contains(id) && (search.isEmpty || ingredient.name.localizedCaseInsensitiveContains(search)) {
-                unique[id] = ingredient
-            }
-        }
-        return unique.values.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        PlanningCore.ingredientSuggestions(recipes: store.allRecipes, pantry: store.pantry, query: search)
     }
     private var toBuy: [ShoppingNeed] { store.shoppingNeeds.filter { $0.missing > 0.001 } }
 
@@ -99,18 +91,24 @@ struct ShoppingView: View {
                 }
             }
             if !suggestions.isEmpty {
-                SectionHeading(title: "Добавить из рецептов")
-                ForEach(suggestions.prefix(12)) { ingredient in
-                    Button {
-                        editorItem = PantryItem(name: ingredient.name, quantity: nil, unit: ingredient.unit, category: ingredient.category)
-                    } label: {
-                        HStack {
-                            Image(systemName: "plus.circle").foregroundStyle(Palette.sage)
-                            Text(ingredient.name).foregroundStyle(Palette.ink)
-                            Spacer()
-                            Text(ingredient.unit).foregroundStyle(Palette.muted)
-                        }.font(.system(size: 14)).padding(13).background(.white, in: RoundedRectangle(cornerRadius: 13))
-                    }.buttonStyle(.plain)
+                Text("Ингредиенты из \(Recipe.all.count) открытых и \(store.privateRecipes.count) загруженных закрытых рецептов.\(store.privateRecipes.isEmpty ? " Закрытый каталог пока не загружен." : "")")
+                    .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                SectionHeading(title: "Добавить из рецептов", trailing: "\(suggestions.count) ПОЗ.")
+                ForEach(Array(Set(suggestions.map(\.category))).sorted(), id: \.self) { category in
+                    Text(category.uppercased())
+                        .font(.system(size: 11, weight: .bold)).tracking(1.2).foregroundStyle(Palette.muted)
+                    ForEach(suggestions.filter { $0.category == category }) { ingredient in
+                        Button {
+                            editorItem = PantryItem(name: ingredient.name, quantity: nil, unit: ingredient.unit, category: ingredient.category)
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle").foregroundStyle(Palette.sage)
+                                Text(ingredient.name).foregroundStyle(Palette.ink)
+                                Spacer()
+                                Text(ingredient.unit).foregroundStyle(Palette.muted)
+                            }.font(.system(size: 14)).padding(13).background(.white, in: RoundedRectangle(cornerRadius: 13))
+                        }.buttonStyle(.plain)
+                    }
                 }
             }
             if store.pantry.isEmpty { Text("Добавьте продукты — подбор блюд покажет, что уже можно приготовить и чего не хватает.")
@@ -172,7 +170,7 @@ struct ShoppingView: View {
                         Text("Нужно \(format(need.required)) · дома \(format(need.available)) \(need.unit)")
                             .font(.system(size: 11)).foregroundStyle(Palette.muted)
                         if need.amountUnknown {
-                            Label("Есть ещё запас без указанного количества — проверьте перед покупкой", systemImage: "questionmark.circle")
+                            Label("Есть запас без точного количества или в другой единице — проверьте перед покупкой", systemImage: "questionmark.circle")
                                 .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
                         }
                         Text(sourceLabel(need)).font(.system(size: 11)).foregroundStyle(Palette.muted)

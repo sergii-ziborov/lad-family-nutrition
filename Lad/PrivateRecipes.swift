@@ -2,7 +2,7 @@ import Foundation
 import Security
 import SwiftUI
 
-private struct PrivateCatalogResponse: Decodable {
+private struct PrivateCatalogResponse: Codable {
     let recipes: [PrivateRecipePayload]
 }
 
@@ -10,7 +10,7 @@ private struct FamilyCloudResponse: Decodable {
     let members: [FamilyMember]
 }
 
-struct PrivateRecipePayload: Decodable {
+struct PrivateRecipePayload: Codable {
     let id: String
     let title: String
     let caption: String
@@ -20,6 +20,7 @@ struct PrivateRecipePayload: Decodable {
     let protein: Int?
     let allergens: [String]
     let ingredients: [Ingredient]
+    let unquantifiedIngredients: [Ingredient]?
     let steps: [String]
     let allergensVerified: Bool
     let mealKinds: [Int]?
@@ -32,13 +33,15 @@ struct PrivateRecipePayload: Decodable {
         guard (kcal.map { $0 >= 0 } ?? true), (protein.map { $0 >= 0 } ?? true),
               mealKinds?.allSatisfy({ (0...2).contains($0) }) ?? true,
               imageId.map({ $0.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil }) ?? true,
+              ingredients.allSatisfy({ !$0.name.isEmpty && ($0.amount.map { $0.isFinite && $0 >= 0 } ?? true) && !$0.unit.isEmpty }),
+              unquantifiedIngredients?.allSatisfy({ !$0.name.isEmpty && $0.amount == nil && !$0.unit.isEmpty }) ?? true,
               nutrients?.values.allSatisfy({ $0.amount.isFinite && $0.amount >= 0 && $0.coverage.isFinite && (0...1).contains($0.coverage) && !$0.unit.isEmpty && !$0.source.isEmpty }) ?? true else { return nil }
-        return Recipe(id: "private:\(id)", title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients, steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:])
+        return Recipe(id: "private:\(id)", title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:])
     }
 }
 
 enum PrivateCatalogError: LocalizedError {
-    case invalidURL, emptyToken, keychainFailure(OSStatus), invalidResponse, unauthorized, serverError
+    case invalidURL, emptyToken, keychainFailure(OSStatus), invalidResponse, unauthorized, serverError, configurationChanged
     var errorDescription: String? {
         switch self {
         case .invalidURL: "Нужен адрес HTTPS-сервера."
@@ -47,6 +50,7 @@ enum PrivateCatalogError: LocalizedError {
         case .invalidResponse: "Сервер вернул неподходящий каталог."
         case .unauthorized: "Ключ не принят сервером."
         case .serverError: "Закрытый каталог сейчас недоступен."
+        case .configurationChanged: "Подключение изменилось во время загрузки. Обновите каталог."
         }
     }
 }
@@ -55,6 +59,10 @@ enum PrivateRecipeAccess {
     private static let urlKey = "lad.privateCatalogURL"
     private static let service = "app.lad.family.private-catalog"
     private static let account = "access-token"
+    private static var cacheURL: URL? {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("private-recipes-v1.json")
+    }
     static var savedURL: String? { UserDefaults.standard.string(forKey: urlKey) }
     static var isConfigured: Bool {
         #if DEBUG
@@ -85,8 +93,10 @@ enum PrivateRecipeAccess {
         let normalized = url.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard let parsed = URL(string: normalized), parsed.scheme == "https", parsed.host != nil,
               parsed.user == nil, parsed.password == nil, parsed.query == nil, parsed.fragment == nil else { throw PrivateCatalogError.invalidURL }
-        guard !token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw PrivateCatalogError.emptyToken }
-        let data = Data(token.trimmingCharacters(in: .whitespacesAndNewlines).utf8)
+        let normalizedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedToken.isEmpty else { throw PrivateCatalogError.emptyToken }
+        let changedAccount = savedURL != normalized || self.token() != normalizedToken
+        let data = Data(normalizedToken.utf8)
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                                     kSecAttrService as String: service,
                                     kSecAttrAccount as String: account]
@@ -101,10 +111,12 @@ enum PrivateRecipeAccess {
         } else if result != errSecSuccess {
             throw PrivateCatalogError.keychainFailure(result)
         }
+        if changedAccount { removeCached() }
         UserDefaults.standard.set(normalized, forKey: urlKey)
     }
 
     static func clear() {
+        removeCached()
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                                     kSecAttrService as String: service,
                                     kSecAttrAccount as String: account]
@@ -125,7 +137,35 @@ enum PrivateRecipeAccess {
     }
 
     static func fetch() async throws -> [Recipe] {
+        let requestedURL = savedURL
+        let requestedToken = token()
         let data = try await request(path: "/v1/recipes", maxBytes: 2_000_000)
+        guard savedURL == requestedURL, token() == requestedToken else { throw PrivateCatalogError.configurationChanged }
+        let recipes = try decodeRecipes(data)
+        if let cacheURL {
+            try? FileManager.default.createDirectory(at: cacheURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? data.write(to: cacheURL, options: [.atomic, .completeFileProtection])
+            var protectedURL = cacheURL
+            var resourceValues = URLResourceValues()
+            resourceValues.isExcludedFromBackup = true
+            try? protectedURL.setResourceValues(resourceValues)
+        }
+        return recipes
+    }
+
+    static func cached() -> [Recipe] {
+        guard isConfigured, let cacheURL, let data = try? Data(contentsOf: cacheURL), data.count <= 2_000_000 else { return [] }
+        return (try? decodeRecipes(data)) ?? []
+    }
+
+    static func discardCached() { removeCached() }
+
+    private static func removeCached() {
+        guard let cacheURL else { return }
+        try? FileManager.default.removeItem(at: cacheURL)
+    }
+
+    private static func decodeRecipes(_ data: Data) throws -> [Recipe] {
         guard let catalog = try? JSONDecoder().decode(PrivateCatalogResponse.self, from: data) else { throw PrivateCatalogError.invalidResponse }
         let recipes = catalog.recipes.compactMap { $0.recipe() }
         guard recipes.count == catalog.recipes.count else { throw PrivateCatalogError.invalidResponse }

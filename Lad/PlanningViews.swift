@@ -293,12 +293,21 @@ struct RecipeDetailView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(ingredient.name).font(.system(size: 15))
                                 let stock = PlanningCore.stock(for: ingredient, pantry: store.pantry)
-                                Text(stock.known >= ingredient.amount * portions ? "Есть дома" : (stock.uncertain ? "Есть, проверьте количество" : "Нужно докупить"))
-                                    .font(.system(size: 11)).foregroundStyle(stock.known >= ingredient.amount * portions ? Palette.sage : Palette.terracotta)
+                                if let amount = ingredient.amount, amount > 0 {
+                                    Text(stock.known >= amount * portions ? "Есть дома" : (stock.uncertain ? "Есть, проверьте количество" : "Нужно докупить"))
+                                        .font(.system(size: 11)).foregroundStyle(stock.known >= amount * portions ? Palette.sage : Palette.terracotta)
+                                } else {
+                                    Text(stock.known > 0 || stock.uncertain ? "Есть дома, количество уточняется" : "Проверьте наличие и количество")
+                                        .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
+                                }
                             }
                             Spacer()
-                            Text("\((ingredient.amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(ingredient.unit)")
-                                .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.sage)
+                            if let amount = ingredient.amount, amount > 0 {
+                                Text("\((amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(ingredient.unit)")
+                                    .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.sage)
+                            } else {
+                                Text("уточнить").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.muted)
+                            }
                         }.padding(.vertical, 5)
                         Rectangle().fill(Palette.line).frame(height: 1)
                     }
