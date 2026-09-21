@@ -1,7 +1,15 @@
 import XCTest
+import UIKit
 @testable import Lad
 
 final class PlanningCoreTests: XCTestCase {
+    func testEveryPublicRecipeHasABundledPhoto() {
+        for recipe in Recipe.all {
+            XCTAssertFalse(recipe.image.isEmpty, "Missing image name for \(recipe.id)")
+            XCTAssertNotNil(UIImage(named: recipe.image), "Missing bundled photo for \(recipe.id)")
+        }
+    }
+
     func testKnownPantryQuantityIsSubtractedFromShopping() {
         let recipe = Recipe.all.first { $0.id == "salmon" }!
         let slots = [MealSlot(id: "0-2", day: 0, kind: 2, recipeID: recipe.id, memberIDs: ["adult"])]

@@ -67,34 +67,34 @@ struct Recipe: Identifiable {
             .init(name: "Лук", amount: 65, unit: "г", category: "Овощи и зелень"),
             .init(name: "Морковь", amount: 70, unit: "г", category: "Овощи и зелень")
         ], steps: ["Мелко нарежьте лук и морковь. Обжарьте до мягкости.", "Добавьте томаты, промытую чечевицу и воду. Варите около 20 минут.", "Приправьте по вкусу. Для более нежной текстуры частично измельчите блендером."], mealKinds: [1, 2]),
-        Recipe(id: "oats", title: "Овсянка с бананом", caption: "Тёплый завтрак без спешки", image: "", cuisine: "Домашняя", minutes: 12, kcal: 310, protein: 11, allergens: ["Молоко"], ingredients: [
+        Recipe(id: "oats", title: "Овсянка с бананом", caption: "Тёплый завтрак без спешки", image: "Oats", cuisine: "Домашняя", minutes: 12, kcal: 310, protein: 11, allergens: ["Молоко"], ingredients: [
             .init(name: "Овсяные хлопья", amount: 60, unit: "г", category: "Бакалея"),
             .init(name: "Молоко", amount: 180, unit: "мл", category: "Молочные продукты"),
             .init(name: "Банан", amount: 1, unit: "шт.", category: "Овощи и зелень")
         ], steps: ["Нагрейте молоко и всыпьте овсяные хлопья.", "Варите на слабом огне 5–7 минут, помешивая.", "Добавьте нарезанный банан перед подачей."], mealKinds: [0]),
-        Recipe(id: "eggs", title: "Яйца с томатами и тостом", caption: "Простой завтрак на сковороде", image: "", cuisine: "Домашняя", minutes: 15, kcal: 330, protein: 17, allergens: ["Яйцо", "Пшеница"], ingredients: [
+        Recipe(id: "eggs", title: "Яйца с томатами и тостом", caption: "Простой завтрак на сковороде", image: "Eggs", cuisine: "Домашняя", minutes: 15, kcal: 330, protein: 17, allergens: ["Яйцо", "Пшеница"], ingredients: [
             .init(name: "Яйцо", amount: 2, unit: "шт.", category: "Молочные продукты"),
             .init(name: "Томаты", amount: 120, unit: "г", category: "Овощи и зелень"),
             .init(name: "Хлеб", amount: 50, unit: "г", category: "Бакалея")
         ], steps: ["Нарежьте томаты и прогрейте их на сковороде.", "Добавьте яйца и готовьте до желаемой степени прожарки.", "Подавайте с подсушенным хлебом."], mealKinds: [0]),
-        Recipe(id: "chicken-buckwheat", title: "Курица с гречкой и огурцом", caption: "Сытный обед из простых продуктов", image: "", cuisine: "Домашняя", minutes: 30, kcal: 480, protein: 36, allergens: [], ingredients: [
+        Recipe(id: "chicken-buckwheat", title: "Курица с гречкой и огурцом", caption: "Сытный обед из простых продуктов", image: "ChickenBuckwheat", cuisine: "Домашняя", minutes: 30, kcal: 480, protein: 36, allergens: [], ingredients: [
             .init(name: "Куриное филе", amount: 160, unit: "г", category: "Рыба и мясо"),
             .init(name: "Гречка", amount: 70, unit: "г", category: "Бакалея"),
             .init(name: "Огурец", amount: 120, unit: "г", category: "Овощи и зелень")
         ], steps: ["Промойте гречку и сварите до готовности.", "Нарежьте куриное филе и полностью прожарьте его.", "Подавайте с нарезанным огурцом."], mealKinds: [1, 2]),
-        Recipe(id: "vegetable-pasta", title: "Паста с томатами и кабачком", caption: "Овощной обед для общего стола", image: "", cuisine: "Средиземноморская", minutes: 25, kcal: 450, protein: 15, allergens: ["Пшеница", "Молоко"], ingredients: [
+        Recipe(id: "vegetable-pasta", title: "Паста с томатами и кабачком", caption: "Овощной обед для общего стола", image: "VegetablePasta", cuisine: "Средиземноморская", minutes: 25, kcal: 450, protein: 15, allergens: ["Пшеница", "Молоко"], ingredients: [
             .init(name: "Макароны", amount: 90, unit: "г", category: "Бакалея"),
             .init(name: "Томаты", amount: 160, unit: "г", category: "Овощи и зелень"),
             .init(name: "Кабачок", amount: 120, unit: "г", category: "Овощи и зелень"),
             .init(name: "Сыр", amount: 25, unit: "г", category: "Молочные продукты")
         ], steps: ["Сварите макароны согласно упаковке.", "Нарежьте и потушите томаты с кабачком.", "Соедините с пастой, посыпьте сыром."], mealKinds: [1, 2]),
-        Recipe(id: "turkey-rice", title: "Индейка с рисом и овощами", caption: "Спокойный семейный ужин", image: "", cuisine: "Домашняя", minutes: 30, kcal: 470, protein: 34, allergens: [], ingredients: [
+        Recipe(id: "turkey-rice", title: "Индейка с рисом и овощами", caption: "Спокойный семейный ужин", image: "TurkeyRice", cuisine: "Домашняя", minutes: 30, kcal: 470, protein: 34, allergens: [], ingredients: [
             .init(name: "Филе индейки", amount: 160, unit: "г", category: "Рыба и мясо"),
             .init(name: "Рис", amount: 70, unit: "г", category: "Бакалея"),
             .init(name: "Морковь", amount: 90, unit: "г", category: "Овощи и зелень"),
             .init(name: "Кабачок", amount: 100, unit: "г", category: "Овощи и зелень")
         ], steps: ["Сварите рис до готовности.", "Нарежьте индейку и овощи.", "Полностью приготовьте индейку с овощами на сковороде и подавайте с рисом."], mealKinds: [1, 2]),
-        Recipe(id: "lentil-stew", title: "Чечевица с овощами", caption: "Ужин из одной кастрюли", image: "", cuisine: "Средиземноморская", minutes: 28, kcal: 400, protein: 19, allergens: [], ingredients: [
+        Recipe(id: "lentil-stew", title: "Чечевица с овощами", caption: "Ужин из одной кастрюли", image: "LentilStew", cuisine: "Средиземноморская", minutes: 28, kcal: 400, protein: 19, allergens: [], ingredients: [
             .init(name: "Чечевица красная", amount: 85, unit: "г", category: "Бакалея"),
             .init(name: "Томаты", amount: 170, unit: "г", category: "Овощи и зелень"),
             .init(name: "Перец сладкий", amount: 110, unit: "г", category: "Овощи и зелень"),
