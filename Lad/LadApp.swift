@@ -2,17 +2,22 @@ import SwiftUI
 
 @main struct LadApp: App {
     @StateObject private var store = LadStore()
+    @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
             AppShell()
                 .environmentObject(store)
                 .tint(Palette.sage)
                 .preferredColorScheme(.light)
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active { store.refreshClock() }
+                }
         }
     }
 }
 
 struct AppShell: View {
+    @EnvironmentObject var store: LadStore
     @State private var selected = 0
     init() {
         #if DEBUG
@@ -33,6 +38,12 @@ struct AppShell: View {
         }
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarBackground(Palette.canvas, for: .tabBar)
+        .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { date in
+            store.refreshClock(date)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            store.refreshClock()
+        }
     }
 }
 
@@ -41,8 +52,8 @@ struct PageTitle: View {
     let title: String
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text(eyebrow.uppercased()).font(.system(size: 11, weight: .bold, design: .rounded)).tracking(2.1).foregroundStyle(Palette.terracotta)
-            Text(title).font(.system(size: 34, weight: .semibold, design: .serif)).tracking(-1.1).foregroundStyle(Palette.ink)
+            Text(L10n.text(eyebrow).uppercased()).font(.system(size: 11, weight: .bold, design: .rounded)).tracking(2.1).foregroundStyle(Palette.terracotta)
+            Text(L10n.text(title)).font(.system(size: 34, weight: .semibold, design: .serif)).tracking(-1.1).foregroundStyle(Palette.ink)
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -52,11 +63,11 @@ struct SectionHeading: View {
     var trailing: String? = nil
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).font(.system(size: 23, weight: .semibold, design: .serif))
+            Text(L10n.text(title)).font(.system(size: 23, weight: .semibold, design: .serif))
                 .lineLimit(1).minimumScaleFactor(0.8).foregroundStyle(Palette.ink)
             Spacer(minLength: 6)
             if let trailing {
-                Text(trailing).font(.system(size: 12, weight: .medium))
+                Text(L10n.text(trailing)).font(.system(size: 12, weight: .medium))
                     .lineLimit(1).minimumScaleFactor(0.8).foregroundStyle(Palette.muted)
             }
         }
@@ -108,7 +119,7 @@ struct DayPicker: View {
 struct TodayView: View {
     @EnvironmentObject var store: LadStore
     @State private var showPersonPicker = false
-    private var dinner: MealSlot { store.slot(store.selectedDay, 2) }
+    private var featuredSlot: MealSlot { store.suggestedSlot() }
     var body: some View {
         GeometryReader { screen in
             ScrollView(showsIndicators: false) {
@@ -124,7 +135,8 @@ struct TodayView: View {
                                 .background(Palette.paleSage, in: Circle())
                         }.accessibilityLabel("Выбрать человека")
                     }
-                    Text(store.selectedDay == store.currentDay ? "Хороший день\nначинается дома" : "План на \(store.dateLabel(store.selectedDay))")
+                    Text(store.selectedDay == store.currentDay ? L10n.text("Хороший день\nначинается дома") :
+                         L10n.format("План на %@", store.dateLabel(store.selectedDay)))
                         .font(.system(size: 34, weight: .semibold, design: .serif)).tracking(-1.1)
                         .lineLimit(2).minimumScaleFactor(0.75).foregroundStyle(Palette.ink)
                 }
@@ -136,27 +148,32 @@ struct TodayView: View {
                             .lineLimit(2).minimumScaleFactor(0.85)
                     }
                     HStack {
-                        Text("Сегодня готовим для \(store.state.members.count) человек").font(.system(size: 12)).foregroundStyle(Palette.muted)
+                        Text(L10n.format("Сегодня готовим для %d человек", store.state.members.count))
+                            .font(.system(size: 12)).foregroundStyle(Palette.muted)
                         Spacer(minLength: 8)
                         PersonDots(members: store.state.members, size: 27)
                     }
                 }.foregroundStyle(Palette.ink).padding(16).background(Palette.paleSage.opacity(0.7), in: RoundedRectangle(cornerRadius: 19))
 
                 VStack(alignment: .leading, spacing: 14) {
-                    SectionHeading(title: "В центре стола", trailing: "СЕГОДНЯ НА УЖИН")
-                    NavigationLink { RecipeDetailView(recipe: store.recipe(dinner), slot: dinner) } label: {
+                    SectionHeading(title: "Следующее на кухне", trailing: featuredSlot.day == store.currentDay ? store.kinds[featuredSlot.kind].uppercased() : "СЛЕДУЮЩИЙ ДЕНЬ")
+                    NavigationLink { RecipeDetailView(recipe: store.recipe(featuredSlot), slot: featuredSlot) } label: {
                         ZStack(alignment: .bottomLeading) {
-                            RecipePicture(recipe: store.recipe(dinner))
+                            RecipePicture(recipe: store.recipe(featuredSlot))
                                 .frame(width: max(0, screen.size.width - 42), height: 260).clipped()
                             LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .center, endPoint: .bottom)
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 6) { Image(systemName: "clock"); Text("\(store.recipe(dinner).minutes) минут") }
+                                HStack(spacing: 6) { Image(systemName: "clock"); Text(L10n.format("%d минут", store.recipe(featuredSlot).minutes)) }
                                     .font(.system(size: 12, weight: .medium)).padding(.horizontal, 11).padding(.vertical, 7)
                                     .background(.ultraThinMaterial, in: Capsule()).environment(\.colorScheme, .dark)
-                                Text(store.recipe(dinner).title).font(.system(size: 27, weight: .semibold, design: .serif))
+                                Text(L10n.text(store.recipe(featuredSlot).title)).font(.system(size: 27, weight: .semibold, design: .serif))
                                     .lineLimit(2).minimumScaleFactor(0.85)
+                                Text(store.availabilityTitle(for: featuredSlot))
+                                    .font(.system(size: 12, weight: .medium))
+                                    .lineLimit(2)
                                 HStack {
-                                    Text("\(store.participating(dinner).count) порции · \(store.recipe(dinner).cuisine)").font(.system(size: 13))
+                                    Text(L10n.format("%d порции · %@", store.participating(featuredSlot).count,
+                                                     L10n.text(store.recipe(featuredSlot).cuisine))).font(.system(size: 13))
                                     Spacer()
                                     Image(systemName: "arrow.up.right").font(.system(size: 15, weight: .semibold))
                                 }
@@ -198,16 +215,30 @@ struct MealRow: View {
                 }.buttonStyle(.plain)
                 VStack(alignment: .leading, spacing: 5) {
                     Text(store.kinds[slot.kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
-                    Text(recipe.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink).lineLimit(1)
+                    Text(L10n.text(recipe.title)).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink).lineLimit(1)
                     Text(recipe.isUnavailable ? "Подключите закрытый каталог" :
                         (recipe.kcal.map { "~\(Int(Double($0) * store.currentMember.portion)) ккал · \(recipe.minutes) мин" } ?? "Калорийность неизвестна · \(recipe.minutes) мин"))
                         .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                    Text(store.availabilityTitle(for: slot))
+                        .font(.system(size: 11)).foregroundStyle(store.requirements(for: slot)?.isReady == true ? Palette.sage : Palette.terracotta)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if store.isPastWindow(slot) && !store.isEaten(slot) && !store.isSkipped(slot) {
+                        Text("Обычное время прошло · можно отметить позже или пропустить")
+                            .font(.system(size: 10)).foregroundStyle(Palette.muted)
+                    }
                 }
                 Spacer(minLength: 0)
                 Button { store.toggleEaten(slot) } label: {
                     Image(systemName: store.isEaten(slot) ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 26, weight: .light)).foregroundStyle(store.isEaten(slot) ? Palette.sage : Palette.line)
                 }.accessibilityLabel(store.isEaten(slot) ? "Убрать отметку о съеденном" : "Отметить как съеденное")
+                    .disabled(!slot.memberIDs.contains(store.currentMember.id))
+            }
+            if store.isPastWindow(slot), !slot.memberIDs.isEmpty,
+               !store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
+                Button(store.isSkipped(slot) ? "Вернуть в план" : "Пропустить приём") {
+                    store.toggleSkipped(slot)
+                }.font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
             }
             Button {
                 store.proposeNotToday(slot)

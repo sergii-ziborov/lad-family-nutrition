@@ -1,6 +1,15 @@
 import Foundation
 import SwiftUI
 
+enum L10n {
+    static func text(_ source: String) -> String {
+        NSLocalizedString(source, tableName: "Localizable", bundle: .main, value: source, comment: "")
+    }
+    static func format(_ source: String, _ arguments: CVarArg...) -> String {
+        String(format: text(source), locale: .current, arguments: arguments)
+    }
+}
+
 enum Palette {
     static let canvas = Color(red: 0.982, green: 0.974, blue: 0.948)
     static let ink = Color(red: 0.17, green: 0.24, blue: 0.19)
@@ -44,8 +53,12 @@ struct Recipe: Identifiable {
     var nutrients: [String: NutrientValue] = [:]
     var isPrivate: Bool { id.hasPrefix("private:") }
     var isUnavailable: Bool { id == "unavailable" }
+    var isPlanEligible: Bool {
+        !isUnavailable && !ingredients.isEmpty && ingredients.allSatisfy { ($0.amount ?? 0) > 0 } &&
+        (!isPrivate || allergensVerified)
+    }
 
-    static let unavailable = Recipe(id: "unavailable", title: "Закрытый рецепт недоступен", caption: "Подключите каталог, чтобы снова открыть это блюдо.", image: "", cuisine: "Закрытая библиотека", minutes: 0, kcal: 0, protein: 0, allergens: [], ingredients: [], steps: [])
+    static let unavailable = Recipe(id: "unavailable", title: "Закрытый рецепт недоступен", caption: "Подключите каталог, чтобы снова открыть это блюдо.", image: "", cuisine: "Закрытая библиотека", minutes: 0, kcal: nil, protein: nil, allergens: [], ingredients: [], steps: [])
 
     static let all: [Recipe] = [
         Recipe(id: "salmon", title: "Лосось с картофелем", caption: "Ужин, который собирает всех", image: "Salmon", cuisine: "Домашняя", minutes: 35, kcal: 520, protein: 38, allergens: ["Рыба", "Молоко"], ingredients: [
@@ -114,6 +127,7 @@ struct FamilyMember: Identifiable, Codable {
     var initials: String { String(name.prefix(1)) }
     var ageLabel: String? {
         guard let ageYears else { return nil }
+        if Locale.current.language.languageCode?.identifier == "en" { return "\(ageYears) years" }
         let suffix: String
         if (11...14).contains(ageYears % 100) { suffix = "лет" }
         else if ageYears % 10 == 1 { suffix = "год" }
@@ -130,6 +144,14 @@ struct PantryItem: Identifiable, Codable {
     var unit: String
     var category: String
     var expiresOn: Date? = nil
+}
+
+struct PurchaseReceipt: Identifiable, Codable {
+    var id: String
+    var productName: String
+    var quantity: Double
+    var unit: String
+    var purchasedAt: Date
 }
 
 struct MealSlot: Identifiable, Codable {
@@ -155,6 +177,9 @@ struct DemoState: Codable {
     var extraShopping: [String]
     var supplementsByMember: [String: [String]]
     var takenSupplements: Set<String>
+    var skippedSlotIDs: Set<String>? = nil
+    var mealSchedule: MealSchedule? = nil
+    var purchaseReceipts: [PurchaseReceipt]? = nil
 
     static func initial() -> DemoState {
         let family = [
@@ -174,6 +199,58 @@ struct DemoState: Codable {
         }
         return DemoState(startDate: Calendar.current.startOfDay(for: .now), members: family, slots: slots, selectedMemberID: "anna", eatenIDs: [], boughtNames: [], pantryNames: [], favorites: ["anna|salmon"], extraShopping: [], supplementsByMember: [:], takenSupplements: [])
     }
+
+    static func nextWeek(after previous: DemoState, now: Date) -> DemoState {
+        var fresh = DemoState.initial()
+        fresh.startDate = Calendar.current.startOfDay(for: now)
+        fresh.members = previous.members
+        fresh.selectedMemberID = previous.selectedMemberID
+        fresh.favorites = previous.favorites
+        fresh.dislikes = previous.dislikes
+        fresh.pantryNames = previous.pantryNames
+        fresh.pantryItems = previous.pantryItems
+        fresh.extraShopping = previous.extraShopping
+        fresh.supplementsByMember = previous.supplementsByMember
+        fresh.mealSchedule = previous.mealSchedule
+        fresh.purchaseReceipts = previous.purchaseReceipts
+        for index in fresh.slots.indices {
+            let kind = fresh.slots[index].kind
+            let sameKind = previous.slots.filter { $0.kind == kind }
+            let first = Set(sameKind.first?.memberIDs ?? [])
+            fresh.slots[index].memberIDs = sameKind.count == 7 && sameKind.allSatisfy({ Set($0.memberIDs) == first })
+                ? (sameKind.first?.memberIDs ?? []) : []
+        }
+        return fresh
+    }
+}
+
+enum LocalWeekArchive {
+    private static func folder() throws -> URL {
+        guard let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            throw CocoaError(.fileNoSuchFile)
+        }
+        let folder = support.appendingPathComponent("lad-week-history", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true,
+                                                attributes: [.protectionKey: FileProtectionType.complete])
+        return folder
+    }
+
+    static func save(_ state: DemoState, accountID: String) throws {
+        let file = try folder().appendingPathComponent("\(accountID)-\(UUID().uuidString).json")
+        try JSONEncoder().encode(state).write(to: file, options: [.atomic, .completeFileProtection])
+    }
+
+    static func saveUnreadable(_ data: Data, accountID: String) throws {
+        let file = try folder().appendingPathComponent("\(accountID)-unreadable-\(UUID().uuidString).bin")
+        try data.write(to: file, options: [.atomic, .completeFileProtection])
+    }
+
+    static func count(accountID: String) -> Int {
+        guard let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return 0 }
+        let folder = support.appendingPathComponent("lad-week-history", isDirectory: true)
+        return (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil))?
+            .filter { $0.lastPathComponent.hasPrefix(accountID + "-") && $0.pathExtension == "json" }.count ?? 0
+    }
 }
 
 struct PlannedChange: Identifiable {
@@ -191,6 +268,8 @@ struct ReplanPreview: Identifiable {
     let shoppingDelta: [String]
     let pendingAvoid: AvoidedRecipe?
     let emptyMessage: String
+    let expectedRevision: Int
+    let expectedCatalogRevision: Int
 }
 
 struct AvoidedRecipe: Equatable {
@@ -201,20 +280,38 @@ struct AvoidedRecipe: Equatable {
 }
 
 @MainActor final class LadStore: ObservableObject {
-    @Published var state: DemoState { didSet { save() } }
+    @Published var state: DemoState {
+        didSet {
+            stateRevision += 1
+            if undoRevision != nil && undoRevision != stateRevision {
+                undoRevision = nil
+                canUndoReplan = false
+                lastAppliedChanges = []
+                lastAppliedAvoid = nil
+            }
+            save()
+        }
+    }
     @Published var selectedDay: Int = 0
+    @Published private(set) var now: Date = .now
     @Published private(set) var privateRecipes: [Recipe] = []
     @Published private(set) var privateCatalogStatus: String = "Не подключён"
     @Published private(set) var familyCloudStatus: String = "Не подключено"
+    @Published private(set) var storageWarning: String?
     @Published var replanPreview: ReplanPreview?
     @Published private(set) var canUndoReplan = false
     private var lastAppliedChanges: [PlannedChange] = []
     private var lastAppliedAvoid: AvoidedRecipe?
+    private var stateRevision = 0
+    private var catalogRevision = 0
+    private var privateSessionRevision = 0
+    private var undoRevision: Int?
+    private var undoCatalogRevision: Int?
     let localAccountID: String
-    let kinds = ["Завтрак", "Обед", "Ужин"]
+    var kinds: [String] { [L10n.text("Завтрак"), L10n.text("Обед"), L10n.text("Ужин")] }
 
     init() {
-        if let savedID = UserDefaults.standard.string(forKey: "lad.localAccountID") {
+        if let savedID = UserDefaults.standard.string(forKey: "lad.localAccountID"), UUID(uuidString: savedID) != nil {
             localAccountID = savedID
         } else {
             let newID = UUID().uuidString
@@ -230,24 +327,26 @@ struct AvoidedRecipe: Equatable {
         if let data = UserDefaults.standard.data(forKey: "lad-demo-v3"),
            let decoded = try? JSONDecoder().decode(DemoState.self, from: data) {
             let elapsed = Calendar.current.dateComponents([.day], from: decoded.startDate, to: .now).day ?? 0
-            if elapsed > 6 || elapsed < 0 {
-                var fresh = DemoState.initial()
-                fresh.members = decoded.members
-                fresh.selectedMemberID = decoded.selectedMemberID
-                fresh.favorites = decoded.favorites
-                fresh.dislikes = decoded.dislikes
-                fresh.pantryNames = decoded.pantryNames
-                fresh.pantryItems = decoded.pantryItems
-                fresh.extraShopping = decoded.extraShopping
-                fresh.supplementsByMember = decoded.supplementsByMember
-                for index in fresh.slots.indices {
-                    fresh.slots[index].memberIDs = decoded.members.map(\.id)
+            if elapsed > 6 {
+                do {
+                    try LocalWeekArchive.save(decoded, accountID: localAccountID)
+                    state = DemoState.nextWeek(after: decoded, now: .now)
+                } catch {
+                    state = decoded
+                    storageWarning = L10n.text("Не удалось сохранить прошлую неделю. Новый план не создан; данные оставлены без изменений.")
                 }
-                state = fresh
             } else {
                 state = decoded
-                selectedDay = elapsed
+                selectedDay = max(0, elapsed)
             }
+        } else if let unreadable = UserDefaults.standard.data(forKey: "lad-demo-v3") {
+            do {
+                try LocalWeekArchive.saveUnreadable(unreadable, accountID: localAccountID)
+            } catch {
+                UserDefaults.standard.set(unreadable, forKey: "lad-unreadable-state-backup")
+            }
+            state = .initial()
+            storageWarning = L10n.text("Старые данные не удалось прочитать. Они сохранены для восстановления; показан новый демо-план.")
         } else {
             state = .initial()
         }
@@ -288,16 +387,91 @@ struct AvoidedRecipe: Equatable {
                 await refreshFamily()
             }
         }
+        save()
     }
 
     var currentMember: FamilyMember { state.members.first { $0.id == state.selectedMemberID } ?? state.members[0] }
+    var archivedWeekCount: Int { LocalWeekArchive.count(accountID: localAccountID) }
     var allRecipes: [Recipe] { Recipe.all + privateRecipes }
     var pantry: [PantryItem] { state.pantryItems ?? [] }
+    var mealSchedule: MealSchedule { state.mealSchedule ?? .standard }
+    var planRequirements: PlanRequirements {
+        PlanningCore.resolvePlan(slots: state.slots, members: state.members, recipes: allRecipes,
+                                 pantry: pantry, startDate: state.startDate, now: now,
+                                 eatenIDs: state.eatenIDs, skippedIDs: state.skippedSlotIDs ?? [],
+                                 schedule: mealSchedule)
+    }
     var shoppingNeeds: [ShoppingNeed] {
-        PlanningCore.shoppingNeeds(slots: state.slots, members: state.members, recipes: allRecipes, pantry: pantry)
+        planRequirements.shoppingNeeds
+    }
+    func requirements(for slot: MealSlot) -> SlotRequirements? { planRequirements.slots[slot.id] }
+    func requirements(for recipe: Recipe, replacing slot: MealSlot) -> SlotRequirements? {
+        var candidateSlots = state.slots
+        guard let index = candidateSlots.firstIndex(where: { $0.id == slot.id }) else { return nil }
+        candidateSlots[index].recipeID = recipe.id
+        return PlanningCore.resolvePlan(slots: candidateSlots, members: state.members, recipes: allRecipes,
+                                        pantry: pantry, startDate: state.startDate, now: now,
+                                        eatenIDs: state.eatenIDs, skippedIDs: state.skippedSlotIDs ?? [],
+                                        schedule: mealSchedule).slots[slot.id]
+    }
+    func availabilityTitle(for slot: MealSlot) -> String {
+        availabilityTitle(requirements(for: slot), inventoryEmpty: planRequirements.inventoryEmpty)
+    }
+    func availabilityTitle(for recipe: Recipe, replacing slot: MealSlot) -> String {
+        availabilityTitle(requirements(for: recipe, replacing: slot), inventoryEmpty: pantry.isEmpty)
+    }
+    private func availabilityTitle(_ result: SlotRequirements?, inventoryEmpty: Bool) -> String {
+        guard let result else { return L10n.text("Наличие уточняется") }
+        switch result.availability {
+        case .past: return L10n.text("Время прошло · блюдо остаётся в плане до вашего решения")
+        case .eaten: return L10n.text("Отмечено как съеденное")
+        case .skipped: return L10n.text("Приём пропущен · продукты освобождены")
+        case .noParticipants: return L10n.text("Никто не участвует")
+        case .unavailable: return L10n.text("Рецепт недоступен — покупки неполные")
+        case .needsReview: return L10n.text("Рецепт требует проверки · покупки предварительные")
+        case .active: break
+        }
+        if inventoryEmpty { return L10n.text("Запасы не внесены — проверьте продукты") }
+        if result.isReady { return L10n.text("Все продукты на этот приём есть дома") }
+        let questions = result.ingredients.filter { $0.required == nil || $0.uncertain }.count
+        let shortages = result.shortageCount
+        if questions > 0 && shortages == 0 { return L10n.format("Нужно уточнить %d поз.", questions) }
+        if questions > 0 { return L10n.format("Докупить %d поз. · уточнить %d", shortages, questions) }
+        return L10n.format("Докупить %d поз.", shortages)
+    }
+    func availabilityDetails(for slot: MealSlot) -> [String] {
+        guard let result = requirements(for: slot),
+              result.availability == .active || result.availability == .needsReview ||
+              result.availability == .past else { return [] }
+        return result.ingredients.compactMap { ingredient in
+            if ingredient.required == nil { return L10n.format("%@: уточнить количество", L10n.text(ingredient.name)) }
+            if ingredient.uncertain { return L10n.format("%@: проверить остаток", L10n.text(ingredient.name)) }
+            guard let shortage = ingredient.shortage, shortage > 0.001 else { return nil }
+            let amount = shortage.formatted(.number.precision(.fractionLength(0...1)))
+            return L10n.format("%@: докупить %@ %@", L10n.text(ingredient.name), amount, L10n.text(ingredient.unit))
+        }
+    }
+    func ingredientAvailabilityText(_ ingredient: Ingredient, in slot: MealSlot?) -> String {
+        if let slot {
+            guard let line = requirements(for: slot)?.ingredients.first(where: {
+                $0.id == PlanningCore.key(ingredient.name, ingredient.unit)
+            }) else { return L10n.text("Наличие пока не рассчитано") }
+            guard let required = line.required else { return L10n.text("Уточните количество для приготовления") }
+            let allocated = line.allocated.formatted(.number.precision(.fractionLength(0...1)))
+            let needed = required.formatted(.number.precision(.fractionLength(0...1)))
+            if line.isReady { return L10n.format("Из запасов на этот день: %@ из %@ %@", allocated, needed, L10n.text(line.unit)) }
+            if line.uncertain { return L10n.format("Подтверждено %@ из %@ %@ · остаток проверить", allocated, needed, L10n.text(line.unit)) }
+            let missing = (line.shortage ?? 0).formatted(.number.precision(.fractionLength(0...1)))
+            return L10n.format("Подтверждено %@ из %@ %@ · докупить %@ %@", allocated, needed, L10n.text(line.unit), missing, L10n.text(line.unit))
+        }
+        if pantry.isEmpty { return L10n.text("Запасы ещё не внесены") }
+        guard let amount = ingredient.amount, amount > 0 else { return L10n.text("Уточните количество для приготовления") }
+        let stock = PlanningCore.stock(for: ingredient, pantry: planRequirements.freePantry, now: now)
+        if stock.known >= amount { return L10n.text("Есть в свободном остатке после плана") }
+        return stock.uncertain ? L10n.text("Проверьте остаток") : L10n.text("Не записано достаточно продуктов дома")
     }
     func readiness(_ recipe: Recipe, portions: Double = 1) -> RecipeReadiness {
-        PlanningCore.readiness(recipe, portions: portions, pantry: pantry)
+        PlanningCore.readiness(recipe, portions: portions, pantry: planRequirements.freePantry, now: now)
     }
     func pantryItem(named name: String, unit: String) -> PantryItem? {
         pantry.first { PlanningCore.key($0.name, $0.unit) == PlanningCore.key(name, unit) }
@@ -317,22 +491,67 @@ struct AvoidedRecipe: Equatable {
         savePantryItem(emptied)
         proposeReplan(affectedBy: item.name)
     }
-    func addPurchasedToPantry(_ need: ShoppingNeed) {
-        var item = pantryItem(named: need.name, unit: need.unit) ?? PantryItem(name: need.name, quantity: 0, unit: need.unit, category: need.category)
-        item.quantity = (item.quantity ?? 0) + need.missing
-        savePantryItem(item)
-        state.boughtNames.remove(need.name)
+    func addPurchasedToPantry(_ need: ShoppingNeed, quantity: Double, commandID: String) {
+        guard quantity > 0, quantity.isFinite else { return }
+        var next = state
+        var receipts = next.purchaseReceipts ?? []
+        guard !receipts.contains(where: { $0.id == commandID }) else { return }
+        let item = PantryItem(name: need.name, quantity: quantity, unit: need.unit, category: need.category)
+        var items = next.pantryItems ?? []
+        items.append(item)
+        next.pantryItems = items
+        receipts.append(PurchaseReceipt(id: commandID, productName: need.name, quantity: quantity,
+                                        unit: need.unit, purchasedAt: now))
+        next.purchaseReceipts = receipts
+        next.boughtNames.remove(need.name)
+        state = next
     }
     var privateCatalogURL: String { PrivateRecipeAccess.savedURL ?? "" }
-    var currentDay: Int { min(6, max(0, Calendar.current.dateComponents([.day], from: state.startDate, to: .now).day ?? 0)) }
+    var currentDay: Int { min(6, max(0, Calendar.current.dateComponents([.day], from: state.startDate, to: now).day ?? 0)) }
+    func refreshClock(_ date: Date = .now) {
+        let previousDay = currentDay
+        now = date
+        let elapsed = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: state.startDate),
+                                                      to: Calendar.current.startOfDay(for: date)).day ?? 0
+        if elapsed > 6 {
+            do {
+                try LocalWeekArchive.save(state, accountID: localAccountID)
+                state = DemoState.nextWeek(after: state, now: date)
+                selectedDay = 0
+                storageWarning = nil
+            } catch {
+                storageWarning = L10n.text("Не удалось сохранить прошлую неделю. Новый план не создан; данные оставлены без изменений.")
+            }
+            return
+        }
+        if selectedDay == previousDay && currentDay != previousDay { selectedDay = currentDay }
+    }
+    func isPastWindow(_ slot: MealSlot) -> Bool {
+        MealTiming.isPastWindow(day: slot.day, kind: slot.kind, currentDay: currentDay,
+                                now: now, schedule: mealSchedule)
+    }
+    func suggestedSlot() -> MealSlot {
+        if selectedDay != currentDay { return slot(selectedDay, 0) }
+        let eatenKinds = Set((0..<3).filter { kind in
+            let candidate = slot(currentDay, kind)
+            let participants = participating(candidate)
+            return !participants.isEmpty && participants.allSatisfy { state.eatenIDs.contains("\(candidate.id)-\($0.id)") }
+        })
+        if let kind = MealTiming.suggestedKind(on: currentDay, currentDay: currentDay, now: now,
+                                                schedule: mealSchedule, eatenKinds: eatenKinds) {
+            return slot(currentDay, kind)
+        }
+        if currentDay < 6 { return slot(currentDay + 1, 0) }
+        return slot(currentDay, 2)
+    }
     var supplementStamp: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: .now)
+        return formatter.string(from: now)
     }
     var dayLabels: [String] {
         let fmt = DateFormatter()
-        fmt.locale = Locale(identifier: "ru_RU")
+        fmt.locale = .current
         return (0..<7).map { offset in
             fmt.dateFormat = "EE"
             return fmt.string(from: Calendar.current.date(byAdding: .day, value: offset, to: state.startDate)!).replacingOccurrences(of: ".", with: "").capitalized
@@ -340,7 +559,7 @@ struct AvoidedRecipe: Equatable {
     }
     func dateLabel(_ offset: Int) -> String {
         let fmt = DateFormatter()
-        fmt.locale = Locale(identifier: "ru_RU")
+        fmt.locale = .current
         fmt.dateFormat = "d MMMM"
         return fmt.string(from: Calendar.current.date(byAdding: .day, value: offset, to: state.startDate)!)
     }
@@ -351,19 +570,48 @@ struct AvoidedRecipe: Equatable {
     func recipe(_ slot: MealSlot) -> Recipe { allRecipes.first { $0.id == slot.recipeID } ?? Recipe.unavailable }
     func participating(_ slot: MealSlot) -> [FamilyMember] { state.members.filter { slot.memberIDs.contains($0.id) } }
     func toggleEaten(_ slot: MealSlot) {
+        guard slot.memberIDs.contains(state.selectedMemberID) else { return }
         let key = "\(slot.id)-\(state.selectedMemberID)"
-        if state.eatenIDs.contains(key) { state.eatenIDs.remove(key) } else { state.eatenIDs.insert(key) }
+        var next = state
+        if next.eatenIDs.contains(key) { next.eatenIDs.remove(key) }
+        else {
+            next.skippedSlotIDs?.remove(slot.id)
+            next.eatenIDs.insert(key)
+        }
+        state = next
     }
     func isEaten(_ slot: MealSlot) -> Bool { state.eatenIDs.contains("\(slot.id)-\(state.selectedMemberID)") }
-    private func score(_ recipe: Recipe, slot: MealSlot, usedToday: Set<String>) -> Double {
-        let portions = participating(slot).reduce(0) { $0 + $1.portion }
-        let match = readiness(recipe, portions: portions)
-        var value = Double(match.covered * 7 - match.missing.count * 10 - match.uncertain.count * 3)
-        if usedToday.contains(recipe.id) { value -= 25 }
-        if state.slots.contains(where: { $0.day == slot.day - 1 && $0.recipeID == recipe.id }) { value -= 14 }
+    func isSkipped(_ slot: MealSlot) -> Bool { state.skippedSlotIDs?.contains(slot.id) == true }
+    func toggleSkipped(_ slot: MealSlot) {
+        guard isPastWindow(slot), !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) else { return }
+        var next = state
+        var skipped = next.skippedSlotIDs ?? []
+        if skipped.contains(slot.id) { skipped.remove(slot.id) } else { skipped.insert(slot.id) }
+        next.skippedSlotIDs = skipped
+        state = next
+    }
+    private func score(_ recipe: Recipe, slot: MealSlot, usedToday: Set<String>, plannedSlots: [MealSlot]) -> Double {
+        var candidateSlots = plannedSlots
+        guard let index = candidateSlots.firstIndex(where: { $0.id == slot.id }) else { return -.infinity }
+        candidateSlots[index].recipeID = recipe.id
+        let resolution = PlanningCore.resolvePlan(slots: candidateSlots, members: state.members, recipes: allRecipes,
+                                                  pantry: pantry, startDate: state.startDate, now: now,
+                                                  eatenIDs: state.eatenIDs, skippedIDs: state.skippedSlotIDs ?? [],
+                                                  schedule: mealSchedule)
+        guard let match = resolution.slots[slot.id], match.availability == .active else { return -.infinity }
+        var value = match.isReady ? (slot.day == currentDay ? 1_000.0 : 80.0) : 0
+        value += Double(match.ingredients.filter(\.isReady).count) * 5
+        value -= Double(match.shortageCount) * 18
+        value -= Double(match.ingredients.filter { $0.required == nil || $0.uncertain }.count) * 25
+        if usedToday.contains(recipe.id) { value -= 35 }
+        if plannedSlots.contains(where: { $0.day == slot.day - 1 && $0.recipeID == recipe.id }) { value -= 25 }
         value += Double(participating(slot).filter { state.favorites.contains("\($0.id)|\(recipe.id)") }.count * 5)
-        if let target = currentMember.dailyEnergyTarget, let kcal = recipe.kcal, (currentMember.ageYears ?? 0) >= 18 {
-            value -= abs(Double(kcal) * currentMember.portion - Double(target) / 3) / 65
+        if let kcal = recipe.kcal {
+            for person in participating(slot) where (person.ageYears ?? 0) >= 18 {
+                if let target = person.dailyEnergyTarget {
+                    value -= abs(Double(kcal) * person.portion - Double(target) / 3) / 65
+                }
+            }
         }
         value -= Double(recipe.minutes) / 100
         return value
@@ -374,10 +622,22 @@ struct AvoidedRecipe: Equatable {
             state.avoidedRecipesBySlot?["\(slot.id)|\(person.id)"] ?? []
         })
         return allRecipes.filter { recipe in
-            recipe.mealKinds.contains(slot.kind) && incompatibility(slot, recipe: recipe) == nil &&
+            recipe.isPlanEligible && recipe.mealKinds.contains(slot.kind) && incompatibility(slot, recipe: recipe) == nil &&
             !excluded.contains(recipe.id) &&
             !people.contains { state.dislikes?.contains("\($0.id)|\(recipe.id)") == true }
         }
+    }
+    private func rankedRecipes(_ recipes: [Recipe], slot: MealSlot, usedToday: Set<String>,
+                               plannedSlots: [MealSlot]) -> [Recipe] {
+        var ranked: [(recipe: Recipe, value: Double)] = []
+        for recipe in recipes {
+            ranked.append((recipe, score(recipe, slot: slot, usedToday: usedToday, plannedSlots: plannedSlots)))
+        }
+        ranked.sort { left, right in
+            if left.value == right.value { return left.recipe.id < right.recipe.id }
+            return left.value > right.value
+        }
+        return ranked.map(\.recipe)
     }
     private func makePreview(title: String, explanation: String, changes: [PlannedChange], pendingAvoid: AvoidedRecipe? = nil,
                              emptyMessage: String = "Подходящей замены с меньшим числом недостающих продуктов не нашлось. Текущее меню остаётся, список покупок уже обновлён.") -> ReplanPreview {
@@ -388,43 +648,71 @@ struct AvoidedRecipe: Equatable {
             }
         }
         let before = Dictionary(uniqueKeysWithValues: shoppingNeeds.map { ($0.id, $0) })
-        let after = Dictionary(uniqueKeysWithValues: PlanningCore.shoppingNeeds(slots: proposedSlots, members: state.members, recipes: allRecipes, pantry: pantry).map { ($0.id, $0) })
+        let afterNeeds = PlanningCore.resolvePlan(slots: proposedSlots, members: state.members, recipes: allRecipes,
+                                                  pantry: pantry, startDate: state.startDate, now: now,
+                                                  eatenIDs: state.eatenIDs, skippedIDs: state.skippedSlotIDs ?? [],
+                                                  schedule: mealSchedule).shoppingNeeds
+        let after = Dictionary(uniqueKeysWithValues: afterNeeds.map { ($0.id, $0) })
         let delta = Set(before.keys).union(after.keys).sorted().compactMap { id -> String? in
             let oldAmount = before[id]?.missing ?? 0
             let newAmount = after[id]?.missing ?? 0
-            guard abs(newAmount - oldAmount) > 0.01 else { return nil }
+            let unknownChanged = (before[id]?.amountUnknown ?? false) != (after[id]?.amountUnknown ?? false)
+            guard abs(newAmount - oldAmount) > 0.01 || unknownChanged else { return nil }
             let item = after[id] ?? before[id]!
             let old = oldAmount.formatted(.number.precision(.fractionLength(0...1)))
             let new = newAmount.formatted(.number.precision(.fractionLength(0...1)))
-            return "\(item.name): \(old) → \(new) \(item.unit)"
+            return "\(item.name): \(old) → \(new) \(item.unit)\(item.amountUnknown ? " · количество уточнить" : "")"
         }
         return ReplanPreview(title: title, explanation: explanation, changes: changes, shoppingDelta: delta,
-                             pendingAvoid: pendingAvoid, emptyMessage: emptyMessage)
+                             pendingAvoid: pendingAvoid, emptyMessage: emptyMessage, expectedRevision: stateRevision,
+                             expectedCatalogRevision: catalogRevision)
     }
     func proposeDayMenu(_ day: Int) {
-        var used: Set<String> = []
+        proposeMenu(days: [day], title: "Подбор на \(dateLabel(day))")
+    }
+    func proposeWeekMenu() {
+        proposeMenu(days: Array(currentDay..<7), title: "Подбор недели")
+    }
+    private func proposeMenu(days: [Int], title: String) {
+        var proposedSlots = state.slots
         var changes: [PlannedChange] = []
-        for kind in 0..<3 {
-            let slot = self.slot(day, kind)
-            if state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) { used.insert(slot.recipeID); continue }
-            let candidates = eligibleRecipes(for: slot).sorted { score($0, slot: slot, usedToday: used) > score($1, slot: slot, usedToday: used) }
-            guard let choice = candidates.first else { continue }
-            used.insert(choice.id)
-            if choice.id != slot.recipeID { changes.append(PlannedChange(slotID: slot.id, previousID: slot.recipeID, nextID: choice.id)) }
+        for day in days where (0..<7).contains(day) {
+            var used: Set<String> = []
+            for kind in 0..<3 {
+                let slot = self.slot(day, kind)
+                if isPastWindow(slot) || state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
+                    used.insert(slot.recipeID)
+                    continue
+                }
+                guard !slot.memberIDs.isEmpty else { continue }
+                let ranked = rankedRecipes(eligibleRecipes(for: slot), slot: slot, usedToday: used,
+                                           plannedSlots: proposedSlots)
+                guard let choice = ranked.first else { continue }
+                used.insert(choice.id)
+                if let index = proposedSlots.firstIndex(where: { $0.id == slot.id }) { proposedSlots[index].recipeID = choice.id }
+                if choice.id != slot.recipeID {
+                    changes.append(PlannedChange(slotID: slot.id, previousID: slot.recipeID, nextID: choice.id))
+                }
+            }
         }
-        replanPreview = makePreview(title: "Подбор на \(dateLabel(day))", explanation: "Учитываем запасы, известные аллергены, разнообразие и ваш ручной ориентир по калориям, если он задан. Пищевая ценность демо-блюд приблизительная; микроэлементы без исходных данных не рассчитываются.", changes: changes)
+        replanPreview = makePreview(title: title,
+                                    explanation: "Сопоставили продукты на всю неделю, даты готовки и ограничения участников. Если запасы не внесены, список покупок предварительный. Меню изменится только после подтверждения.",
+                                    changes: changes)
     }
     func proposeNotToday(_ slot: MealSlot) {
+        guard !isPastWindow(slot) else {
+            replanPreview = makePreview(title: "Другое блюдо", explanation: "Время этого приёма пищи уже прошло.", changes: [],
+                                        emptyMessage: "Изменяйте только будущий план; съеденное можно отметить отдельно.")
+            return
+        }
         guard !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) else {
             replanPreview = makePreview(title: "Другое блюдо", explanation: "Этот приём пищи уже отмечен съеденным.", changes: [],
                                         emptyMessage: "Отмените отметку о съеденном, если хотите поменять блюдо.")
             return
         }
         let used = Set(state.slots.filter { $0.day == slot.day && $0.id != slot.id }.map(\.recipeID))
-        let choice = eligibleRecipes(for: slot)
-            .filter { $0.id != slot.recipeID }
-            .sorted { score($0, slot: slot, usedToday: used) > score($1, slot: slot, usedToday: used) }
-            .first
+        let alternatives = eligibleRecipes(for: slot).filter { $0.id != slot.recipeID }
+        let choice = rankedRecipes(alternatives, slot: slot, usedToday: used, plannedSlots: state.slots).first
         let changes = choice.map { [PlannedChange(slotID: slot.id, previousID: slot.recipeID, nextID: $0.id)] } ?? []
         let avoid = choice.map { _ in AvoidedRecipe(slotID: slot.id, memberID: state.selectedMemberID, recipeID: slot.recipeID) }
         replanPreview = makePreview(title: "Другое блюдо на \(dateLabel(slot.day))",
@@ -437,57 +725,97 @@ struct AvoidedRecipe: Equatable {
         for slot in state.slots where slot.day >= currentDay {
             let original = recipe(slot)
             guard original.ingredients.contains(where: { ProductNames.canonical($0.name) == ProductNames.canonical(ingredientName) }) else { continue }
-            if state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) { continue }
-            let originalMatch = readiness(original, portions: participating(slot).reduce(0) { $0 + $1.portion })
+            if isPastWindow(slot) || state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) { continue }
+            let originalMatch = planRequirements.slots[slot.id]
             let used = Set(state.slots.filter { $0.day == slot.day && $0.id != slot.id }.map(\.recipeID))
-            let candidates = eligibleRecipes(for: slot).filter { candidate in
-                candidate.id != original.id && !candidate.ingredients.contains { ProductNames.canonical($0.name) == ProductNames.canonical(ingredientName) }
-            }.sorted { score($0, slot: slot, usedToday: used) > score($1, slot: slot, usedToday: used) }
-            if let choice = candidates.first {
-                let candidateMatch = readiness(choice, portions: participating(slot).reduce(0) { $0 + $1.portion })
-                if candidateMatch.missing.count + candidateMatch.uncertain.count < originalMatch.missing.count + originalMatch.uncertain.count {
-                    changes.append(PlannedChange(slotID: slot.id, previousID: original.id, nextID: choice.id))
-                }
+            let targetProduct = ProductNames.canonical(ingredientName)
+            let alternatives = eligibleRecipes(for: slot).filter { candidate in
+                candidate.id != original.id && !candidate.ingredients.contains { ProductNames.canonical($0.name) == targetProduct }
+            }
+            let candidates = rankedRecipes(alternatives, slot: slot, usedToday: used, plannedSlots: state.slots)
+            if let choice = candidates.first(where: { candidate in
+                var proposedSlots = state.slots
+                if let index = proposedSlots.firstIndex(where: { $0.id == slot.id }) { proposedSlots[index].recipeID = candidate.id }
+                let result = PlanningCore.resolvePlan(slots: proposedSlots, members: state.members, recipes: allRecipes,
+                                                      pantry: pantry, startDate: state.startDate, now: now,
+                                                      eatenIDs: state.eatenIDs, skippedIDs: state.skippedSlotIDs ?? [],
+                                                      schedule: mealSchedule).slots[slot.id]
+                return (result?.shortageCount ?? .max) < (originalMatch?.shortageCount ?? .max)
+            }) {
+                changes.append(PlannedChange(slotID: slot.id, previousID: original.id, nextID: choice.id))
             }
         }
         replanPreview = makePreview(title: "\(ingredientName) закончился", explanation: "Запас обновлён, покупки пересчитаны. Ниже — только возможные изменения будущего меню. Уже отмеченные съеденными блюда не меняются.", changes: changes)
     }
     func applyReplan(_ preview: ReplanPreview) {
-        for change in preview.changes {
-            if let index = state.slots.firstIndex(where: { $0.id == change.slotID && $0.recipeID == change.previousID }) {
-                state.slots[index].recipeID = change.nextID
-            }
+        guard preview.expectedRevision == stateRevision, preview.expectedCatalogRevision == catalogRevision else {
+            replanPreview = makePreview(title: "План изменился", explanation: "Запасы, семья или каталог изменились после подбора.",
+                                        changes: [], emptyMessage: "Обновите предложение, чтобы увидеть актуальный вариант.")
+            return
         }
+        var next = state
+        for change in preview.changes {
+            guard let index = next.slots.firstIndex(where: { $0.id == change.slotID && $0.recipeID == change.previousID }),
+                  !isPastWindow(next.slots[index]),
+                  !state.eatenIDs.contains(where: { $0.hasPrefix("\(change.slotID)-") }),
+                  let replacement = allRecipes.first(where: { $0.id == change.nextID }),
+                  replacement.isPlanEligible,
+                  incompatibility(next.slots[index], recipe: replacement) == nil else {
+                replanPreview = makePreview(title: "План изменился", explanation: "Предложение больше не подходит текущему плану.",
+                                            changes: [], emptyMessage: "Подберите меню заново; ничего не было изменено.")
+                return
+            }
+            next.slots[index].recipeID = change.nextID
+        }
+        guard !preview.changes.isEmpty else { replanPreview = nil; return }
         lastAppliedChanges = preview.changes
         lastAppliedAvoid = nil
-        if let avoid = preview.pendingAvoid, !preview.changes.isEmpty {
-            var all = state.avoidedRecipesBySlot ?? [:]
+        if let avoid = preview.pendingAvoid {
+            var all = next.avoidedRecipesBySlot ?? [:]
             if !all[avoid.key, default: []].contains(avoid.recipeID) {
                 all[avoid.key, default: []].insert(avoid.recipeID)
-                state.avoidedRecipesBySlot = all
+                next.avoidedRecipesBySlot = all
                 lastAppliedAvoid = avoid
             }
         }
-        canUndoReplan = !preview.changes.isEmpty
+        state = next
+        undoRevision = stateRevision
+        undoCatalogRevision = catalogRevision
+        canUndoReplan = true
         replanPreview = nil
     }
     func undoReplan() {
+        guard undoRevision == stateRevision, undoCatalogRevision == catalogRevision else {
+            lastAppliedChanges = []
+            lastAppliedAvoid = nil
+            undoRevision = nil
+            undoCatalogRevision = nil
+            canUndoReplan = false
+            return
+        }
+        var next = state
         for change in lastAppliedChanges {
-            if let index = state.slots.firstIndex(where: { $0.id == change.slotID && $0.recipeID == change.nextID }) {
-                state.slots[index].recipeID = change.previousID
-            }
+            guard let index = next.slots.firstIndex(where: { $0.id == change.slotID && $0.recipeID == change.nextID }) else { return }
+            next.slots[index].recipeID = change.previousID
         }
-        lastAppliedChanges = []
         if let avoid = lastAppliedAvoid {
-            state.avoidedRecipesBySlot?[avoid.key]?.remove(avoid.recipeID)
+            next.avoidedRecipesBySlot?[avoid.key]?.remove(avoid.recipeID)
         }
+        state = next
+        lastAppliedChanges = []
         lastAppliedAvoid = nil
+        undoRevision = nil
+        undoCatalogRevision = nil
         canUndoReplan = false
         replanPreview = nil
     }
     func assign(_ recipe: Recipe, to slot: MealSlot) -> String? {
+        guard !isPastWindow(slot), !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) else {
+            return "Нельзя заменить прошедшее или отмеченное съеденным блюдо."
+        }
         if recipe.isUnavailable { return "Этот рецепт сейчас недоступен. Подключите закрытый каталог." }
         if recipe.isPrivate && !recipe.allergensVerified { return "Для этого закрытого рецепта ещё не проверены сведения об аллергенах. Его нельзя добавить в семейное меню." }
+        if !recipe.isPlanEligible { return "Для семейного плана нужно уточнить количество каждого ингредиента." }
         let incompatible = participating(slot).filter { !Set($0.allergies).isDisjoint(with: recipe.allergens) }
         if !incompatible.isEmpty { return "У \(incompatible.map(\.name).joined(separator: ", ")) указано ограничение: \(recipe.allergens.joined(separator: ", ")). Для общей готовки выберите другое блюдо или измените участников." }
         guard let index = state.slots.firstIndex(where: { $0.id == slot.id }) else { return nil }
@@ -505,7 +833,12 @@ struct AvoidedRecipe: Equatable {
     func toggleParticipant(_ id: String, in slot: MealSlot) -> String? {
         guard let index = state.slots.firstIndex(where: { $0.id == slot.id }) else { return nil }
         if recipe(slot).isUnavailable { return "Сначала подключите закрытый каталог: это блюдо сейчас недоступно." }
-        if state.slots[index].memberIDs.contains(id) { state.slots[index].memberIDs.removeAll { $0 == id } }
+        if state.slots[index].memberIDs.contains(id) {
+            guard !state.eatenIDs.contains("\(slot.id)-\(id)") else {
+                return L10n.text("Приём уже отмечен съеденным. Сначала исправьте эту отметку.")
+            }
+            state.slots[index].memberIDs.removeAll { $0 == id }
+        }
         else {
             let person = state.members.first { $0.id == id }
             if let person, !Set(person.allergies).isDisjoint(with: recipe(slot).allergens) {
@@ -535,16 +868,27 @@ struct AvoidedRecipe: Equatable {
     func isDisliked(_ id: String) -> Bool { state.dislikes?.contains("\(state.selectedMemberID)|\(id)") == true }
     func updateMember(_ member: FamilyMember) {
         guard let index = state.members.firstIndex(where: { $0.id == member.id }) else { return }
-        state.members[index] = member
+        var checked = member
+        if let age = checked.ageYears, age < 18 {
+            checked.goal = "Без цели по весу"
+            checked.dailyEnergyTarget = nil
+        }
+        state.members[index] = checked
+    }
+    func updateMealSchedule(_ schedule: MealSchedule) {
+        guard schedule.isValid else { return }
+        state.mealSchedule = schedule
     }
     func addMember(_ name: String) {
         let member = FamilyMember(id: UUID().uuidString, name: name, goal: "Без цели по весу", portion: 1.0, allergies: [])
         state.members.append(member)
     }
     func refreshFamily() async {
-        familyCloudStatus = "Загружаем…"
+        let session = privateSessionRevision
+        familyCloudStatus = L10n.text("Загружаем…")
         do {
             let remoteMembers = try await PrivateRecipeAccess.fetchFamily()
+            guard session == privateSessionRevision, PrivateRecipeAccess.isConfigured else { return }
             let localMembers = Dictionary(uniqueKeysWithValues: state.members.map { ($0.id, $0) })
             let members = remoteMembers.map { remote in
                 var merged = remote
@@ -552,6 +896,7 @@ struct AvoidedRecipe: Equatable {
                     merged.goal = local.goal
                     merged.portion = local.portion
                     merged.allergies = local.allergies
+                    merged.dailyEnergyTarget = local.dailyEnergyTarget
                 }
                 return merged
             }
@@ -576,35 +921,42 @@ struct AvoidedRecipe: Equatable {
             let validIDs = Set(state.members.map(\.id))
             for index in state.slots.indices {
                 state.slots[index].memberIDs.removeAll { !validIDs.contains($0) }
-                if state.slots[index].memberIDs.isEmpty {
-                    state.slots[index].memberIDs = members.map(\.id)
-                }
             }
             if !validIDs.contains(state.selectedMemberID) { state.selectedMemberID = members[0].id }
-            familyCloudStatus = "Имена и возраст обновлены с Hetzner · настройки остаются на этом iPhone"
+            familyCloudStatus = L10n.text("Имена и возраст обновлены с Hetzner · настройки остаются на этом iPhone")
         } catch {
-            familyCloudStatus = "Не удалось обновить: \(error.localizedDescription). Локальные данные сохранены."
+            guard session == privateSessionRevision else { return }
+            familyCloudStatus = L10n.format("Не удалось обновить: %@. Локальные данные сохранены.", error.localizedDescription)
         }
     }
     func refreshPrivateRecipes() async {
-        privateCatalogStatus = "Загружаем…"
+        let session = privateSessionRevision
+        privateCatalogStatus = L10n.text("Загружаем…")
         do {
-            privateRecipes = try await PrivateRecipeAccess.fetch()
-            privateCatalogStatus = "Загружено закрытых рецептов: \(privateRecipes.count)"
+            let recipes = try await PrivateRecipeAccess.fetch()
+            guard session == privateSessionRevision, PrivateRecipeAccess.isConfigured else { return }
+            privateRecipes = recipes
+            catalogRevision += 1
+            privateCatalogStatus = L10n.format("Загружено закрытых рецептов: %d", privateRecipes.count)
         } catch {
+            guard session == privateSessionRevision else { return }
             if case PrivateCatalogError.unauthorized = error {
                 PrivateRecipeAccess.discardCached()
                 privateRecipes = []
+                catalogRevision += 1
             }
             privateCatalogStatus = privateRecipes.isEmpty
                 ? error.localizedDescription
-                : "Нет связи: показаны \(privateRecipes.count) сохранённых закрытых рецептов. \(error.localizedDescription)"
+                : L10n.format("Нет связи: показаны %d сохранённых закрытых рецептов. %@",
+                              privateRecipes.count, error.localizedDescription)
         }
     }
     func connectPrivateCatalog(url: String, token: String) async {
         do {
             try PrivateRecipeAccess.save(url: url, token: token)
+            privateSessionRevision += 1
             privateRecipes = PrivateRecipeAccess.cached()
+            catalogRevision += 1
             await refreshPrivateRecipes()
             await refreshFamily()
         } catch {
@@ -613,10 +965,12 @@ struct AvoidedRecipe: Equatable {
         }
     }
     func disconnectPrivateCatalog() {
+        privateSessionRevision += 1
         PrivateRecipeAccess.clear()
         privateRecipes = []
-        privateCatalogStatus = "Не подключён"
-        familyCloudStatus = "Облако отключено · семья остаётся на этом iPhone"
+        catalogRevision += 1
+        privateCatalogStatus = L10n.text("Не подключён")
+        familyCloudStatus = L10n.text("Облако отключено · семья остаётся на этом iPhone")
     }
     func save() { if let data = try? JSONEncoder().encode(state) { UserDefaults.standard.set(data, forKey: "lad-demo-v3") } }
 }

@@ -44,13 +44,13 @@ enum PrivateCatalogError: LocalizedError {
     case invalidURL, emptyToken, keychainFailure(OSStatus), invalidResponse, unauthorized, serverError, configurationChanged
     var errorDescription: String? {
         switch self {
-        case .invalidURL: "Нужен адрес HTTPS-сервера."
-        case .emptyToken: "Введите личный ключ доступа."
-        case .keychainFailure(let status): "Не удалось сохранить ключ на устройстве (\(status))."
-        case .invalidResponse: "Сервер вернул неподходящий каталог."
-        case .unauthorized: "Ключ не принят сервером."
-        case .serverError: "Закрытый каталог сейчас недоступен."
-        case .configurationChanged: "Подключение изменилось во время загрузки. Обновите каталог."
+        case .invalidURL: L10n.text("Нужен адрес HTTPS-сервера.")
+        case .emptyToken: L10n.text("Введите личный ключ доступа.")
+        case .keychainFailure(let status): L10n.format("Не удалось сохранить ключ на устройстве (%d).", status)
+        case .invalidResponse: L10n.text("Сервер вернул неподходящий каталог.")
+        case .unauthorized: L10n.text("Ключ не принят сервером.")
+        case .serverError: L10n.text("Закрытый каталог сейчас недоступен.")
+        case .configurationChanged: L10n.text("Подключение изменилось во время загрузки. Обновите каталог.")
         }
     }
 }
@@ -165,15 +165,19 @@ enum PrivateRecipeAccess {
         try? FileManager.default.removeItem(at: cacheURL)
     }
 
-    private static func decodeRecipes(_ data: Data) throws -> [Recipe] {
+    static func decodeRecipes(_ data: Data) throws -> [Recipe] {
         guard let catalog = try? JSONDecoder().decode(PrivateCatalogResponse.self, from: data) else { throw PrivateCatalogError.invalidResponse }
         let recipes = catalog.recipes.compactMap { $0.recipe() }
-        guard recipes.count == catalog.recipes.count else { throw PrivateCatalogError.invalidResponse }
+        guard recipes.count == catalog.recipes.count,
+              Set(recipes.map(\.id)).count == recipes.count else { throw PrivateCatalogError.invalidResponse }
         return recipes
     }
 
     static func fetchFamily() async throws -> [FamilyMember] {
+        let requestedURL = savedURL
+        let requestedToken = token()
         let data = try await request(path: "/v1/family", maxBytes: 50_000)
+        guard savedURL == requestedURL, token() == requestedToken else { throw PrivateCatalogError.configurationChanged }
         guard let profile = try? JSONDecoder().decode(FamilyCloudResponse.self, from: data),
               (1...12).contains(profile.members.count),
               Set(profile.members.map(\.id)).count == profile.members.count,
@@ -189,7 +193,10 @@ enum PrivateRecipeAccess {
 
     static func fetchImage(id: String) async throws -> UIImage {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil else { throw PrivateCatalogError.invalidURL }
+        let requestedURL = savedURL
+        let requestedToken = token()
         let data = try await request(path: "/v1/recipe-images/\(id)", maxBytes: 1_500_000, accept: "image/jpeg")
+        guard savedURL == requestedURL, token() == requestedToken else { throw PrivateCatalogError.configurationChanged }
         guard data.starts(with: [0xff, 0xd8, 0xff]), let image = UIImage(data: data) else { throw PrivateCatalogError.invalidResponse }
         return image
     }

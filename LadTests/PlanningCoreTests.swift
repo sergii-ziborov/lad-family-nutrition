@@ -14,6 +14,7 @@ final class PlanningCoreTests: XCTestCase {
     func testDislikeIsPersonalPersistsAcrossWeekAndExcludesRecipeFromReplan() throws {
         let store = LadStore()
         store.state = .initial()
+        store.refreshClock(store.state.startDate)
         let breakfast = store.slot(0, 0).recipeID
         XCTAssertTrue(store.isFavorite("salmon"))
         store.toggleDislike("salmon")
@@ -37,6 +38,7 @@ final class PlanningCoreTests: XCTestCase {
     func testNotTodayOnlyAppliesAfterConfirmationAndUndoRestores() throws {
         let store = LadStore()
         store.state = .initial()
+        store.refreshClock(store.state.startDate)
         let slot = store.slot(0, 2)
         store.proposeNotToday(slot)
         let preview = try XCTUnwrap(store.replanPreview)
@@ -58,6 +60,7 @@ final class PlanningCoreTests: XCTestCase {
     func testNotTodayDoesNotReplaceEatenMeal() throws {
         let store = LadStore()
         store.state = .initial()
+        store.refreshClock(store.state.startDate)
         let slot = store.slot(0, 1)
         store.toggleEaten(slot)
         store.proposeNotToday(slot)
@@ -68,6 +71,7 @@ final class PlanningCoreTests: XCTestCase {
     func testSharedMealAvoidsRecipesDislikedByAnotherParticipant() throws {
         let store = LadStore()
         store.state = .initial()
+        store.refreshClock(store.state.startDate)
         store.state.dislikes = Set(Recipe.all.filter { $0.mealKinds.contains(2) && $0.id != "lentil-stew" }
             .map { "igor|\($0.id)" })
         store.proposeNotToday(store.slot(0, 2))
@@ -91,9 +95,19 @@ final class PlanningCoreTests: XCTestCase {
         let suggestions = PlanningCore.ingredientSuggestions(recipes: Recipe.all, pantry: [], query: "помидор")
         XCTAssertEqual(suggestions.map(\.name), ["Томаты"])
         XCTAssertTrue(ProductNames.matches("Томаты", query: "помид"))
+        XCTAssertTrue(ProductNames.matches("Томаты", query: "tomatoes"))
         XCTAssertTrue(ProductNames.matches("Томаты черри", query: "помидоры черри"))
         XCTAssertTrue(ProductNames.matches("Сушёный чеснок", query: "сухой чеснок"))
         XCTAssertFalse(ProductNames.matches("Томатная паста", query: "помидор"))
+    }
+
+    func testEnglishAndRussianResourcesAreBundled() throws {
+        let englishPath = try XCTUnwrap(Bundle.main.path(forResource: "en", ofType: "lproj"))
+        let english = try XCTUnwrap(Bundle(path: englishPath))
+        XCTAssertEqual(english.localizedString(forKey: "Неделя", value: nil, table: "Localizable"), "Week")
+        XCTAssertEqual(english.localizedString(forKey: "Томаты", value: nil, table: "Localizable"), "Tomatoes")
+        XCTAssertNotNil(Bundle.main.path(forResource: "ru", ofType: "lproj"))
+        XCTAssertNotNil(Bundle.main.url(forResource: "PrivacyInfo", withExtension: "xcprivacy"))
     }
 
     func testSynonymousPantryItemCoversRecipeAndReducesShopping() {
@@ -118,7 +132,9 @@ final class PlanningCoreTests: XCTestCase {
         let members = [FamilyMember(id: "adult", name: "Тест", goal: "", portion: 1, allergies: [])]
         let pantry = [PantryItem(name: "Помидор", quantity: 50, unit: "г", category: "Овощи и зелень")]
 
-        let needs = PlanningCore.shoppingNeeds(slots: slots, members: members, recipes: recipes, pantry: pantry)
+        let start = Calendar.current.startOfDay(for: .now)
+        let needs = PlanningCore.shoppingNeeds(slots: slots, members: members, recipes: recipes, pantry: pantry,
+                                               startDate: start, now: start)
         XCTAssertEqual(needs.count, 1)
         XCTAssertEqual(needs.first?.required, 200)
         XCTAssertEqual(needs.first?.missing, 150)
@@ -136,7 +152,12 @@ final class PlanningCoreTests: XCTestCase {
 
         XCTAssertEqual(readiness.covered, 0)
         XCTAssertEqual(readiness.uncertain, ["Укроп"])
-        XCTAssertTrue(PlanningCore.shoppingNeeds(slots: slots, members: members, recipes: [recipe], pantry: pantry).isEmpty)
+        let start = Calendar.current.startOfDay(for: .now)
+        let unresolved = PlanningCore.shoppingNeeds(slots: slots, members: members, recipes: [recipe], pantry: pantry,
+                                                     startDate: start, now: start)
+        XCTAssertEqual(unresolved.count, 1)
+        XCTAssertTrue(unresolved[0].amountUnknown)
+        XCTAssertEqual(unresolved[0].required, 0)
     }
 
     func testEveryPublicRecipeHasABundledPhoto() {
@@ -152,7 +173,9 @@ final class PlanningCoreTests: XCTestCase {
         let members = [FamilyMember(id: "adult", name: "Тест", goal: "Баланс", portion: 1, allergies: [])]
         let pantry = [PantryItem(name: "Картофель", quantity: 100, unit: "г", category: "Овощи и зелень")]
 
-        let needs = PlanningCore.shoppingNeeds(slots: slots, members: members, recipes: [recipe], pantry: pantry)
+        let start = Calendar.current.startOfDay(for: .now)
+        let needs = PlanningCore.shoppingNeeds(slots: slots, members: members, recipes: [recipe], pantry: pantry,
+                                               startDate: start, now: start)
         let potato = needs.first { $0.name == "Картофель" }!
         XCTAssertEqual(potato.required, 180)
         XCTAssertEqual(potato.available, 100)
@@ -229,5 +252,234 @@ final class PlanningCoreTests: XCTestCase {
         let recipe = try XCTUnwrap(draft.recipe())
         XCTAssertEqual(recipe.ingredients.first?.name, "Укроп")
         XCTAssertNil(recipe.ingredients.first?.amount)
+    }
+
+    func testDuplicatePrivateRecipeIDsRejectEntireSnapshot() {
+        let recipe = #"{"id":"same","title":"Test","caption":"","cuisine":"Home","minutes":10,"allergens":[],"allergensVerified":true,"ingredients":[{"name":"Apple","amount":1,"unit":"pcs","category":"Fruit"}],"steps":["Cook"]}"#
+        let data = Data("{\"recipes\":[\(recipe),\(recipe)]}".utf8)
+        XCTAssertThrowsError(try PrivateRecipeAccess.decodeRecipes(data))
+    }
+
+    func testUnverifiedDraftNeverClaimsReadyWhileNeedsRemainVisible() throws {
+        let recipe = Recipe(id: "private:draft", title: "Draft", caption: "", image: "", cuisine: "",
+                            minutes: 10, kcal: nil, protein: nil, allergens: [], ingredients: [
+                                Ingredient(name: "Томаты", amount: 100, unit: "г", category: "Овощи")
+                            ], steps: ["Cook"], allergensVerified: false)
+        let day = Calendar.current.startOfDay(for: .now)
+        let slot = MealSlot(id: "draft", day: 0, kind: 1, recipeID: recipe.id, memberIDs: ["adult"])
+        let person = FamilyMember(id: "adult", name: "Test", goal: "", portion: 1, allergies: [])
+        let pantry = [PantryItem(name: "Томаты", quantity: 100, unit: "г", category: "Овощи")]
+        let result = PlanningCore.resolvePlan(slots: [slot], members: [person], recipes: [recipe], pantry: pantry,
+                                              startDate: day, now: day)
+        XCTAssertEqual(result.slots[slot.id]?.availability, .needsReview)
+        XCTAssertFalse(try XCTUnwrap(result.slots[slot.id]).isReady)
+        XCTAssertEqual(result.shoppingNeeds.first?.required, 100)
+    }
+
+    func testOneStockCannotMakeTwoMealsReady() throws {
+        let recipe = Recipe(id: "test-tomato", title: "Томаты", caption: "", image: "", cuisine: "", minutes: 10,
+                            kcal: nil, protein: nil, allergens: [], ingredients: [
+                                Ingredient(name: "Томаты", amount: 100, unit: "г", category: "Овощи")
+                            ], steps: ["Приготовить"])
+        let slots = [MealSlot(id: "0-1", day: 0, kind: 1, recipeID: recipe.id, memberIDs: ["adult"]),
+                     MealSlot(id: "1-1", day: 1, kind: 1, recipeID: recipe.id, memberIDs: ["adult"])]
+        let members = [FamilyMember(id: "adult", name: "Тест", goal: "", portion: 1, allergies: [])]
+        let pantry = [PantryItem(name: "Помидоры", quantity: 100, unit: "г", category: "Овощи")]
+        let day = Calendar.current.startOfDay(for: .now)
+        let result = PlanningCore.resolvePlan(slots: slots, members: members, recipes: [recipe], pantry: pantry,
+                                              startDate: day, now: day)
+
+        XCTAssertTrue(try XCTUnwrap(result.slots["0-1"]).isReady)
+        XCTAssertFalse(try XCTUnwrap(result.slots["1-1"]).isReady)
+        XCTAssertEqual(result.slots["1-1"]?.ingredients.first?.shortage, 100)
+        XCTAssertEqual(result.shoppingNeeds.first?.required, 200)
+        XCTAssertEqual(result.shoppingNeeds.first?.available, 100)
+        XCTAssertEqual(result.shoppingNeeds.first?.missing, 100)
+        let extra = PlanningCore.readiness(recipe, portions: 1, pantry: result.freePantry, now: day)
+        XCTAssertEqual(extra.missing, ["Томаты"])
+    }
+
+    func testPartialStockAndFutureExpiryStayVisible() throws {
+        let recipe = Recipe(id: "test-milk", title: "Молоко", caption: "", image: "", cuisine: "", minutes: 10,
+                            kcal: nil, protein: nil, allergens: [], ingredients: [
+                                Ingredient(name: "Молоко", amount: 200, unit: "мл", category: "Молочные продукты")
+                            ], steps: ["Приготовить"])
+        let members = [FamilyMember(id: "adult", name: "Тест", goal: "", portion: 1, allergies: [])]
+        let start = Calendar.current.startOfDay(for: .now)
+        let expiringToday = PantryItem(name: "Молоко", quantity: 80, unit: "мл", category: "Молочные продукты", expiresOn: start)
+        let today = [MealSlot(id: "0-0", day: 0, kind: 0, recipeID: recipe.id, memberIDs: ["adult"])]
+        let tomorrow = [MealSlot(id: "1-0", day: 1, kind: 0, recipeID: recipe.id, memberIDs: ["adult"])]
+        let todayResult = PlanningCore.resolvePlan(slots: today, members: members, recipes: [recipe],
+                                                   pantry: [expiringToday], startDate: start, now: start)
+        let tomorrowResult = PlanningCore.resolvePlan(slots: tomorrow, members: members, recipes: [recipe],
+                                                      pantry: [expiringToday], startDate: start, now: start)
+        XCTAssertEqual(todayResult.slots["0-0"]?.ingredients.first?.shortage, 120)
+        XCTAssertEqual(tomorrowResult.slots["1-0"]?.ingredients.first?.shortage, 200)
+    }
+
+    func testMealSuggestionUsesLocalClockWithoutErasingBreakfast() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "Asia/Jerusalem"))
+        let day = DateComponents(calendar: calendar, timeZone: calendar.timeZone,
+                                 year: 2026, month: 9, day: 23, hour: 0).date!
+        let afternoon = calendar.date(byAdding: .hour, value: 16, to: day)!
+        let evening = calendar.date(byAdding: .hour, value: 23, to: day)!
+        XCTAssertEqual(MealTiming.suggestedKind(on: 0, currentDay: 0, now: afternoon,
+                                                 schedule: .standard, calendar: calendar), 2)
+        XCTAssertTrue(MealTiming.isPastWindow(day: 0, kind: 0, currentDay: 0, now: afternoon,
+                                             schedule: .standard, calendar: calendar))
+        XCTAssertNil(MealTiming.suggestedKind(on: 0, currentDay: 0, now: evening,
+                                              schedule: .standard, calendar: calendar))
+        XCTAssertEqual(MealTiming.suggestedKind(on: 1, currentDay: 0, now: evening,
+                                                 schedule: .standard, calendar: calendar), 0)
+    }
+
+    func testPassedBreakfastRemainsPlannedUntilExplicitlySkipped() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "Asia/Jerusalem"))
+        let day = DateComponents(calendar: calendar, timeZone: calendar.timeZone,
+                                 year: 2026, month: 9, day: 23, hour: 0).date!
+        let noon = calendar.date(byAdding: .hour, value: 12, to: day)!
+        let recipe = Recipe(id: "test-egg", title: "Egg", caption: "", image: "", cuisine: "", minutes: 10,
+                            kcal: nil, protein: nil, allergens: [], ingredients: [
+                                Ingredient(name: "Яйцо", amount: 2, unit: "шт.", category: "Молочные продукты")
+                            ], steps: ["Cook"])
+        let members = [FamilyMember(id: "adult", name: "Test", goal: "", portion: 1, allergies: [])]
+        let slots = [MealSlot(id: "breakfast", day: 0, kind: 0, recipeID: recipe.id, memberIDs: ["adult"]),
+                     MealSlot(id: "lunch", day: 0, kind: 1, recipeID: recipe.id, memberIDs: ["adult"])]
+        let result = PlanningCore.resolvePlan(slots: slots, members: members, recipes: [recipe], pantry: [],
+                                              startDate: day, now: noon, calendar: calendar)
+        XCTAssertEqual(result.slots["breakfast"]?.availability, .past)
+        XCTAssertEqual(result.slots["lunch"]?.availability, .active)
+        XCTAssertEqual(result.shoppingNeeds.first?.required, 4)
+        XCTAssertEqual(result.shoppingNeeds.first?.sourceSlots, ["breakfast", "lunch"])
+        let skipped = PlanningCore.resolvePlan(slots: slots, members: members, recipes: [recipe], pantry: [],
+                                               startDate: day, now: noon, calendar: calendar,
+                                               skippedIDs: ["breakfast"])
+        XCTAssertEqual(skipped.slots["breakfast"]?.availability, .skipped)
+        XCTAssertEqual(skipped.shoppingNeeds.first?.required, 2)
+        XCTAssertEqual(skipped.shoppingNeeds.first?.sourceSlots, ["lunch"])
+    }
+
+    func testPartlyEatenMealOnlyPlansRemainingParticipants() throws {
+        let day = Calendar.current.startOfDay(for: .now)
+        let recipe = Recipe(id: "eggs-test", title: "Eggs", caption: "", image: "", cuisine: "", minutes: 10,
+                            kcal: nil, protein: nil, allergens: [], ingredients: [
+                                Ingredient(name: "Яйцо", amount: 2, unit: "шт.", category: "Молочные продукты")
+                            ], steps: ["Cook"])
+        let people = [FamilyMember(id: "a", name: "A", goal: "", portion: 1, allergies: []),
+                      FamilyMember(id: "b", name: "B", goal: "", portion: 1.5, allergies: [])]
+        let slot = MealSlot(id: "s", day: 0, kind: 1, recipeID: recipe.id, memberIDs: ["a", "b"])
+        let result = PlanningCore.resolvePlan(slots: [slot], members: people, recipes: [recipe], pantry: [],
+                                              startDate: day, now: day, eatenIDs: ["s-a"])
+        XCTAssertEqual(result.shoppingNeeds.first?.required, 3)
+        XCTAssertEqual(result.slots["s"]?.availability, .active)
+    }
+
+    @MainActor
+    func testPastMealCannotBeReplacedByOldProposalOrManualAssignment() throws {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        let breakfast = store.slot(0, 0)
+        store.proposeNotToday(breakfast)
+        let preview = try XCTUnwrap(store.replanPreview)
+        XCTAssertFalse(preview.changes.isEmpty)
+        let noon = Calendar.current.date(byAdding: .hour, value: 12, to: store.state.startDate)!
+        store.refreshClock(noon)
+        store.applyReplan(preview)
+        XCTAssertEqual(store.slot(0, 0).recipeID, breakfast.recipeID)
+        XCTAssertNotNil(store.assign(Recipe.all.first { $0.id == "oats" }!, to: breakfast))
+    }
+
+    @MainActor
+    func testSkippingPastMealReleasesShoppingAndLoggingItRestoresTheFact() {
+        let store = LadStore()
+        store.state = .initial()
+        let noon = Calendar.current.date(byAdding: .hour, value: 12, to: store.state.startDate)!
+        store.refreshClock(noon)
+        let breakfast = store.slot(0, 0)
+        let before = store.shoppingNeeds.first { ProductNames.canonical($0.name) == ProductNames.canonical("Творог") }?.required ?? 0
+        store.toggleSkipped(breakfast)
+        XCTAssertTrue(store.isSkipped(breakfast))
+        let after = store.shoppingNeeds.first { ProductNames.canonical($0.name) == ProductNames.canonical("Творог") }?.required ?? 0
+        XCTAssertLessThan(after, before)
+        store.toggleEaten(breakfast)
+        XCTAssertFalse(store.isSkipped(breakfast))
+        XCTAssertTrue(store.isEaten(breakfast))
+        XCTAssertNotNil(store.toggleParticipant(store.currentMember.id, in: breakfast))
+        XCTAssertTrue(store.slot(0, 0).memberIDs.contains(store.currentMember.id))
+    }
+
+    func testQuantityEditorParsesItsOwnRussianGrouping() {
+        XCTAssertEqual(QuantityInput.parse("12\u{00A0}000,5", locale: Locale(identifier: "ru_RU")), 12_000.5)
+        XCTAssertEqual(QuantityInput.parse("12,000.5", locale: Locale(identifier: "en_US")), 12_000.5)
+        XCTAssertNil(QuantityInput.parse("12abc", locale: Locale(identifier: "ru_RU")))
+    }
+
+    @MainActor
+    func testChildCannotKeepAdultWeightGoalInDomain() {
+        let store = LadStore()
+        store.state = .initial()
+        var child = store.state.members[2]
+        child.ageYears = 12
+        child.goal = "Снижение"
+        child.dailyEnergyTarget = 1200
+        store.updateMember(child)
+        XCTAssertEqual(store.state.members[2].goal, "Без цели по весу")
+        XCTAssertNil(store.state.members[2].dailyEnergyTarget)
+    }
+
+    func testNewWeekKeepsPreferencesButNotOldMealFactsOrVariableParticipation() {
+        var old = DemoState.initial()
+        old.eatenIDs.insert("0-0-anna")
+        old.slots[0].memberIDs = []
+        old.extraShopping = ["Soap"]
+        let nextDate = Calendar.current.date(byAdding: .day, value: 8, to: old.startDate)!
+        let next = DemoState.nextWeek(after: old, now: nextDate)
+        XCTAssertEqual(Calendar.current.startOfDay(for: next.startDate), Calendar.current.startOfDay(for: nextDate))
+        XCTAssertTrue(next.eatenIDs.isEmpty)
+        XCTAssertEqual(next.extraShopping, ["Soap"])
+        XCTAssertTrue(next.slots.filter { $0.kind == 0 }.allSatisfy(\.memberIDs.isEmpty))
+    }
+
+    @MainActor
+    func testPurchaseCreatesFreshLotAndDuplicateCommandIsIgnored() throws {
+        let store = LadStore()
+        store.state = .initial()
+        let old = PantryItem(name: "Томаты", quantity: nil, unit: "г", category: "Овощи", expiresOn: Date(timeIntervalSince1970: 0))
+        store.savePantryItem(old)
+        let need = ShoppingNeed(id: "томат|г", name: "Томаты", unit: "г", category: "Овощи",
+                                required: 200, available: 0, amountUnknown: true, sourceSlots: ["0-1"])
+        store.addPurchasedToPantry(need, quantity: 150, commandID: "receipt-1")
+        store.addPurchasedToPantry(need, quantity: 150, commandID: "receipt-1")
+        XCTAssertEqual(store.pantry.count, 2)
+        XCTAssertNil(store.pantry.first { $0.id != old.id }?.expiresOn)
+        XCTAssertNil(store.pantry.first { $0.id == old.id }?.quantity)
+        XCTAssertEqual(store.state.purchaseReceipts?.count, 1)
+    }
+
+    @MainActor
+    func testStalePreviewAndLaterFactCannotBeUndoneIntoOldMeal() throws {
+        let store = LadStore()
+        store.state = .initial()
+        let day = Calendar.current.startOfDay(for: .now)
+        store.refreshClock(Calendar.current.date(byAdding: .hour, value: 7, to: day)!)
+        let dinner = store.slot(0, 2)
+        store.proposeNotToday(dinner)
+        let stale = try XCTUnwrap(store.replanPreview)
+        store.state.members[0].allergies.append("Рыба")
+        store.applyReplan(stale)
+        XCTAssertEqual(store.slot(0, 2).recipeID, dinner.recipeID)
+
+        store.state.members[0].allergies = []
+        store.proposeNotToday(dinner)
+        let fresh = try XCTUnwrap(store.replanPreview)
+        guard !fresh.changes.isEmpty else { return XCTFail("Expected a replacement") }
+        store.applyReplan(fresh)
+        let replacement = store.slot(0, 2).recipeID
+        store.toggleEaten(store.slot(0, 2))
+        store.undoReplan()
+        XCTAssertEqual(store.slot(0, 2).recipeID, replacement)
     }
 }

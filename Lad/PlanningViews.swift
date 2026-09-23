@@ -18,15 +18,21 @@ struct WeekView: View {
                 }.padding(17).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Palette.paleSage.opacity(0.7), in: RoundedRectangle(cornerRadius: 18))
                 VStack(alignment: .leading, spacing: 9) {
-                    let dayRecipes = (0..<3).map { store.recipe(store.slot(store.selectedDay, $0)) }
+                    let dayRecipes = (0..<3).compactMap { kind -> Recipe? in
+                        let slot = store.slot(store.selectedDay, kind)
+                        return slot.memberIDs.contains(store.currentMember.id) && !store.isSkipped(slot)
+                            ? store.recipe(slot) : nil
+                    }
                     let energy = dayRecipes.compactMap(\.kcal).reduce(0) { $0 + Int(Double($1) * store.currentMember.portion) }
                     let protein = dayRecipes.compactMap(\.protein).reduce(0) { $0 + Int(Double($1) * store.currentMember.portion) }
-                    Text(dayRecipes.allSatisfy { $0.kcal != nil && $0.protein != nil } ?
-                         "План для \(store.currentMember.name): ~\(energy) ккал · белок ~\(protein) г" :
-                         "План для \(store.currentMember.name): нутриенты известны не для всех блюд")
+                    Text(dayRecipes.isEmpty ? L10n.format("В этот день %@ не участвует в плане", store.currentMember.name) :
+                         dayRecipes.allSatisfy { $0.kcal != nil && $0.protein != nil } ?
+                         L10n.format("План для %@: ~%d ккал · белок ~%d г", store.currentMember.name, energy, protein) :
+                         L10n.format("План для %@: нутриенты известны не для всех блюд", store.currentMember.name))
                         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
-                    if let target = store.currentMember.dailyEnergyTarget, dayRecipes.allSatisfy({ $0.kcal != nil }), (store.currentMember.ageYears ?? 0) >= 18 {
-                        Text("Ручной ориентир: \(target) ккал/день · разница \(energy - target) ккал")
+                    if let target = store.currentMember.dailyEnergyTarget, !dayRecipes.isEmpty,
+                       dayRecipes.allSatisfy({ $0.kcal != nil }), (store.currentMember.ageYears ?? 0) >= 18 {
+                        Text(L10n.format("Ручной ориентир: %d ккал/день · разница %d ккал", target, energy - target))
                             .font(.system(size: 12)).foregroundStyle(Palette.muted)
                     }
                     Text("Калории и белок демо-блюд приблизительные. Для жиров, углеводов и микронутриентов пока нет проверенных исходных данных — неизвестно не означает ноль.")
@@ -36,8 +42,15 @@ struct WeekView: View {
                         Spacer()
                         if store.canUndoReplan { Button("Отменить подбор") { store.undoReplan() } }
                     }.font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
+                    Button("Подобрать оставшуюся неделю с учётом запасов") { store.proposeWeekMenu() }
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
                 }.padding(16).background(.white, in: RoundedRectangle(cornerRadius: 18))
-                SectionHeading(title: store.dateLabel(store.selectedDay).capitalized, trailing: "3 ПРИЁМА ПИЩИ")
+                SectionHeading(title: store.dateLabel(store.selectedDay).capitalized,
+                               trailing: L10n.format("%d ПРИЁМА ПИЩИ",
+                                                     (0..<3).filter {
+                                                         let slot = store.slot(store.selectedDay, $0)
+                                                         return !slot.memberIDs.isEmpty && !store.isSkipped(slot)
+                                                     }.count))
                 ForEach(0..<3, id: \.self) { kind in
                     let slot = store.slot(store.selectedDay, kind)
                     let recipe = store.recipe(slot)
@@ -47,12 +60,13 @@ struct WeekView: View {
                                 RecipePicture(recipe: recipe).frame(width: 94, height: 94).clipped().clipShape(RoundedRectangle(cornerRadius: 15))
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text(store.kinds[kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.4).foregroundStyle(Palette.terracotta)
-                                    Text(recipe.title).font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
-                                    Text("\(recipe.minutes) мин · \(store.participating(slot).count) за столом").font(.system(size: 12)).foregroundStyle(Palette.muted)
-                                    let match = store.readiness(recipe, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
-                                    Text(match.missing.isEmpty && match.uncertain.isEmpty ? "Продукты есть дома" : "Не хватает: \((match.missing + match.uncertain).joined(separator: ", "))")
-                                        .font(.system(size: 11)).foregroundStyle(match.missing.isEmpty && match.uncertain.isEmpty ? Palette.sage : Palette.terracotta)
-                                        .lineLimit(2)
+                                    Text(L10n.text(recipe.title)).font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
+                                    Text(L10n.format("%d мин · %d за столом", recipe.minutes, store.participating(slot).count))
+                                        .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                    Text(store.availabilityTitle(for: slot))
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundStyle(store.requirements(for: slot)?.isReady == true ? Palette.sage : Palette.terracotta)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                                 Spacer(minLength: 0)
                                 Image(systemName: "chevron.right")
@@ -61,16 +75,33 @@ struct WeekView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                         }.buttonStyle(.plain).accessibilityLabel("Открыть рецепт: \(recipe.title)")
+                        ForEach(Array(store.availabilityDetails(for: slot).prefix(2)), id: \.self) { line in
+                            Text(line).font(.system(size: 11)).foregroundStyle(Palette.muted)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        if store.availabilityDetails(for: slot).count > 2 {
+                            Text("Ещё \(store.availabilityDetails(for: slot).count - 2) позиции — откройте рецепт")
+                                .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                        }
                         Rectangle().fill(Palette.line).frame(height: 1).padding(.vertical, 15)
                         HStack {
                             PersonDots(members: store.participating(slot))
                             Spacer()
                             Button("Изменить блюдо") { editingSlot = slot }
                                 .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                                .disabled(store.isPastWindow(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
                         }
                         Button("Не хочу в этот день — подобрать другое") { store.proposeNotToday(slot) }
                             .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
                             .padding(.top, 11)
+                            .disabled(store.isPastWindow(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
+                        if store.isPastWindow(slot), !slot.memberIDs.isEmpty,
+                           !store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
+                            Button(store.isSkipped(slot) ? "Вернуть в план" : "Пропустить приём") {
+                                store.toggleSkipped(slot)
+                            }.font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
+                                .padding(.top, 11)
+                        }
                         HStack(spacing: 8) {
                             ForEach(store.state.members) { person in
                                 Button { warning = store.toggleParticipant(person.id, in: slot) } label: {
@@ -112,9 +143,12 @@ struct RecipeChooser: View {
     private var candidates: [Recipe] {
         store.allRecipes.filter { $0.mealKinds.contains(slot.kind) }
             .sorted {
-                let left = store.readiness($0, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
-                let right = store.readiness($1, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
-                return left.missing.count + left.uncertain.count < right.missing.count + right.uncertain.count
+                let left = store.requirements(for: $0, replacing: slot)
+                let right = store.requirements(for: $1, replacing: slot)
+                if (left?.isReady == true) != (right?.isReady == true) { return left?.isReady == true }
+                let leftProblems = (left?.shortageCount ?? .max) + (left?.hasUncertainty == true ? 1 : 0)
+                let rightProblems = (right?.shortageCount ?? .max) + (right?.hasUncertainty == true ? 1 : 0)
+                return leftProblems == rightProblems ? $0.title < $1.title : leftProblems < rightProblems
             }
     }
     var body: some View {
@@ -126,11 +160,12 @@ struct RecipeChooser: View {
                             HStack(spacing: 12) {
                                 RecipePicture(recipe: recipe).frame(width: 75, height: 75).clipped().clipShape(RoundedRectangle(cornerRadius: 13))
                                 VStack(alignment: .leading, spacing: 5) {
-                                    Text(recipe.title).font(.system(size: 16, weight: .semibold))
-                                    Text("\(recipe.minutes) мин · \(recipe.cuisine)").font(.system(size: 12)).foregroundStyle(Palette.muted)
-                                    let match = store.readiness(recipe, portions: store.participating(slot).reduce(0) { $0 + $1.portion })
-                                    Text(match.missing.isEmpty && match.uncertain.isEmpty ? "Всё есть дома" : "Не хватает: \((match.missing + match.uncertain).joined(separator: ", "))")
-                                        .font(.system(size: 11)).foregroundStyle(match.missing.isEmpty && match.uncertain.isEmpty ? Palette.sage : Palette.terracotta)
+                                    Text(L10n.text(recipe.title)).font(.system(size: 16, weight: .semibold))
+                                    Text(String(format: L10n.text("%d мин · %@"), recipe.minutes, L10n.text(recipe.cuisine)))
+                                        .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                    let match = store.requirements(for: recipe, replacing: slot)
+                                    Text(store.availabilityTitle(for: recipe, replacing: slot))
+                                        .font(.system(size: 11)).foregroundStyle(match?.isReady == true ? Palette.sage : Palette.terracotta)
                                         .lineLimit(2)
                                 }
                                 Spacer()
@@ -160,10 +195,11 @@ struct RecipesView: View {
     private let filters = ["Все", "Есть дома", "Не хватает", "Любимые", "Закрытые", "Домашняя", "Средиземноморская"]
     private var results: [Recipe] {
         store.allRecipes.filter { recipe in
-            (query.isEmpty || recipe.title.localizedCaseInsensitiveContains(query)) &&
+            (query.isEmpty || recipe.title.localizedCaseInsensitiveContains(query) ||
+             L10n.text(recipe.title).localizedCaseInsensitiveContains(query)) &&
             (filter == "Все" || (filter == "Любимые" ? store.isFavorite(recipe.id) :
                 (filter == "Закрытые" ? recipe.isPrivate :
-                (filter == "Есть дома" ? store.readiness(recipe).missing.isEmpty && store.readiness(recipe).uncertain.isEmpty :
+                (filter == "Есть дома" ? !recipe.ingredients.isEmpty && store.readiness(recipe).missing.isEmpty && store.readiness(recipe).uncertain.isEmpty :
                 (filter == "Не хватает" ? !store.readiness(recipe).missing.isEmpty || !store.readiness(recipe).uncertain.isEmpty : recipe.cuisine == filter)))))
         }
     }
@@ -176,7 +212,7 @@ struct RecipesView: View {
                         Image(systemName: "lock.shield").font(.system(size: 21)).foregroundStyle(Palette.sage)
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Закрытая библиотека").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
-                            Text(store.privateCatalogStatus).font(.system(size: 11)).foregroundStyle(Palette.muted).lineLimit(2)
+                            Text(L10n.text(store.privateCatalogStatus)).font(.system(size: 11)).foregroundStyle(Palette.muted).lineLimit(2)
                         }
                         Spacer()
                         Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
@@ -184,13 +220,13 @@ struct RecipesView: View {
                 }.buttonStyle(.plain)
                 HStack(spacing: 9) {
                     Image(systemName: "magnifyingglass").foregroundStyle(Palette.muted)
-                    TextField("Найти блюдо", text: $query).font(.system(size: 15))
+                    TextField(L10n.text("Найти блюдо"), text: $query).font(.system(size: 15))
                 }.padding(16).background(.white, in: RoundedRectangle(cornerRadius: 15))
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(filters, id: \.self) { name in
                             Button { filter = name } label: {
-                                Text(name).font(.system(size: 13, weight: .medium))
+                                Text(L10n.text(name)).font(.system(size: 13, weight: .medium))
                                     .padding(.horizontal, 15).padding(.vertical, 10)
                                     .background(filter == name ? Palette.sage : .white, in: Capsule())
                                     .foregroundStyle(filter == name ? .white : Palette.ink)
@@ -198,11 +234,14 @@ struct RecipesView: View {
                         }
                     }
                 }.contentMargins(.trailing, 21)
-                SectionHeading(title: "Идеи для первых недель", trailing: "\(results.count) БЛЮДА")
+                SectionHeading(title: "Идеи для первых недель",
+                               trailing: L10n.format("%d БЛЮДА", results.count))
                 Text("Открытые блюда демонстрационные, а закрытый каталог берётся с Hetzner. Состав и пищевая ценность требуют проверки перед использованием как рекомендаций.")
                     .font(.system(size: 12)).foregroundStyle(Palette.muted)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("♥ — нравится; 👎 — не нравится для \(store.currentMember.name). Неподходящие блюда исключаются из нового подбора, а не удаляются из каталога.")
+                Text("Наличие в каталоге показывает свободный остаток после блюд, уже стоящих в плане.")
+                    .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                Text(L10n.format("♥ — нравится; 👎 — не нравится для %@. Неподходящие блюда исключаются из нового подбора, а не удаляются из каталога.", store.currentMember.name))
                     .font(.system(size: 11)).foregroundStyle(Palette.muted)
                 ForEach(Array(results.prefix(visibleCount))) { recipe in
                     ZStack(alignment: .bottomTrailing) {
@@ -210,12 +249,14 @@ struct RecipesView: View {
                             VStack(alignment: .leading, spacing: 0) {
                                 RecipePicture(recipe: recipe).frame(height: 190).frame(maxWidth: .infinity).clipped()
                                 VStack(alignment: .leading, spacing: 6) {
-                                    Text((recipe.isPrivate ? "ЗАКРЫТАЯ · " : "ДЕМО · ") + recipe.cuisine.uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
-                                    Text(recipe.title).font(.system(size: 21, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
-                                    Text(recipe.kcal.map { "\(recipe.minutes) минут · ~\($0) ккал на базовую порцию" } ?? "\(recipe.minutes) минут · калорийность не рассчитана")
+                                    Text((recipe.isPrivate ? L10n.text("ЗАКРЫТАЯ · ") : L10n.text("ДЕМО · ")) + L10n.text(recipe.cuisine).uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
+                                    Text(L10n.text(recipe.title)).font(.system(size: 21, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
+                                    Text(recipe.kcal.map { L10n.format("%d минут · ~%d ккал на базовую порцию", recipe.minutes, $0) } ??
+                                         L10n.format("%d минут · калорийность не рассчитана", recipe.minutes))
                                         .font(.system(size: 12)).foregroundStyle(Palette.muted)
                                     let match = store.readiness(recipe)
-                                    Text(match.missing.isEmpty && match.uncertain.isEmpty ? "Можно приготовить из запасов" : "Не хватает: \((match.missing + match.uncertain).joined(separator: ", "))")
+                                    Text(match.missing.isEmpty && match.uncertain.isEmpty ? L10n.text("Можно приготовить из свободных запасов") :
+                                         L10n.format("Не хватает после плана: %@", (match.missing + match.uncertain).map(L10n.text).joined(separator: ", ")))
                                         .font(.system(size: 11)).foregroundStyle(match.missing.isEmpty && match.uncertain.isEmpty ? Palette.sage : Palette.terracotta)
                                         .lineLimit(2)
                                 }.frame(maxWidth: .infinity, alignment: .leading).padding(16).padding(.trailing, 62)
@@ -261,9 +302,9 @@ struct RecipeDetailView: View {
                 RecipePicture(recipe: recipe).frame(height: 310).frame(maxWidth: .infinity).clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 25))
                 VStack(alignment: .leading, spacing: 9) {
-                    Text(recipe.cuisine.uppercased()).font(.system(size: 11, weight: .bold)).tracking(1.8).foregroundStyle(Palette.terracotta)
-                    Text(recipe.title).font(.system(size: 33, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
-                    Text(recipe.caption).font(.system(size: 15)).foregroundStyle(Palette.muted)
+                    Text(L10n.text(recipe.cuisine).uppercased()).font(.system(size: 11, weight: .bold)).tracking(1.8).foregroundStyle(Palette.terracotta)
+                    Text(L10n.text(recipe.title)).font(.system(size: 33, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
+                    Text(L10n.text(recipe.caption)).font(.system(size: 15)).foregroundStyle(Palette.muted)
                 }
                 HStack(spacing: 18) {
                     Button { store.toggleFavorite(recipe.id) } label: {
@@ -274,11 +315,11 @@ struct RecipeDetailView: View {
                     }
                 }.font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
                 HStack(spacing: 0) {
-                    detailMetric("ВРЕМЯ", "\(recipe.minutes) мин")
+                    detailMetric("ВРЕМЯ", L10n.format("%d мин", recipe.minutes))
                     Spacer()
-                    detailMetric("НА ПОРЦИЮ", recipe.kcal.map { "~\($0) ккал" } ?? "нет данных")
+                    detailMetric("НА ПОРЦИЮ", recipe.kcal.map { L10n.format("~%d ккал", $0) } ?? L10n.text("нет данных"))
                     Spacer()
-                    detailMetric("БЕЛОК", recipe.protein.map { "~\($0) г" } ?? "нет данных")
+                    detailMetric("БЕЛОК", recipe.protein.map { L10n.format("~%d г", $0) } ?? L10n.text("нет данных"))
                 }.padding(19).background(.white, in: RoundedRectangle(cornerRadius: 19))
                 if let slot {
                     VStack(alignment: .leading, spacing: 12) {
@@ -287,7 +328,8 @@ struct RecipeDetailView: View {
                             HStack {
                                 Text(member.name).font(.system(size: 14))
                                 Spacer()
-                                Text(recipe.kcal.map { "\(Int(member.portion * 100))% · ~\(Int(Double($0) * member.portion)) ккал" } ?? "\(Int(member.portion * 100))% · ккал неизвестны")
+                                Text(recipe.kcal.map { L10n.format("%d%% · ~%d ккал", Int(member.portion * 100), Int(Double($0) * member.portion)) } ??
+                                     L10n.format("%d%% · ккал неизвестны", Int(member.portion * 100)))
                                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.sage)
                             }
                         }
@@ -318,7 +360,7 @@ struct RecipeDetailView: View {
                         ForEach(recipe.nutrients.keys.sorted(), id: \.self) { key in
                             if let value = recipe.nutrients[key] {
                                 HStack {
-                                    Text(nutrientLabel(key)).foregroundStyle(Palette.ink)
+                                    Text(L10n.text(nutrientLabel(key))).foregroundStyle(Palette.ink)
                                     Spacer()
                                     Text("\((value.amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(value.unit)")
                                         .foregroundStyle(Palette.sage)
@@ -332,22 +374,22 @@ struct RecipeDetailView: View {
                     .background(.white, in: RoundedRectangle(cornerRadius: 18))
                 VStack(alignment: .leading, spacing: 14) {
                     SectionHeading(title: "Ингредиенты", trailing: slot == nil ? "1 ПОРЦИЯ" : "НА ВСЕХ")
-                    ForEach(recipe.ingredients) { ingredient in
+                    if let slot {
+                        Text(store.availabilityTitle(for: slot))
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(store.requirements(for: slot)?.isReady == true ? Palette.sage : Palette.terracotta)
+                    }
+                    ForEach(Array(recipe.ingredients.enumerated()), id: \.offset) { _, ingredient in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(ingredient.name).font(.system(size: 15))
-                                let stock = PlanningCore.stock(for: ingredient, pantry: store.pantry)
-                                if let amount = ingredient.amount, amount > 0 {
-                                    Text(stock.known >= amount * portions ? "Есть дома" : (stock.uncertain ? "Есть, проверьте количество" : "Нужно докупить"))
-                                        .font(.system(size: 11)).foregroundStyle(stock.known >= amount * portions ? Palette.sage : Palette.terracotta)
-                                } else {
-                                    Text(stock.known > 0 || stock.uncertain ? "Есть дома, количество уточняется" : "Проверьте наличие и количество")
-                                        .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
-                                }
+                                Text(L10n.text(ingredient.name)).font(.system(size: 15))
+                                Text(store.ingredientAvailabilityText(ingredient, in: slot))
+                                    .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer()
                             if let amount = ingredient.amount, amount > 0 {
-                                Text("\((amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(ingredient.unit)")
+                                Text("\((amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))")
                                     .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.sage)
                             } else {
                                 Text("уточнить").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.muted)
@@ -371,8 +413,8 @@ struct RecipeDetailView: View {
     }
     private func detailMetric(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title).font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(Palette.muted)
-            Text(value).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
+            Text(L10n.text(title)).font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(Palette.muted)
+            Text(L10n.text(value)).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
         }
     }
     private func nutrientLabel(_ id: String) -> String {
@@ -392,18 +434,20 @@ struct CookingView: View {
                 Spacer()
                 Button { dismiss() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 27)).foregroundStyle(Palette.muted) }
             }
-            Text(recipe.title).font(.system(size: 15)).foregroundStyle(Palette.muted)
+            Text(L10n.text(recipe.title)).font(.system(size: 15)).foregroundStyle(Palette.muted)
             ProgressView(value: Double(step + 1), total: Double(recipe.steps.count)).tint(Palette.sage)
-            Text("ШАГ \(step + 1) ИЗ \(recipe.steps.count)").font(.system(size: 12, weight: .bold)).tracking(1.7).foregroundStyle(Palette.terracotta)
-            Text(recipe.steps[step]).font(.system(size: 27, weight: .medium, design: .serif)).foregroundStyle(Palette.ink)
+            Text(L10n.format("ШАГ %d ИЗ %d", step + 1, recipe.steps.count))
+                .font(.system(size: 12, weight: .bold)).tracking(1.7).foregroundStyle(Palette.terracotta)
+            Text(L10n.text(recipe.steps[step])).font(.system(size: 27, weight: .medium, design: .serif)).foregroundStyle(Palette.ink)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
-            Text("Ингредиенты рассчитаны на \(portions.formatted(.number.precision(.fractionLength(0...1)))) базовых порций")
+            Text(L10n.format("Ингредиенты рассчитаны на %@ базовых порций",
+                             portions.formatted(.number.precision(.fractionLength(0...1)))))
                 .font(.system(size: 12)).foregroundStyle(Palette.muted)
             Button {
                 if step + 1 < recipe.steps.count { step += 1 } else { dismiss() }
             } label: {
-                Text(step + 1 < recipe.steps.count ? "Следующий шаг" : "Готово")
+                Text(L10n.text(step + 1 < recipe.steps.count ? "Следующий шаг" : "Готово"))
                     .font(.system(size: 16, weight: .semibold)).frame(maxWidth: .infinity).padding(18)
                     .background(Palette.sage, in: RoundedRectangle(cornerRadius: 17)).foregroundStyle(.white)
             }
@@ -438,8 +482,8 @@ struct PrivateCatalogSheet: View {
                             .textInputAutocapitalization(.never).autocorrectionDisabled()
                             .padding(15).background(.white, in: RoundedRectangle(cornerRadius: 13))
                     }
-                    Text(store.privateCatalogStatus).font(.system(size: 12)).foregroundStyle(Palette.muted)
-                    Text(store.familyCloudStatus).font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    Text(L10n.text(store.privateCatalogStatus)).font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    Text(L10n.text(store.familyCloudStatus)).font(.system(size: 12)).foregroundStyle(Palette.muted)
                     Button {
                         busy = true
                         Task {

@@ -5,6 +5,7 @@ struct ShoppingView: View {
     @State private var section = 0
     @State private var search = ""
     @State private var editorItem: PantryItem?
+    @State private var purchaseNeed: ShoppingNeed?
     @State private var manualName = ""
     @State private var showManual = false
     @State private var visibleSuggestionCount = 24
@@ -29,7 +30,7 @@ struct ShoppingView: View {
             }
     }
     private var visibleSuggestions: [Ingredient] { Array(suggestions.prefix(visibleSuggestionCount)) }
-    private var toBuy: [ShoppingNeed] { store.shoppingNeeds.filter { $0.missing > 0.001 } }
+    private var toBuy: [ShoppingNeed] { store.shoppingNeeds.filter { $0.missing > 0.001 || $0.amountUnknown } }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -45,6 +46,7 @@ struct ShoppingView: View {
             .onChange(of: search) { _, _ in visibleSuggestionCount = 24 }
             .onChange(of: store.allRecipes.count) { _, _ in visibleSuggestionCount = 24 }
             .sheet(item: $editorItem) { item in PantryEditor(item: item) }
+            .sheet(item: $purchaseNeed) { need in PurchaseEntrySheet(need: need) }
             .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
             .alert("Добавить вручную", isPresented: $showManual) {
                 TextField("Например, яблоки", text: $manualName)
@@ -70,7 +72,7 @@ struct ShoppingView: View {
                 .background(Palette.paleSage.opacity(0.7), in: RoundedRectangle(cornerRadius: 18))
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass").foregroundStyle(Palette.muted)
-                TextField("Поиск продукта", text: $search)
+                TextField(L10n.text("Поиск продукта"), text: $search)
                     .textInputAutocapitalization(.sentences)
                 Button {
                     editorItem = PantryItem(name: search, quantity: nil, unit: "г", category: "Другое")
@@ -78,13 +80,13 @@ struct ShoppingView: View {
                     .accessibilityLabel("Добавить новый продукт")
             }.padding(13).background(.white, in: RoundedRectangle(cornerRadius: 15))
             if !filteredPantry.isEmpty {
-                SectionHeading(title: "В запасе", trailing: "\(filteredPantry.count) ПОЗ.")
+                SectionHeading(title: "В запасе", trailing: L10n.format("%d ПОЗ.", filteredPantry.count))
                 ForEach(filteredPantry) { item in
                     HStack(spacing: 11) {
                         Image(systemName: item.quantity == 0 ? "minus.circle" : "checkmark.circle.fill")
                             .foregroundStyle(item.quantity == 0 ? Palette.terracotta : Palette.sage)
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(item.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
+                            Text(L10n.text(item.name)).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
                             Text(stockLabel(item)).font(.system(size: 12)).foregroundStyle(Palette.muted)
                         }
                         Spacer(minLength: 4)
@@ -99,11 +101,13 @@ struct ShoppingView: View {
                 }
             }
             if !suggestions.isEmpty {
-                Text("Ингредиенты из \(Recipe.all.count) открытых и \(store.privateRecipes.count) загруженных закрытых рецептов.\(store.privateRecipes.isEmpty ? " Закрытый каталог пока не загружен." : "")")
+                Text(L10n.format("Ингредиенты из %d открытых и %d загруженных закрытых рецептов.%@",
+                                 Recipe.all.count, store.privateRecipes.count,
+                                 store.privateRecipes.isEmpty ? L10n.text(" Закрытый каталог пока не загружен.") : ""))
                     .font(.system(size: 11)).foregroundStyle(Palette.muted)
-                SectionHeading(title: "Добавить из рецептов", trailing: "\(suggestions.count) ПОЗ.")
+                SectionHeading(title: "Добавить из рецептов", trailing: L10n.format("%d ПОЗ.", suggestions.count))
                 ForEach(Array(Set(visibleSuggestions.map(\.category))).sorted(), id: \.self) { category in
-                    Text(category.uppercased())
+                    Text(L10n.text(category).uppercased())
                         .font(.system(size: 11, weight: .bold)).tracking(1.2).foregroundStyle(Palette.muted)
                     ForEach(visibleSuggestions.filter { $0.category == category }) { ingredient in
                         Button {
@@ -111,9 +115,9 @@ struct ShoppingView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "plus.circle").foregroundStyle(Palette.sage)
-                                Text(ingredient.name).foregroundStyle(Palette.ink)
+                                Text(L10n.text(ingredient.name)).foregroundStyle(Palette.ink)
                                 Spacer()
-                                Text(ingredient.unit).foregroundStyle(Palette.muted)
+                                Text(L10n.text(ingredient.unit)).foregroundStyle(Palette.muted)
                             }.font(.system(size: 14)).padding(13).background(.white, in: RoundedRectangle(cornerRadius: 13))
                         }.buttonStyle(.plain)
                     }
@@ -137,7 +141,8 @@ struct ShoppingView: View {
             HStack(spacing: 12) {
                 Image(systemName: "basket.fill").font(.system(size: 24)).foregroundStyle(Palette.sage)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(toBuy.count) продуктов докупить").font(.system(size: 17, weight: .semibold, design: .serif))
+                    Text(L10n.format("%d продуктов докупить", toBuy.count))
+                        .font(.system(size: 17, weight: .semibold, design: .serif))
                     Text("Потребность на неделю минус известный запас дома")
                         .font(.system(size: 12)).foregroundStyle(Palette.muted)
                 }
@@ -174,29 +179,32 @@ struct ShoppingView: View {
                 }
             }
             ForEach(Array(Set(toBuy.map(\.category))).sorted(), id: \.self) { category in
-                SectionHeading(title: category)
+                SectionHeading(title: L10n.text(category))
                 ForEach(toBuy.filter { $0.category == category }) { need in
                     VStack(alignment: .leading, spacing: 7) {
                         HStack(alignment: .top) {
-                            Text(need.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
+                            Text(L10n.text(need.name)).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
                             Spacer()
-                            Text("\(format(need.missing)) \(need.unit)")
+                            Text(need.amountUnknown ? L10n.text("уточнить") : "\(format(need.missing)) \(L10n.text(need.unit))")
                                 .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.sage)
                         }
-                        Text("Нужно \(format(need.required)) · дома \(format(need.available)) \(need.unit)")
-                            .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                        if need.required > 0 {
+                            Text(L10n.format("Известная потребность %@ · выделено из запасов %@ %@",
+                                             format(need.required), format(need.available), L10n.text(need.unit)))
+                                .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                        }
                         if need.amountUnknown {
-                            Label("Есть запас без точного количества или в другой единице — проверьте перед покупкой", systemImage: "questionmark.circle")
+                            Label("Количество рецепта или остатка неизвестно — проверьте перед покупкой", systemImage: "questionmark.circle")
                                 .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
                         }
                         Text(sourceLabel(need)).font(.system(size: 11)).foregroundStyle(Palette.muted)
-                        Button("Куплено → в холодильник") { store.addPurchasedToPantry(need) }
+                        Button("Внести фактическую покупку") { purchaseNeed = need }
                             .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
                     }.padding(15).frame(maxWidth: .infinity, alignment: .leading)
                         .background(.white, in: RoundedRectangle(cornerRadius: 16))
                 }
             }
-            if toBuy.isEmpty { Text("Для текущего меню всё есть дома — или количество запасов ещё не указано.")
+            if toBuy.isEmpty { Text("Нет рассчитанных покупок. Проверьте недоступные блюда и фактические остатки.")
                     .font(.system(size: 13)).foregroundStyle(Palette.muted) }
             Text("Расчёт не учитывает фасовку, пищевые отходы и уже приготовленные блюда. Неизвестный остаток не считается полным запасом.")
                 .font(.system(size: 11)).foregroundStyle(Palette.muted)
@@ -204,8 +212,8 @@ struct ShoppingView: View {
     }
 
     private func stockLabel(_ item: PantryItem) -> String {
-        let quantity = item.quantity.map { "\(format($0)) \(item.unit)" } ?? "количество неизвестно"
-        if let date = item.expiresOn { return "\(quantity) · до \(date.formatted(date: .abbreviated, time: .omitted))" }
+        let quantity = item.quantity.map { "\(format($0)) \(L10n.text(item.unit))" } ?? L10n.text("количество неизвестно")
+        if let date = item.expiresOn { return L10n.format("%@ · до %@", quantity, date.formatted(date: .abbreviated, time: .omitted)) }
         return quantity
     }
     private func sourceLabel(_ need: ShoppingNeed) -> String {
@@ -213,7 +221,8 @@ struct ShoppingView: View {
             guard let slot = store.state.slots.first(where: { $0.id == id }) else { return nil }
             return "\(store.dateLabel(slot.day)), \(store.kinds[slot.kind].lowercased())"
         }
-        return "Для: \(sources.joined(separator: "; "))\(need.sourceSlots.count > 2 ? " и ещё \(need.sourceSlots.count - 2)" : "")"
+        return L10n.format("Для: %@%@", sources.joined(separator: "; "),
+                           need.sourceSlots.count > 2 ? L10n.format(" и ещё %d", need.sourceSlots.count - 2) : "")
     }
     private func format(_ value: Double) -> String { value.formatted(.number.precision(.fractionLength(0...1))) }
 }
@@ -260,14 +269,56 @@ private struct PantryEditor: View {
         item.name = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
         item.unit = item.unit.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !item.name.isEmpty, !item.unit.isEmpty else { validation = "Укажите название и единицу."; return }
-        let amount = quantityText.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: ",", with: ".")
+        let amount = quantityText.trimmingCharacters(in: .whitespacesAndNewlines)
         if !amount.isEmpty {
-            guard let value = Double(amount), value >= 0, value.isFinite else { validation = "Введите неотрицательное количество."; return }
+            guard let value = QuantityInput.parse(amount) else { validation = "Введите неотрицательное количество."; return }
             item.quantity = value
         } else { item.quantity = nil }
         item.expiresOn = hasExpiry ? expiryDate : nil
         store.savePantryItem(item)
         dismiss()
+    }
+}
+
+private struct PurchaseEntrySheet: View {
+    @EnvironmentObject var store: LadStore
+    @Environment(\.dismiss) private var dismiss
+    let need: ShoppingNeed
+    @State private var quantityText = ""
+    @State private var validation = ""
+    @State private var commandID = UUID().uuidString
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Что купили") {
+                    Text(need.name)
+                    TextField("Фактическое количество, \(need.unit)", text: $quantityText)
+                        .keyboardType(.decimalPad)
+                    Text("Запишите количество с упаковки или фактически купленное. Покупка создаст новую партию без унаследованного срока годности.")
+                        .font(.footnote).foregroundStyle(Palette.muted)
+                }
+                if !validation.isEmpty { Text(validation).foregroundStyle(Palette.terracotta) }
+            }
+            .navigationTitle("Покупка")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) { Button("Отмена") { dismiss() } }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Добавить") {
+                        guard let amount = QuantityInput.parse(quantityText), amount > 0 else {
+                            validation = "Укажите положительное количество."
+                            return
+                        }
+                        store.addPurchasedToPantry(need, quantity: amount, commandID: commandID)
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .onAppear {
+            quantityText = need.missing > 0.001
+                ? need.missing.formatted(.number.precision(.fractionLength(0...1))) : ""
+        }
     }
 }
 
