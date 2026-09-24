@@ -395,6 +395,13 @@ struct AvoidedRecipe: Equatable {
             courseCatalogStatus = L10n.format("Загружено программ: %d", courses.count)
         } catch {
             guard session == privateSessionRevision else { return }
+            if case PrivateCatalogError.unauthorized = error {
+                catalogueRecipes = []
+                courses = CourseCatalogAccess.bundledCourses
+                privateRecipes = []
+                privateCatalogStatus = error.localizedDescription
+                catalogRevision += 1
+            }
             courseCatalogStatus = error.localizedDescription
         }
     }

@@ -59,6 +59,7 @@ final class PlanningCoreTests: XCTestCase {
         XCTAssertEqual(CourseCatalogAccess.bundledCourses.count, 2)
         XCTAssertEqual(Recipe.all.count, 9)
         XCTAssertFalse(Recipe.all.first { $0.id == "salmon" }?.remoteImage ?? true)
+        XCTAssertTrue(Recipe.all.allSatisfy { UIImage(named: $0.image) != nil })
         let available = Set(Recipe.all.map(\.id))
         XCTAssertTrue(CourseCatalogAccess.bundledCourses.allSatisfy { course in
             course.recipeIDs.allSatisfy { available.contains($0) }
