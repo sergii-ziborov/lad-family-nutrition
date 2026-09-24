@@ -57,6 +57,7 @@
 "Готовить с радостью" = "Enjoy cooking";
 "Не подключён" = "Not connected";
 "Не подключено" = "Not connected";
+"Демо-каталог офлайн" = "Offline demo catalogue";
 "Найти блюдо" = "Find a dish";
 "Все" = "All";
 "Есть дома" = "At home";
@@ -353,3 +354,30 @@
 "Нарежьте лук и перец, прогрейте в кастрюле." = "Chop the onion and pepper and cook briefly in a pot.";
 "Добавьте томаты, чечевицу и воду." = "Add the tomatoes, lentils and water.";
 "Тушите около 20 минут до мягкости чечевицы." = "Simmer for about 20 minutes, until the lentils are tender.";
+
+/* Course catalogue */
+"Каталог" = "Catalogue";
+"Курсы" = "Courses";
+"ПРОГРАММЫ ПИТАНИЯ" = "MEAL PROGRAMS";
+"Курсы для вашего стола" = "Courses for your table";
+"Курс объединяет блюда и тему: домашняя кухня, кухни мира или индивидуальная программа. Выбранные курсы служат источником будущего меню; уже составленная неделя меняется только после подтверждения." = "A course brings dishes together around a theme, such as home cooking, world cuisines, or a personal program. Selected courses feed future menus; the current week changes only after you confirm.";
+"Каталог программ" = "Program catalogue";
+"Пока нет опубликованных курсов" = "No published courses yet";
+"Подключите каталог или обновите его. Черновики и закрытые блюда без доступа здесь не показываются." = "Connect or refresh the catalogue. Drafts and restricted dishes are not shown without access.";
+"Подобрать блюда из выбранных курсов" = "Plan dishes from selected courses";
+"БЕСПЛАТНО" = "FREE";
+"ПО ДОСТУПУ" = "ACCESS REQUIRED";
+"Блюд в программе: %d" = "Dishes in program: %d";
+"Используется для подбора меню" = "Used for menu planning";
+"БЕСПЛАТНЫЙ КУРС" = "FREE COURSE";
+"КУРС ПО ДОСТУПУ" = "ACCESS-RESTRICTED COURSE";
+"Убрать из подбора меню" = "Remove from menu planning";
+"Добавить в подбор меню" = "Use for menu planning";
+"Блюда программы" = "Program dishes";
+"В курсе пока нет доступных блюд." = "No dishes are available in this course yet.";
+"Программа больше не доступна в текущем каталоге." = "This program is no longer available in the current catalogue.";
+"Адрес каталога" = "Catalogue address";
+"Бесплатные курсы доступны без ключа. Закрытый доступ подключается отдельно в разделе рецептов." = "Free courses need no access key. Connect restricted access separately in Recipes.";
+"Обновить каталог" = "Refresh catalogue";
+"Загружено программ: %d" = "Programs loaded: %d";
+"Не подключено" = "Not connected";

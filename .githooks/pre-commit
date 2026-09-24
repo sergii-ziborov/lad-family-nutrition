@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+git diff --cached --check
+if git diff --cached --name-only --diff-filter=ACMR | grep -E '(^|/)(api|private-assets|Lad-private|internal-[^/]*|\.env[^/]*)(/|$)|(^|/)private-[^/]*\.json$|\.(token|mobileprovision|p12|key)$'; then
+    echo 'Refusing to commit private/server material to the public iOS repository.' >&2
+    exit 1
+fi
+LAD_SIM_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(device["udid"] for group in data["devices"].values() for device in group if "iPhone" in device["name"]))')
+xcodebuild test -project Lad.xcodeproj -scheme Lad -destination "platform=iOS Simulator,id=$LAD_SIM_ID" CODE_SIGNING_ALLOWED=NO -quiet

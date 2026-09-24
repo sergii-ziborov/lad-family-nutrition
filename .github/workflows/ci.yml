@@ -7,8 +7,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test private recipe API
-        run: python3 -m unittest discover -s api -p 'test_*.py' -v
       - name: Build iPhone app for Simulator
         run: xcodebuild -project Lad.xcodeproj -scheme Lad -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build -quiet
       - name: Test pantry and menu logic on Simulator

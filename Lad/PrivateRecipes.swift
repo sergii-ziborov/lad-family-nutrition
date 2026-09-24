@@ -27,7 +27,7 @@ struct PrivateRecipePayload: Codable {
     let nutrients: [String: NutrientValue]?
     let imageId: String?
 
-    func recipe() -> Recipe? {
+    func recipe(privateAccess: Bool = true) -> Recipe? {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil,
               !title.isEmpty, minutes > 0, steps.count > 0 else { return nil }
         guard (kcal.map { $0 >= 0 } ?? true), (protein.map { $0 >= 0 } ?? true),
@@ -36,7 +36,7 @@ struct PrivateRecipePayload: Codable {
               ingredients.allSatisfy({ !$0.name.isEmpty && ($0.amount.map { $0.isFinite && $0 >= 0 } ?? true) && !$0.unit.isEmpty }),
               unquantifiedIngredients?.allSatisfy({ !$0.name.isEmpty && $0.amount == nil && !$0.unit.isEmpty }) ?? true,
               nutrients?.values.allSatisfy({ $0.amount.isFinite && $0.amount >= 0 && $0.coverage.isFinite && (0...1).contains($0.coverage) && !$0.unit.isEmpty && !$0.source.isEmpty }) ?? true else { return nil }
-        return Recipe(id: "private:\(id)", title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:])
+        return Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:])
     }
 }
 
@@ -57,6 +57,7 @@ enum PrivateCatalogError: LocalizedError {
 
 enum PrivateRecipeAccess {
     private static let urlKey = "lad.privateCatalogURL"
+    private(set) static var catalogGeneration = 0
     private static let service = "app.lad.family.private-catalog"
     private static let account = "access-token"
     private static var cacheURL: URL? {
@@ -64,6 +65,7 @@ enum PrivateRecipeAccess {
             .appendingPathComponent("private-recipes-v1.json")
     }
     static var savedURL: String? { UserDefaults.standard.string(forKey: urlKey) }
+    static var catalogToken: String? { isConfigured ? token() : nil }
     static var isConfigured: Bool {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--screenshots") { return false }
@@ -111,12 +113,18 @@ enum PrivateRecipeAccess {
         } else if result != errSecSuccess {
             throw PrivateCatalogError.keychainFailure(result)
         }
-        if changedAccount { removeCached() }
+        if changedAccount {
+            removeCached()
+            catalogGeneration += 1
+        }
         UserDefaults.standard.set(normalized, forKey: urlKey)
+        try CourseCatalogAccess.saveURL(normalized)
     }
 
     static func clear() {
         removeCached()
+        catalogGeneration += 1
+        CourseCatalogAccess.clearCache()
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                                     kSecAttrService as String: service,
                                     kSecAttrAccount as String: account]
@@ -217,24 +225,38 @@ enum PrivateRecipeAccess {
 
 struct RecipePicture: View {
     let recipe: Recipe
-    @State private var privateImage: UIImage?
+    @State private var remoteImage: UIImage?
+    private var imageContext: String {
+        "\(recipe.id)|\(recipe.image)|\(CourseCatalogAccess.savedURL ?? "")|\(PrivateRecipeAccess.catalogGeneration)"
+    }
     var body: some View {
-        Group {
-            if recipe.isPrivate, let privateImage {
-                Image(uiImage: privateImage).resizable().scaledToFill()
-            } else if recipe.image.isEmpty || recipe.isPrivate || recipe.isUnavailable {
-                ZStack {
-                    LinearGradient(colors: [Palette.paleSage, Palette.peach], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    Image(systemName: recipe.isUnavailable ? "lock.slash" : "fork.knife")
-                        .font(.system(size: 38, weight: .ultraLight)).foregroundStyle(Palette.sage)
+        GeometryReader { bounds in
+            Group {
+                if let remoteImage {
+                    Image(uiImage: remoteImage).resizable().scaledToFill()
+                } else if recipe.image.isEmpty || recipe.isPrivate || recipe.isUnavailable || UIImage(named: recipe.image) == nil {
+                    ZStack {
+                        LinearGradient(colors: [Palette.paleSage, Palette.peach], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        Image(systemName: recipe.isUnavailable ? "lock.slash" : "fork.knife")
+                            .font(.system(size: 38, weight: .ultraLight)).foregroundStyle(Palette.sage)
+                    }
+                } else {
+                    Image(recipe.image).resizable().scaledToFill()
                 }
-            } else {
-                Image(recipe.image).resizable().scaledToFill()
             }
+            .frame(width: bounds.size.width, height: bounds.size.height)
+            .clipped()
         }
-        .task(id: recipe.image) {
-            guard recipe.isPrivate, !recipe.image.isEmpty else { return }
-            privateImage = try? await PrivateRecipeAccess.fetchImage(id: recipe.image)
+        .task(id: imageContext) {
+            remoteImage = nil
+            guard !recipe.image.isEmpty else { return }
+            if recipe.isPrivate {
+                let result = try? await PrivateRecipeAccess.fetchImage(id: recipe.image)
+                if !Task.isCancelled { remoteImage = result }
+            } else if UIImage(named: recipe.image) == nil {
+                let result = try? await CourseCatalogAccess.fetchPublicImage(id: recipe.image)
+                if !Task.isCancelled { remoteImage = result }
+            }
         }
     }
 }

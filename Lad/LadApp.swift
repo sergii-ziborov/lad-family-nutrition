@@ -32,7 +32,7 @@ struct AppShell: View {
         TabView(selection: $selected) {
             NavigationStack { TodayView() }.tabItem { Label("Сегодня", systemImage: "sun.max") }.tag(0)
             NavigationStack { WeekView() }.tabItem { Label("Неделя", systemImage: "calendar") }.tag(1)
-            NavigationStack { RecipesView() }.tabItem { Label("Рецепты", systemImage: "book.closed") }.tag(2)
+            NavigationStack { CatalogHubView() }.tabItem { Label("Каталог", systemImage: "books.vertical") }.tag(2)
             NavigationStack { ShoppingView() }.tabItem { Label("Продукты", systemImage: "refrigerator") }.tag(3)
             NavigationStack { FamilyView() }.tabItem { Label("Семья", systemImage: "person.2") }.tag(4)
         }

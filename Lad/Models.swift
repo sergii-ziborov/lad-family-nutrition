@@ -60,60 +60,16 @@ struct Recipe: Identifiable {
 
     static let unavailable = Recipe(id: "unavailable", title: "Закрытый рецепт недоступен", caption: "Подключите каталог, чтобы снова открыть это блюдо.", image: "", cuisine: "Закрытая библиотека", minutes: 0, kcal: nil, protein: nil, allergens: [], ingredients: [], steps: [])
 
-    static let all: [Recipe] = [
-        Recipe(id: "salmon", title: "Лосось с картофелем", caption: "Ужин, который собирает всех", image: "Salmon", cuisine: "Домашняя", minutes: 35, kcal: 520, protein: 38, allergens: ["Рыба", "Молоко"], ingredients: [
-            .init(name: "Лосось", amount: 160, unit: "г", category: "Рыба и мясо"),
-            .init(name: "Картофель", amount: 180, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Брокколи", amount: 120, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Йогурт натуральный", amount: 40, unit: "г", category: "Молочные продукты"),
-            .init(name: "Лимон", amount: 0.25, unit: "шт.", category: "Овощи и зелень")
-        ], steps: ["Разогрейте духовку до 200 °C. Картофель нарежьте дольками и запекайте с маслом 20 минут.", "Добавьте рыбу и брокколи на противень. Запекайте ещё 12–15 минут до готовности рыбы.", "Смешайте йогурт с лимонным соком и зеленью. Подавайте соус отдельно — так каждый соберёт свою тарелку."], mealKinds: [1, 2]),
-        Recipe(id: "pancakes", title: "Сырники с ягодами", caption: "Медленное и доброе утро", image: "Pancakes", cuisine: "Домашняя", minutes: 20, kcal: 340, protein: 22, allergens: ["Молоко", "Яйцо", "Пшеница"], ingredients: [
-            .init(name: "Творог", amount: 150, unit: "г", category: "Молочные продукты"),
-            .init(name: "Яйцо", amount: 0.5, unit: "шт.", category: "Молочные продукты"),
-            .init(name: "Мука", amount: 20, unit: "г", category: "Бакалея"),
-            .init(name: "Ягоды", amount: 70, unit: "г", category: "Овощи и зелень")
-        ], steps: ["Разомните творог вилкой, добавьте яйцо и муку. Смешайте до однородности.", "Сформуйте небольшие сырники. Жарьте на умеренном огне по 3–4 минуты с каждой стороны.", "Подавайте с ягодами. Йогурт можно добавить по вкусу отдельно."], mealKinds: [0]),
-        Recipe(id: "soup", title: "Томатный суп с чечевицей", caption: "Согревает и остаётся на завтра", image: "Soup", cuisine: "Средиземноморская", minutes: 30, kcal: 390, protein: 18, allergens: [], ingredients: [
-            .init(name: "Чечевица красная", amount: 80, unit: "г", category: "Бакалея"),
-            .init(name: "Томаты", amount: 220, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Лук", amount: 65, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Морковь", amount: 70, unit: "г", category: "Овощи и зелень")
-        ], steps: ["Мелко нарежьте лук и морковь. Обжарьте до мягкости.", "Добавьте томаты, промытую чечевицу и воду. Варите около 20 минут.", "Приправьте по вкусу. Для более нежной текстуры частично измельчите блендером."], mealKinds: [1, 2]),
-        Recipe(id: "oats", title: "Овсянка с бананом", caption: "Тёплый завтрак без спешки", image: "Oats", cuisine: "Домашняя", minutes: 12, kcal: 310, protein: 11, allergens: ["Молоко"], ingredients: [
-            .init(name: "Овсяные хлопья", amount: 60, unit: "г", category: "Бакалея"),
-            .init(name: "Молоко", amount: 180, unit: "мл", category: "Молочные продукты"),
-            .init(name: "Банан", amount: 1, unit: "шт.", category: "Овощи и зелень")
-        ], steps: ["Нагрейте молоко и всыпьте овсяные хлопья.", "Варите на слабом огне 5–7 минут, помешивая.", "Добавьте нарезанный банан перед подачей."], mealKinds: [0]),
-        Recipe(id: "eggs", title: "Яйца с томатами и тостом", caption: "Простой завтрак на сковороде", image: "Eggs", cuisine: "Домашняя", minutes: 15, kcal: 330, protein: 17, allergens: ["Яйцо", "Пшеница"], ingredients: [
-            .init(name: "Яйцо", amount: 2, unit: "шт.", category: "Молочные продукты"),
-            .init(name: "Томаты", amount: 120, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Хлеб", amount: 50, unit: "г", category: "Бакалея")
-        ], steps: ["Нарежьте томаты и прогрейте их на сковороде.", "Добавьте яйца и готовьте до желаемой степени прожарки.", "Подавайте с подсушенным хлебом."], mealKinds: [0]),
-        Recipe(id: "chicken-buckwheat", title: "Курица с гречкой и огурцом", caption: "Сытный обед из простых продуктов", image: "ChickenBuckwheat", cuisine: "Домашняя", minutes: 30, kcal: 480, protein: 36, allergens: [], ingredients: [
-            .init(name: "Куриное филе", amount: 160, unit: "г", category: "Рыба и мясо"),
-            .init(name: "Гречка", amount: 70, unit: "г", category: "Бакалея"),
-            .init(name: "Огурец", amount: 120, unit: "г", category: "Овощи и зелень")
-        ], steps: ["Промойте гречку и сварите до готовности.", "Нарежьте куриное филе и полностью прожарьте его.", "Подавайте с нарезанным огурцом."], mealKinds: [1, 2]),
-        Recipe(id: "vegetable-pasta", title: "Паста с томатами и кабачком", caption: "Овощной обед для общего стола", image: "VegetablePasta", cuisine: "Средиземноморская", minutes: 25, kcal: 450, protein: 15, allergens: ["Пшеница", "Молоко"], ingredients: [
-            .init(name: "Макароны", amount: 90, unit: "г", category: "Бакалея"),
-            .init(name: "Томаты", amount: 160, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Кабачок", amount: 120, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Сыр", amount: 25, unit: "г", category: "Молочные продукты")
-        ], steps: ["Сварите макароны согласно упаковке.", "Нарежьте и потушите томаты с кабачком.", "Соедините с пастой, посыпьте сыром."], mealKinds: [1, 2]),
-        Recipe(id: "turkey-rice", title: "Индейка с рисом и овощами", caption: "Спокойный семейный ужин", image: "TurkeyRice", cuisine: "Домашняя", minutes: 30, kcal: 470, protein: 34, allergens: [], ingredients: [
-            .init(name: "Филе индейки", amount: 160, unit: "г", category: "Рыба и мясо"),
-            .init(name: "Рис", amount: 70, unit: "г", category: "Бакалея"),
-            .init(name: "Морковь", amount: 90, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Кабачок", amount: 100, unit: "г", category: "Овощи и зелень")
-        ], steps: ["Сварите рис до готовности.", "Нарежьте индейку и овощи.", "Полностью приготовьте индейку с овощами на сковороде и подавайте с рисом."], mealKinds: [1, 2]),
-        Recipe(id: "lentil-stew", title: "Чечевица с овощами", caption: "Ужин из одной кастрюли", image: "LentilStew", cuisine: "Средиземноморская", minutes: 28, kcal: 400, protein: 19, allergens: [], ingredients: [
-            .init(name: "Чечевица красная", amount: 85, unit: "г", category: "Бакалея"),
-            .init(name: "Томаты", amount: 170, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Перец сладкий", amount: 110, unit: "г", category: "Овощи и зелень"),
-            .init(name: "Лук", amount: 60, unit: "г", category: "Овощи и зелень")
-        ], steps: ["Нарежьте лук и перец, прогрейте в кастрюле.", "Добавьте томаты, чечевицу и воду.", "Тушите около 20 минут до мягкости чечевицы."], mealKinds: [1, 2])
-    ]
+    private struct PublicDemoBundle: Decodable { let recipes: [PrivateRecipePayload] }
+
+    static let all: [Recipe] = {
+        guard let url = Bundle.main.url(forResource: "public-recipes", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let bundle = try? JSONDecoder().decode(PublicDemoBundle.self, from: data) else { return [] }
+        let recipes = bundle.recipes.compactMap { $0.recipe(privateAccess: false) }
+        guard recipes.count == bundle.recipes.count, Set(recipes.map(\.id)).count == recipes.count else { return [] }
+        return recipes
+    }()
 }
 
 struct FamilyMember: Identifiable, Codable {
@@ -178,6 +134,7 @@ struct DemoState: Codable {
     var supplementsByMember: [String: [String]]
     var takenSupplements: Set<String>
     var skippedSlotIDs: Set<String>? = nil
+    var activeCourseIDs: Set<String>? = nil
     var mealSchedule: MealSchedule? = nil
     var purchaseReceipts: [PurchaseReceipt]? = nil
 
@@ -207,6 +164,7 @@ struct DemoState: Codable {
         fresh.selectedMemberID = previous.selectedMemberID
         fresh.favorites = previous.favorites
         fresh.dislikes = previous.dislikes
+        fresh.activeCourseIDs = previous.activeCourseIDs
         fresh.pantryNames = previous.pantryNames
         fresh.pantryItems = previous.pantryItems
         fresh.extraShopping = previous.extraShopping
@@ -295,6 +253,9 @@ struct AvoidedRecipe: Equatable {
     @Published var selectedDay: Int = 0
     @Published private(set) var now: Date = .now
     @Published private(set) var privateRecipes: [Recipe] = []
+    @Published private(set) var catalogueRecipes: [Recipe] = []
+    @Published private(set) var courses: [LadCourse] = CourseCatalogAccess.bundledCourses
+    @Published private(set) var courseCatalogStatus: String = "Демо-каталог офлайн"
     @Published private(set) var privateCatalogStatus: String = "Не подключён"
     @Published private(set) var familyCloudStatus: String = "Не подключено"
     @Published private(set) var storageWarning: String?
@@ -387,12 +348,55 @@ struct AvoidedRecipe: Equatable {
                 await refreshFamily()
             }
         }
+        if CourseCatalogAccess.savedURL != nil {
+            Task { await refreshCourseCatalog() }
+        }
         save()
     }
 
     var currentMember: FamilyMember { state.members.first { $0.id == state.selectedMemberID } ?? state.members[0] }
     var archivedWeekCount: Int { LocalWeekArchive.count(accountID: localAccountID) }
-    var allRecipes: [Recipe] { Recipe.all + privateRecipes }
+    var allRecipes: [Recipe] {
+        var seen = Set<String>()
+        return (catalogueRecipes + Recipe.all + privateRecipes).filter { seen.insert($0.id).inserted }
+    }
+    var activeCourseIDs: Set<String> { state.activeCourseIDs ?? [] }
+    private var activeCourseRecipeIDs: Set<String>? {
+        guard !activeCourseIDs.isEmpty else { return nil }
+        let existing = Set(allRecipes.map(\.id))
+        return Set(courses.filter { activeCourseIDs.contains($0.id) }.flatMap(\.recipeIDs).map { id in
+            existing.contains(id) ? id : "private:\(id)"
+        })
+    }
+    func toggleCourse(_ id: String) {
+        guard courses.contains(where: { $0.id == id }) else { return }
+        var next = state.activeCourseIDs ?? []
+        if !next.insert(id).inserted { next.remove(id) }
+        state.activeCourseIDs = next
+    }
+    func setCourseCatalogURL(_ url: String) async {
+        do {
+            try CourseCatalogAccess.saveURL(url)
+            await refreshCourseCatalog()
+        } catch {
+            courseCatalogStatus = error.localizedDescription
+        }
+    }
+    func refreshCourseCatalog() async {
+        let session = privateSessionRevision
+        courseCatalogStatus = L10n.text("Загружаем…")
+        do {
+            let snapshot = try await CourseCatalogAccess.fetch()
+            guard session == privateSessionRevision else { return }
+            catalogueRecipes = snapshot.recipes
+            courses = snapshot.courses
+            catalogRevision += 1
+            courseCatalogStatus = L10n.format("Загружено программ: %d", courses.count)
+        } catch {
+            guard session == privateSessionRevision else { return }
+            courseCatalogStatus = error.localizedDescription
+        }
+    }
     var pantry: [PantryItem] { state.pantryItems ?? [] }
     var mealSchedule: MealSchedule { state.mealSchedule ?? .standard }
     var planRequirements: PlanRequirements {
@@ -618,10 +622,12 @@ struct AvoidedRecipe: Equatable {
     }
     private func eligibleRecipes(for slot: MealSlot) -> [Recipe] {
         let people = participating(slot)
+        let source = activeCourseRecipeIDs
         let excluded = Set(people.flatMap { person in
             state.avoidedRecipesBySlot?["\(slot.id)|\(person.id)"] ?? []
         })
         return allRecipes.filter { recipe in
+            (source == nil || source?.contains(recipe.id) == true) &&
             recipe.isPlanEligible && recipe.mealKinds.contains(slot.kind) && incompatibility(slot, recipe: recipe) == nil &&
             !excluded.contains(recipe.id) &&
             !people.contains { state.dislikes?.contains("\($0.id)|\(recipe.id)") == true }
@@ -959,6 +965,7 @@ struct AvoidedRecipe: Equatable {
             catalogRevision += 1
             await refreshPrivateRecipes()
             await refreshFamily()
+            await refreshCourseCatalog()
         } catch {
             privateCatalogStatus = error.localizedDescription
             familyCloudStatus = error.localizedDescription
@@ -968,9 +975,13 @@ struct AvoidedRecipe: Equatable {
         privateSessionRevision += 1
         PrivateRecipeAccess.clear()
         privateRecipes = []
+        catalogueRecipes = []
+        courses = CourseCatalogAccess.bundledCourses
         catalogRevision += 1
         privateCatalogStatus = L10n.text("Не подключён")
         familyCloudStatus = L10n.text("Облако отключено · семья остаётся на этом iPhone")
+        if CourseCatalogAccess.savedURL != nil { Task { await refreshCourseCatalog() } }
+        else { courseCatalogStatus = L10n.text("Демо-каталог офлайн") }
     }
     func save() { if let data = try? JSONEncoder().encode(state) { UserDefaults.standard.set(data, forKey: "lad-demo-v3") } }
 }

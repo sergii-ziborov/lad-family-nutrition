@@ -1,8 +1,80 @@
 import XCTest
 import UIKit
+import SwiftUI
 @testable import Lad
 
 final class PlanningCoreTests: XCTestCase {
+    func testCourseCatalogueDecodesOneRevisionAndRejectsMissingDishes() throws {
+        let recipe: [String: Any] = [
+            "id": "course-dish", "title": "Тестовое блюдо", "caption": "Тест", "cuisine": "Домашняя",
+            "minutes": 20, "allergens": [], "allergensVerified": true,
+            "ingredients": [["name": "Томаты", "amount": 100, "unit": "г", "category": "Овощи"]],
+            "steps": ["Приготовить"], "mealKinds": [1]
+        ]
+        let course: [String: Any] = [
+            "id": "home", "titleRu": "Домашняя кухня", "titleEn": "Home cooking",
+            "summaryRu": "Тест", "summaryEn": "Test", "category": "home",
+            "access": "free", "status": "published", "recipeIDs": ["course-dish"]
+        ]
+        func page(_ items: [[String: Any]], revision: String) throws -> Data {
+            try JSONSerialization.data(withJSONObject: ["revision": revision, "scope": "public", "items": items,
+                                                     "nextCursor": NSNull()])
+        }
+        let recipeItem: [String: Any] = ["type": "recipe", "visibility": "public", "data": recipe]
+        let courseItem: [String: Any] = ["type": "program", "visibility": "free", "data": course]
+        let snapshot = try CourseCatalogAccess.decodePages([page([recipeItem, courseItem], revision: "r1")])
+        XCTAssertEqual(snapshot.recipes.map(\.id), ["course-dish"])
+        XCTAssertEqual(snapshot.courses.map(\.id), ["home"])
+        XCTAssertThrowsError(try CourseCatalogAccess.decodePages([
+            page([recipeItem], revision: "r1"), page([courseItem], revision: "r2")
+        ]))
+        var missing = course
+        missing["recipeIDs"] = ["missing"]
+        XCTAssertThrowsError(try CourseCatalogAccess.decodePages([
+            page([recipeItem, ["type": "program", "visibility": "free", "data": missing]], revision: "r1")
+        ]))
+    }
+
+    @MainActor
+    func testLandscapeRecipePictureKeepsDetailWithinSmallPhoneWidth() throws {
+        let recipe = try XCTUnwrap(Recipe.all.first { $0.id == "salmon" })
+        let store = LadStore()
+        store.state = .initial()
+        let detail = NavigationStack { RecipeDetailView(recipe: recipe) }
+            .environmentObject(store)
+        let controller = UIHostingController(rootView: detail)
+        controller.loadViewIfNeeded()
+        let fitted = controller.sizeThatFits(in: CGSize(width: 320, height: 700))
+        XCTAssertLessThanOrEqual(fitted.width, 321)
+    }
+
+    func testSelectedCoursesSurviveWeekRollover() {
+        XCTAssertEqual(CourseCatalogAccess.bundledCourses.count, 2)
+        XCTAssertEqual(Recipe.all.count, 9)
+        let available = Set(Recipe.all.map(\.id))
+        XCTAssertTrue(CourseCatalogAccess.bundledCourses.allSatisfy { course in
+            course.recipeIDs.allSatisfy { available.contains($0) }
+        })
+        var state = DemoState.initial()
+        state.activeCourseIDs = ["home"]
+        let next = DemoState.nextWeek(after: state, now: Calendar.current.date(byAdding: .day, value: 8, to: state.startDate)!)
+        XCTAssertEqual(next.activeCourseIDs, ["home"])
+    }
+
+    @MainActor
+    func testSelectedCourseConstrainsNewMenuCandidatesWithoutChangingCurrentWeek() throws {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        let original = store.state.slots.map(\.recipeID)
+        store.toggleCourse("mediterranean-ideas")
+        XCTAssertEqual(store.state.slots.map(\.recipeID), original)
+        store.proposeWeekMenu()
+        let preview = try XCTUnwrap(store.replanPreview)
+        let allowed = Set(["soup", "vegetable-pasta", "lentil-stew"])
+        XCTAssertTrue(preview.changes.allSatisfy { $0.slotID.hasSuffix("-0") == false && allowed.contains($0.nextID) })
+    }
+
     func testCatalogPagesAdvanceAndStopAtEnd() {
         XCTAssertEqual(CatalogPaging.nextLimit(current: 0, total: 50, step: 24), 24)
         XCTAssertEqual(CatalogPaging.nextLimit(current: 24, total: 50, step: 24), 48)
