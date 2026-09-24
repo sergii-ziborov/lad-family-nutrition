@@ -57,6 +57,14 @@
 "Готовить с радостью" = "Enjoy cooking";
 "Не подключён" = "Not connected";
 "Не подключено" = "Not connected";
+"Курс снижения веса" = "Weight-management course";
+"Остальное" = "Other dishes";
+"План по дням" = "Day-by-day plan";
+"День %d" = "Day %d";
+"Нет полной страницы рецепта — не добавлено в курс" = "No complete recipe page was supplied — not added to the course";
+"Калорийность и порции уточняются: в исходных страницах не указаны веса части продуктов и выход блюд. Пока это подборка рецептов, а не рассчитанная программа снижения веса." = "Calories and portions need confirmation: the source pages omit some ingredient weights and recipe yields. This is a recipe collection, not yet a calculated weight-management plan.";
+"Изображение шага %d" = "Image for step %d";
+"Назад" = "Back";
 "Демо-каталог офлайн" = "Offline demo catalogue";
 "Найти блюдо" = "Find a dish";
 "Все" = "All";

@@ -123,6 +123,10 @@ struct CourseDetailView: View {
             store.allRecipes.first { $0.id == id || $0.id == "private:\(id)" }
         }
     }
+    private func recipe(_ id: String?) -> Recipe? {
+        guard let id else { return nil }
+        return recipes.first { $0.id == id || $0.id == "private:\(id)" }
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -136,6 +140,15 @@ struct CourseDetailView: View {
                     Text(course.summary)
                         .font(.system(size: 15)).foregroundStyle(Palette.muted)
                         .fixedSize(horizontal: false, vertical: true)
+                    if course.category == "weight-management" {
+                        Label("Калорийность и порции уточняются: в исходных страницах не указаны веса части продуктов и выход блюд. Пока это подборка рецептов, а не рассчитанная программа снижения веса.",
+                              systemImage: "info.circle")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Palette.terracotta)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(14)
+                            .background(Palette.peach.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
+                    }
                     Button { store.toggleCourse(course.id) } label: {
                         Label(store.activeCourseIDs.contains(course.id) ? "Убрать из подбора меню" : "Добавить в подбор меню",
                               systemImage: store.activeCourseIDs.contains(course.id) ? "checkmark.circle.fill" : "plus.circle")
@@ -145,6 +158,21 @@ struct CourseDetailView: View {
                             .foregroundStyle(.white)
                             .background(Palette.sage, in: RoundedRectangle(cornerRadius: 16))
                     }.buttonStyle(.plain)
+                    if let days = course.days, !days.isEmpty {
+                        Text("План по дням")
+                            .font(.system(size: 23, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
+                        ForEach(days.sorted { $0.day < $1.day }) { day in
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(L10n.format("День %d", day.day))
+                                    .font(.system(size: 18, weight: .semibold, design: .serif))
+                                courseMeal("Обед", recipe: recipe(day.lunchRecipeID))
+                                courseMeal("Ужин", recipe: recipe(day.dinnerRecipeID))
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.white, in: RoundedRectangle(cornerRadius: 18))
+                        }
+                    }
                     Text("Блюда программы")
                         .font(.system(size: 23, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
                     ForEach(recipes) { recipe in
@@ -182,6 +210,27 @@ struct CourseDetailView: View {
         }
         .background(Palette.canvas.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private func courseMeal(_ label: String, recipe: Recipe?) -> some View {
+        HStack(alignment: .top, spacing: 9) {
+            Text(L10n.text(label)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.muted)
+                .frame(width: 48, alignment: .leading)
+            if let recipe {
+                NavigationLink { RecipeDetailView(recipe: recipe) } label: {
+                    Text(L10n.text(recipe.title))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Palette.sage)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else {
+                Text("Нет полной страницы рецепта — не добавлено в курс")
+                    .font(.system(size: 12)).foregroundStyle(Palette.terracotta)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }
 

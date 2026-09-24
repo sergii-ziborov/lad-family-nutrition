@@ -192,15 +192,20 @@ struct RecipesView: View {
     @State private var filter = "Все"
     @State private var showPrivateAccess = false
     @State private var visibleCount = 12
-    private let filters = ["Все", "Есть дома", "Не хватает", "Любимые", "Закрытые", "Домашняя", "Средиземноморская"]
+    private let filters = ["Все", "Курс снижения веса", "Остальное", "Есть дома", "Не хватает", "Любимые", "Закрытые", "Домашняя", "Средиземноморская"]
+    private var weightCourseRecipeIDs: Set<String> {
+        Set(store.courses.filter { $0.category == "weight-management" }.flatMap(\.recipeIDs))
+    }
     private var results: [Recipe] {
         store.allRecipes.filter { recipe in
             (query.isEmpty || recipe.title.localizedCaseInsensitiveContains(query) ||
              L10n.text(recipe.title).localizedCaseInsensitiveContains(query)) &&
-            (filter == "Все" || (filter == "Любимые" ? store.isFavorite(recipe.id) :
+            (filter == "Все" || (filter == "Курс снижения веса" ? weightCourseRecipeIDs.contains(recipe.id.replacingOccurrences(of: "private:", with: "")) :
+                (filter == "Остальное" ? !weightCourseRecipeIDs.contains(recipe.id.replacingOccurrences(of: "private:", with: "")) :
+                (filter == "Любимые" ? store.isFavorite(recipe.id) :
                 (filter == "Закрытые" ? recipe.isPrivate :
                 (filter == "Есть дома" ? !recipe.ingredients.isEmpty && store.readiness(recipe).missing.isEmpty && store.readiness(recipe).uncertain.isEmpty :
-                (filter == "Не хватает" ? !store.readiness(recipe).missing.isEmpty || !store.readiness(recipe).uncertain.isEmpty : recipe.cuisine == filter)))))
+                (filter == "Не хватает" ? !store.readiness(recipe).missing.isEmpty || !store.readiness(recipe).uncertain.isEmpty : recipe.cuisine == filter)))))))
         }
     }
     var body: some View {
@@ -314,12 +319,13 @@ struct RecipeDetailView: View {
                         Label(store.isDisliked(recipe.id) ? "Не нравится" : "Не нравится?", systemImage: store.isDisliked(recipe.id) ? "hand.thumbsdown.fill" : "hand.thumbsdown")
                     }
                 }.font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
-                HStack(spacing: 0) {
+                HStack(alignment: .top, spacing: 8) {
                     detailMetric("ВРЕМЯ", L10n.format("%d мин", recipe.minutes))
-                    Spacer()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     detailMetric("НА ПОРЦИЮ", recipe.kcal.map { L10n.format("~%d ккал", $0) } ?? L10n.text("нет данных"))
-                    Spacer()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     detailMetric("БЕЛОК", recipe.protein.map { L10n.format("~%d г", $0) } ?? L10n.text("нет данных"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }.padding(19).background(.white, in: RoundedRectangle(cornerRadius: 19))
                 if let slot {
                     VStack(alignment: .leading, spacing: 12) {
@@ -382,14 +388,19 @@ struct RecipeDetailView: View {
                     ForEach(Array(recipe.ingredients.enumerated()), id: \.offset) { _, ingredient in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(L10n.text(ingredient.name)).font(.system(size: 15))
+                                Text(([ingredient.name] + (ingredient.alternatives ?? [])).map(L10n.text).joined(separator: " / "))
+                                    .font(.system(size: 15))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .layoutPriority(1)
                                 Text(store.ingredientAvailabilityText(ingredient, in: slot))
                                     .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer()
                             if let amount = ingredient.amount, amount > 0 {
-                                Text("\((amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))")
+                                Text(ingredient.amountMax.map { maxAmount in
+                                    "\((amount * portions).formatted(.number.precision(.fractionLength(0...1))))–\((maxAmount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))"
+                                } ?? "\((amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))")
                                     .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.sage)
                             } else {
                                 Text("уточнить").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.muted)
@@ -414,7 +425,9 @@ struct RecipeDetailView: View {
     private func detailMetric(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(L10n.text(title)).font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(Palette.muted)
+                .fixedSize(horizontal: false, vertical: true)
             Text(L10n.text(value)).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
     private func nutrientLabel(_ id: String) -> String {
@@ -428,30 +441,48 @@ struct CookingView: View {
     let portions: Double
     @State private var step = 0
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack {
-                Text("Готовим вместе").font(.system(size: 27, weight: .semibold, design: .serif))
-                Spacer()
-                Button { dismiss() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 27)).foregroundStyle(Palette.muted) }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack {
+                    Text("Готовим вместе").font(.system(size: 27, weight: .semibold, design: .serif))
+                    Spacer()
+                    Button { dismiss() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 27)).foregroundStyle(Palette.muted) }
+                }
+                Text(L10n.text(recipe.title)).font(.system(size: 15)).foregroundStyle(Palette.muted)
+                ProgressView(value: Double(step + 1), total: Double(recipe.steps.count)).tint(Palette.sage)
+                Text(L10n.format("ШАГ %d ИЗ %d", step + 1, recipe.steps.count))
+                    .font(.system(size: 12, weight: .bold)).tracking(1.7).foregroundStyle(Palette.terracotta)
+                if recipe.stepImageIDs.indices.contains(step), let imageID = recipe.stepImageIDs[step] {
+                    RecipeStepPicture(imageID: imageID, privateAccess: recipe.isPrivate)
+                        .frame(height: 235)
+                        .clipShape(RoundedRectangle(cornerRadius: 17))
+                        .accessibilityLabel(L10n.format("Изображение шага %d", step + 1))
+                }
+                Text(L10n.text(recipe.steps[step]))
+                    .font(.system(size: 24, weight: .medium, design: .serif))
+                    .foregroundStyle(Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(L10n.format("Ингредиенты рассчитаны на %@ базовых порций",
+                                 portions.formatted(.number.precision(.fractionLength(0...1)))))
+                    .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                HStack(spacing: 12) {
+                    if step > 0 {
+                        Button("Назад") { step -= 1 }
+                            .font(.system(size: 16, weight: .semibold))
+                            .padding(18)
+                            .foregroundStyle(Palette.sage)
+                    }
+                    Button {
+                        if step + 1 < recipe.steps.count { step += 1 } else { dismiss() }
+                    } label: {
+                        Text(L10n.text(step + 1 < recipe.steps.count ? "Следующий шаг" : "Готово"))
+                            .font(.system(size: 16, weight: .semibold)).frame(maxWidth: .infinity).padding(18)
+                            .background(Palette.sage, in: RoundedRectangle(cornerRadius: 17)).foregroundStyle(.white)
+                    }
+                }
             }
-            Text(L10n.text(recipe.title)).font(.system(size: 15)).foregroundStyle(Palette.muted)
-            ProgressView(value: Double(step + 1), total: Double(recipe.steps.count)).tint(Palette.sage)
-            Text(L10n.format("ШАГ %d ИЗ %d", step + 1, recipe.steps.count))
-                .font(.system(size: 12, weight: .bold)).tracking(1.7).foregroundStyle(Palette.terracotta)
-            Text(L10n.text(recipe.steps[step])).font(.system(size: 27, weight: .medium, design: .serif)).foregroundStyle(Palette.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer()
-            Text(L10n.format("Ингредиенты рассчитаны на %@ базовых порций",
-                             portions.formatted(.number.precision(.fractionLength(0...1)))))
-                .font(.system(size: 12)).foregroundStyle(Palette.muted)
-            Button {
-                if step + 1 < recipe.steps.count { step += 1 } else { dismiss() }
-            } label: {
-                Text(L10n.text(step + 1 < recipe.steps.count ? "Следующий шаг" : "Готово"))
-                    .font(.system(size: 16, weight: .semibold)).frame(maxWidth: .infinity).padding(18)
-                    .background(Palette.sage, in: RoundedRectangle(cornerRadius: 17)).foregroundStyle(.white)
-            }
-        }.padding(25).padding(.top, 14).background(Palette.canvas.ignoresSafeArea())
+            .padding(25).padding(.top, 14)
+        }.background(Palette.canvas.ignoresSafeArea())
             .presentationDragIndicator(.visible)
     }
 }

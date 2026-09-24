@@ -27,17 +27,24 @@ struct PrivateRecipePayload: Codable {
     let nutrients: [String: NutrientValue]?
     let imageId: String?
     let imageSource: String?
+    let stepImageIDs: [String?]?
 
     func recipe(privateAccess: Bool = true, remoteImage: Bool? = nil) -> Recipe? {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil,
               !title.isEmpty, minutes > 0, steps.count > 0 else { return nil }
         guard (kcal.map { $0 >= 0 } ?? true), (protein.map { $0 >= 0 } ?? true),
+              !steps.isEmpty, steps.allSatisfy({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }),
               mealKinds?.allSatisfy({ (0...2).contains($0) }) ?? true,
               imageId.map({ $0.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil }) ?? true,
-              ingredients.allSatisfy({ !$0.name.isEmpty && ($0.amount.map { $0.isFinite && $0 >= 0 } ?? true) && !$0.unit.isEmpty }),
+              stepImageIDs.map({ $0.count == steps.count && $0.allSatisfy { $0 == nil || $0?.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil } }) ?? true,
+              ingredients.allSatisfy({ ingredient in
+                  !ingredient.name.isEmpty && (ingredient.amount.map { $0.isFinite && $0 >= 0 } ?? true) &&
+                  (ingredient.amountMax.map { maximum in maximum.isFinite && maximum >= (ingredient.amount ?? 0) } ?? true) &&
+                  !ingredient.unit.isEmpty
+              }),
               unquantifiedIngredients?.allSatisfy({ !$0.name.isEmpty && $0.amount == nil && !$0.unit.isEmpty }) ?? true,
               nutrients?.values.allSatisfy({ $0.amount.isFinite && $0.amount >= 0 && $0.coverage.isFinite && (0...1).contains($0.coverage) && !$0.unit.isEmpty && !$0.source.isEmpty }) ?? true else { return nil }
-        return Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:], remoteImage: remoteImage ?? (imageSource != "bundled"))
+        return Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:], remoteImage: remoteImage ?? (imageSource != "bundled"), stepImageIDs: stepImageIDs ?? [])
     }
 }
 
@@ -258,6 +265,42 @@ struct RecipePicture: View {
                 let result = try? await CourseCatalogAccess.fetchPublicImage(id: recipe.image)
                 if !Task.isCancelled { remoteImage = result }
             }
+        }
+    }
+}
+
+struct RecipeStepPicture: View {
+    let imageID: String
+    let privateAccess: Bool
+    @State private var image: UIImage?
+
+    private var imageContext: String {
+        "\(imageID)|\(privateAccess)|\(CourseCatalogAccess.savedURL ?? "")|\(PrivateRecipeAccess.catalogGeneration)"
+    }
+
+    var body: some View {
+        GeometryReader { bounds in
+            Group {
+                if let image {
+                    Image(uiImage: image).resizable().scaledToFill()
+                } else {
+                    ZStack {
+                        Palette.paleSage
+                        Image(systemName: "photo")
+                            .font(.system(size: 32, weight: .ultraLight))
+                            .foregroundStyle(Palette.sage)
+                    }
+                }
+            }
+            .frame(width: bounds.size.width, height: bounds.size.height)
+            .clipped()
+        }
+        .task(id: imageContext) {
+            image = nil
+            let result = try? await (privateAccess
+                ? PrivateRecipeAccess.fetchImage(id: imageID)
+                : CourseCatalogAccess.fetchPublicImage(id: imageID))
+            if !Task.isCancelled { image = result }
         }
     }
 }

@@ -26,6 +26,8 @@ struct Ingredient: Identifiable, Codable {
     var amount: Double?
     var unit: String
     var category: String
+    var alternatives: [String]? = nil
+    var amountMax: Double? = nil
     var id: String { "\(name)|\(unit)" }
 }
 
@@ -52,6 +54,7 @@ struct Recipe: Identifiable {
     var mealKinds: [Int] = [0, 1, 2]
     var nutrients: [String: NutrientValue] = [:]
     var remoteImage: Bool = false
+    var stepImageIDs: [String?] = []
     var isPrivate: Bool { id.hasPrefix("private:") }
     var isUnavailable: Bool { id == "unavailable" }
     var isPlanEligible: Bool {

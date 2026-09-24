@@ -8,13 +8,14 @@ final class PlanningCoreTests: XCTestCase {
         let recipe: [String: Any] = [
             "id": "course-dish", "title": "Тестовое блюдо", "caption": "Тест", "cuisine": "Домашняя",
             "minutes": 20, "allergens": [], "allergensVerified": true,
-            "ingredients": [["name": "Томаты", "amount": 100, "unit": "г", "category": "Овощи"]],
-            "steps": ["Приготовить"], "mealKinds": [1]
+            "ingredients": [["name": "Томаты", "alternatives": ["Помидоры"], "amount": 100, "unit": "г", "category": "Овощи"]],
+            "steps": ["Приготовить"], "stepImageIDs": ["dish-step-1"], "mealKinds": [1]
         ]
         let course: [String: Any] = [
             "id": "home", "titleRu": "Домашняя кухня", "titleEn": "Home cooking",
             "summaryRu": "Тест", "summaryEn": "Test", "category": "home",
-            "access": "free", "status": "published", "recipeIDs": ["course-dish"]
+            "access": "free", "status": "published", "recipeIDs": ["course-dish"],
+            "days": [["day": 1, "lunchRecipeID": "course-dish"]]
         ]
         func page(_ items: [[String: Any]], revision: String) throws -> Data {
             try JSONSerialization.data(withJSONObject: ["revision": revision, "scope": "public", "items": items,
@@ -24,6 +25,8 @@ final class PlanningCoreTests: XCTestCase {
         let courseItem: [String: Any] = ["type": "program", "visibility": "free", "data": course]
         let snapshot = try CourseCatalogAccess.decodePages([page([recipeItem, courseItem], revision: "r1")])
         XCTAssertEqual(snapshot.recipes.map(\.id), ["course-dish"])
+        XCTAssertEqual(snapshot.recipes[0].stepImageIDs, ["dish-step-1"])
+        XCTAssertEqual(snapshot.recipes[0].ingredients[0].alternatives, ["Помидоры"])
         XCTAssertTrue(snapshot.recipes[0].remoteImage)
         var bundledRecipe = recipe
         bundledRecipe["imageSource"] = "bundled"
@@ -32,6 +35,12 @@ final class PlanningCoreTests: XCTestCase {
         ])
         XCTAssertFalse(bundled.recipes[0].remoteImage)
         XCTAssertEqual(snapshot.courses.map(\.id), ["home"])
+        XCTAssertEqual(snapshot.courses[0].days?.first?.lunchRecipeID, "course-dish")
+        var stepLessRecipe = recipe
+        stepLessRecipe["steps"] = [String]()
+        XCTAssertThrowsError(try CourseCatalogAccess.decodePages([
+            page([["type": "recipe", "visibility": "public", "data": stepLessRecipe]], revision: "r1")
+        ]))
         XCTAssertThrowsError(try CourseCatalogAccess.decodePages([
             page([recipeItem], revision: "r1"), page([courseItem], revision: "r2")
         ]))
@@ -296,6 +305,8 @@ final class PlanningCoreTests: XCTestCase {
     func testOutOfStockOffersReplanAndCanUndoWithoutLosingManualShopping() {
         let store = LadStore()
         store.state = DemoState.initial()
+        store.refreshClock(Calendar.current.date(byAdding: .hour, value: 7,
+                                                  to: Calendar.current.startOfDay(for: store.state.startDate))!)
         store.state.extraShopping = ["Бумажные полотенца"]
         let potato = PantryItem(name: "Картофель", quantity: 2000, unit: "г", category: "Овощи и зелень")
         store.savePantryItem(potato)

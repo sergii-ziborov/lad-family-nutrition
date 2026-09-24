@@ -12,10 +12,18 @@ struct LadCourse: Identifiable, Codable {
     let access: String
     let status: String
     let recipeIDs: [String]
+    let days: [CourseDay]?
 
     var title: String { Locale.current.language.languageCode?.identifier == "en" ? titleEn : titleRu }
     var summary: String { Locale.current.language.languageCode?.identifier == "en" ? summaryEn : summaryRu }
     var isFree: Bool { access == "free" }
+}
+
+struct CourseDay: Codable, Identifiable {
+    let day: Int
+    let lunchRecipeID: String?
+    let dinnerRecipeID: String?
+    var id: Int { day }
 }
 
 private enum CatalogueItem: Decodable {
@@ -191,7 +199,15 @@ enum CourseCatalogAccess {
                     recipes.append(recipe)
                 case .course(let course):
                     guard course.status == "published", ["free", "members"].contains(course.access),
-                          !course.titleRu.isEmpty, !course.titleEn.isEmpty else { throw PrivateCatalogError.invalidResponse }
+                          !course.titleRu.isEmpty, !course.titleEn.isEmpty,
+                          course.days.map({ days in
+                              days.count <= 31 && Set(days.map(\.day)).count == days.count &&
+                              days.allSatisfy { day in
+                                  (1...31).contains(day.day) &&
+                                  [day.lunchRecipeID, day.dinnerRecipeID].compactMap { $0 }
+                                      .allSatisfy(course.recipeIDs.contains)
+                              }
+                          }) ?? true else { throw PrivateCatalogError.invalidResponse }
                     courses.append(course)
                 }
             }
