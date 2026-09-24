@@ -56,6 +56,7 @@ final class PlanningCoreTests: XCTestCase {
     }
 
     func testSelectedCoursesSurviveWeekRollover() {
+        XCTAssertEqual(URL(string: CourseCatalogAccess.defaultURL)?.scheme, "https")
         XCTAssertEqual(CourseCatalogAccess.bundledCourses.count, 2)
         XCTAssertEqual(Recipe.all.count, 9)
         XCTAssertFalse(Recipe.all.first { $0.id == "salmon" }?.remoteImage ?? true)

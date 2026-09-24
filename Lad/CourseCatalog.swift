@@ -54,6 +54,7 @@ struct CourseCatalogue {
 
 enum CourseCatalogAccess {
     private static let urlKey = "lad.catalogURL"
+    static let defaultURL = "https://116.203.99.11"
     private struct BundledCourses: Decodable { let programs: [LadCourse] }
     static var bundledCourses: [LadCourse] {
         guard let url = Bundle.main.url(forResource: "public-recipes", withExtension: "json"),
@@ -61,7 +62,9 @@ enum CourseCatalogAccess {
               let bundle = try? JSONDecoder().decode(BundledCourses.self, from: data) else { return [] }
         return bundle.programs.filter { $0.status == "published" && $0.isFree }
     }
-    static var savedURL: String? { UserDefaults.standard.string(forKey: urlKey) ?? PrivateRecipeAccess.savedURL }
+    static var savedURL: String? {
+        UserDefaults.standard.string(forKey: urlKey) ?? PrivateRecipeAccess.savedURL ?? defaultURL
+    }
 
     static func saveURL(_ raw: String) throws {
         let normalized = raw.trimmingCharacters(in: .whitespacesAndNewlines)
