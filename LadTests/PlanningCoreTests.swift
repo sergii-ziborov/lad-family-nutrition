@@ -25,6 +25,12 @@ final class PlanningCoreTests: XCTestCase {
         let snapshot = try CourseCatalogAccess.decodePages([page([recipeItem, courseItem], revision: "r1")])
         XCTAssertEqual(snapshot.recipes.map(\.id), ["course-dish"])
         XCTAssertTrue(snapshot.recipes[0].remoteImage)
+        var bundledRecipe = recipe
+        bundledRecipe["imageSource"] = "bundled"
+        let bundled = try CourseCatalogAccess.decodePages([
+            page([["type": "recipe", "visibility": "public", "data": bundledRecipe], courseItem], revision: "r1")
+        ])
+        XCTAssertFalse(bundled.recipes[0].remoteImage)
         XCTAssertEqual(snapshot.courses.map(\.id), ["home"])
         XCTAssertThrowsError(try CourseCatalogAccess.decodePages([
             page([recipeItem], revision: "r1"), page([courseItem], revision: "r2")
