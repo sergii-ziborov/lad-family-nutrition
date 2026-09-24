@@ -27,7 +27,7 @@ struct PrivateRecipePayload: Codable {
     let nutrients: [String: NutrientValue]?
     let imageId: String?
 
-    func recipe(privateAccess: Bool = true) -> Recipe? {
+    func recipe(privateAccess: Bool = true, remoteImage: Bool = true) -> Recipe? {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil,
               !title.isEmpty, minutes > 0, steps.count > 0 else { return nil }
         guard (kcal.map { $0 >= 0 } ?? true), (protein.map { $0 >= 0 } ?? true),
@@ -36,7 +36,7 @@ struct PrivateRecipePayload: Codable {
               ingredients.allSatisfy({ !$0.name.isEmpty && ($0.amount.map { $0.isFinite && $0 >= 0 } ?? true) && !$0.unit.isEmpty }),
               unquantifiedIngredients?.allSatisfy({ !$0.name.isEmpty && $0.amount == nil && !$0.unit.isEmpty }) ?? true,
               nutrients?.values.allSatisfy({ $0.amount.isFinite && $0.amount >= 0 && $0.coverage.isFinite && (0...1).contains($0.coverage) && !$0.unit.isEmpty && !$0.source.isEmpty }) ?? true else { return nil }
-        return Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:])
+        return Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:], remoteImage: remoteImage)
     }
 }
 
@@ -234,7 +234,7 @@ struct RecipePicture: View {
             Group {
                 if let remoteImage {
                     Image(uiImage: remoteImage).resizable().scaledToFill()
-                } else if recipe.image.isEmpty || recipe.isPrivate || recipe.isUnavailable || UIImage(named: recipe.image) == nil {
+                } else if recipe.image.isEmpty || recipe.remoteImage || recipe.isUnavailable {
                     ZStack {
                         LinearGradient(colors: [Palette.paleSage, Palette.peach], startPoint: .topLeading, endPoint: .bottomTrailing)
                         Image(systemName: recipe.isUnavailable ? "lock.slash" : "fork.knife")
@@ -250,10 +250,10 @@ struct RecipePicture: View {
         .task(id: imageContext) {
             remoteImage = nil
             guard !recipe.image.isEmpty else { return }
-            if recipe.isPrivate {
+            if recipe.remoteImage && recipe.isPrivate {
                 let result = try? await PrivateRecipeAccess.fetchImage(id: recipe.image)
                 if !Task.isCancelled { remoteImage = result }
-            } else if UIImage(named: recipe.image) == nil {
+            } else if recipe.remoteImage {
                 let result = try? await CourseCatalogAccess.fetchPublicImage(id: recipe.image)
                 if !Task.isCancelled { remoteImage = result }
             }

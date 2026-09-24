@@ -51,6 +51,7 @@ struct Recipe: Identifiable {
     var allergensVerified: Bool = false
     var mealKinds: [Int] = [0, 1, 2]
     var nutrients: [String: NutrientValue] = [:]
+    var remoteImage: Bool = false
     var isPrivate: Bool { id.hasPrefix("private:") }
     var isUnavailable: Bool { id == "unavailable" }
     var isPlanEligible: Bool {
@@ -66,7 +67,7 @@ struct Recipe: Identifiable {
         guard let url = Bundle.main.url(forResource: "public-recipes", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let bundle = try? JSONDecoder().decode(PublicDemoBundle.self, from: data) else { return [] }
-        let recipes = bundle.recipes.compactMap { $0.recipe(privateAccess: false) }
+        let recipes = bundle.recipes.compactMap { $0.recipe(privateAccess: false, remoteImage: false) }
         guard recipes.count == bundle.recipes.count, Set(recipes.map(\.id)).count == recipes.count else { return [] }
         return recipes
     }()

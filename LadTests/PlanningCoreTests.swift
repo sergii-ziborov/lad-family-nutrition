@@ -24,6 +24,7 @@ final class PlanningCoreTests: XCTestCase {
         let courseItem: [String: Any] = ["type": "program", "visibility": "free", "data": course]
         let snapshot = try CourseCatalogAccess.decodePages([page([recipeItem, courseItem], revision: "r1")])
         XCTAssertEqual(snapshot.recipes.map(\.id), ["course-dish"])
+        XCTAssertTrue(snapshot.recipes[0].remoteImage)
         XCTAssertEqual(snapshot.courses.map(\.id), ["home"])
         XCTAssertThrowsError(try CourseCatalogAccess.decodePages([
             page([recipeItem], revision: "r1"), page([courseItem], revision: "r2")
@@ -51,6 +52,7 @@ final class PlanningCoreTests: XCTestCase {
     func testSelectedCoursesSurviveWeekRollover() {
         XCTAssertEqual(CourseCatalogAccess.bundledCourses.count, 2)
         XCTAssertEqual(Recipe.all.count, 9)
+        XCTAssertFalse(Recipe.all.first { $0.id == "salmon" }?.remoteImage ?? true)
         let available = Set(Recipe.all.map(\.id))
         XCTAssertTrue(CourseCatalogAccess.bundledCourses.allSatisfy { course in
             course.recipeIDs.allSatisfy { available.contains($0) }
