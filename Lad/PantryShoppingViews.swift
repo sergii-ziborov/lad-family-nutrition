@@ -362,9 +362,8 @@ struct ReplanPreviewSheet: View {
                             .background(Palette.paleSage.opacity(0.7), in: RoundedRectangle(cornerRadius: 17))
                     }
                     if !preview.changes.isEmpty {
-                        Button("Применить \(preview.changes.count) изменений") {
+                        Button(preview.changes.count == 1 ? L10n.text("Применить замену") : L10n.format("Применить изменения: %d", preview.changes.count)) {
                             store.applyReplan(preview)
-                            dismiss()
                         }.font(.system(size: 15, weight: .semibold)).frame(maxWidth: .infinity)
                             .padding(17).foregroundStyle(.white).background(Palette.sage, in: RoundedRectangle(cornerRadius: 16))
                     }

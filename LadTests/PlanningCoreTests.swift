@@ -9,7 +9,8 @@ final class PlanningCoreTests: XCTestCase {
             "id": "course-dish", "title": "Тестовое блюдо", "caption": "Тест", "cuisine": "Домашняя",
             "minutes": 20, "allergens": [], "allergensVerified": true,
             "ingredients": [["name": "Томаты", "alternatives": ["Помидоры"], "amount": 100, "unit": "г", "category": "Овощи"]],
-            "steps": ["Приготовить"], "stepImageIDs": ["dish-step-1"], "mealKinds": [1]
+            "steps": ["Приготовить"], "stepImageIDs": ["dish-step-1"], "mealKinds": [1],
+            "difficulty": "moderate"
         ]
         let course: [String: Any] = [
             "id": "home", "titleRu": "Домашняя кухня", "titleEn": "Home cooking",
@@ -27,6 +28,7 @@ final class PlanningCoreTests: XCTestCase {
         XCTAssertEqual(snapshot.recipes.map(\.id), ["course-dish"])
         XCTAssertEqual(snapshot.recipes[0].stepImageIDs, ["dish-step-1"])
         XCTAssertEqual(snapshot.recipes[0].ingredients[0].alternatives, ["Помидоры"])
+        XCTAssertEqual(snapshot.recipes[0].difficulty, .moderate)
         XCTAssertTrue(snapshot.recipes[0].remoteImage)
         var bundledRecipe = recipe
         bundledRecipe["imageSource"] = "bundled"
@@ -156,6 +158,72 @@ final class PlanningCoreTests: XCTestCase {
         store.toggleEaten(slot)
         store.proposeNotToday(slot)
         XCTAssertTrue(try XCTUnwrap(store.replanPreview).changes.isEmpty)
+    }
+
+    @MainActor
+    func testNotTodayCanReplaceAnUneatenMealLaterTheSameDay() throws {
+        let store = LadStore()
+        store.state = .initial()
+        let noon = Calendar.current.date(byAdding: .hour, value: 12, to: store.state.startDate)!
+        store.refreshClock(noon)
+        let breakfast = store.slot(0, 0)
+        XCTAssertTrue(store.isPastWindow(breakfast))
+        store.proposeNotToday(breakfast)
+        let preview = try XCTUnwrap(store.replanPreview)
+        XCTAssertEqual(preview.lateCorrectionSlotID, breakfast.id)
+        let replacement = try XCTUnwrap(preview.changes.first?.nextID)
+        store.applyReplan(preview)
+        XCTAssertEqual(store.slot(0, 0).recipeID, replacement)
+        store.undoReplan()
+        XCTAssertEqual(store.slot(0, 0).recipeID, breakfast.recipeID)
+    }
+
+    @MainActor
+    func testNotTodayReadsLiveParticipantsInsteadOfAnOldSlotCopy() throws {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        let oldSlot = store.slot(0, 2)
+        let index = try XCTUnwrap(store.state.slots.firstIndex(where: { $0.id == oldSlot.id }))
+        store.state.slots[index].memberIDs = []
+        store.proposeNotToday(oldSlot)
+        XCTAssertTrue(try XCTUnwrap(store.replanPreview).changes.isEmpty)
+    }
+
+    @MainActor
+    func testNotTodayDoesNotRecordDislikeForSomeoneOutsideTheMeal() throws {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        let slot = store.slot(0, 0)
+        let index = try XCTUnwrap(store.state.slots.firstIndex(where: { $0.id == slot.id }))
+        store.state.slots[index].memberIDs = ["igor"]
+        store.proposeNotToday(slot)
+        let preview = try XCTUnwrap(store.replanPreview)
+        XCTAssertFalse(preview.changes.isEmpty)
+        XCTAssertNil(preview.pendingAvoid)
+        store.applyReplan(preview)
+        XCTAssertTrue(store.state.avoidedRecipesBySlot?.isEmpty ?? true)
+    }
+
+    @MainActor
+    func testSecondNotTodayUndoRestoresTheImmediatelyPreviousRecipe() throws {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        let slot = store.slot(0, 0)
+        store.proposeNotToday(slot)
+        let first = try XCTUnwrap(store.replanPreview)
+        store.applyReplan(first)
+        let firstReplacement = store.slot(0, 0).recipeID
+        XCTAssertNotEqual(firstReplacement, slot.recipeID)
+        store.proposeNotToday(store.slot(0, 0))
+        let second = try XCTUnwrap(store.replanPreview)
+        XCTAssertFalse(second.changes.isEmpty)
+        store.applyReplan(second)
+        XCTAssertTrue(store.canUndoReplan)
+        store.undoReplan()
+        XCTAssertEqual(store.slot(0, 0).recipeID, firstReplacement)
     }
 
     @MainActor

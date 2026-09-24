@@ -8,6 +8,7 @@
       "imageSource": "bundled",
       "cuisine": "Домашняя",
       "minutes": 35,
+      "difficulty": "moderate",
       "kcal": 520,
       "protein": 38,
       "allergens": [
@@ -67,6 +68,7 @@
       "imageSource": "bundled",
       "cuisine": "Домашняя",
       "minutes": 20,
+      "difficulty": "moderate",
       "kcal": 340,
       "protein": 22,
       "allergens": [
@@ -120,6 +122,7 @@
       "imageSource": "bundled",
       "cuisine": "Средиземноморская",
       "minutes": 30,
+      "difficulty": "easy",
       "kcal": 390,
       "protein": 18,
       "allergens": [],
@@ -170,6 +173,7 @@
       "imageSource": "bundled",
       "cuisine": "Домашняя",
       "minutes": 12,
+      "difficulty": "easy",
       "kcal": 310,
       "protein": 11,
       "allergens": [
@@ -215,6 +219,7 @@
       "imageSource": "bundled",
       "cuisine": "Домашняя",
       "minutes": 15,
+      "difficulty": "easy",
       "kcal": 330,
       "protein": 17,
       "allergens": [
@@ -261,6 +266,7 @@
       "imageSource": "bundled",
       "cuisine": "Домашняя",
       "minutes": 30,
+      "difficulty": "moderate",
       "kcal": 480,
       "protein": 36,
       "allergens": [],
@@ -305,6 +311,7 @@
       "imageSource": "bundled",
       "cuisine": "Средиземноморская",
       "minutes": 25,
+      "difficulty": "easy",
       "kcal": 450,
       "protein": 15,
       "allergens": [
@@ -358,6 +365,7 @@
       "imageSource": "bundled",
       "cuisine": "Домашняя",
       "minutes": 30,
+      "difficulty": "moderate",
       "kcal": 470,
       "protein": 34,
       "allergens": [],
@@ -408,6 +416,7 @@
       "imageSource": "bundled",
       "cuisine": "Средиземноморская",
       "minutes": 28,
+      "difficulty": "easy",
       "kcal": 400,
       "protein": 19,
       "allergens": [],

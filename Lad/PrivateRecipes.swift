@@ -28,6 +28,7 @@ struct PrivateRecipePayload: Codable {
     let imageId: String?
     let imageSource: String?
     let stepImageIDs: [String?]?
+    let difficulty: CookingDifficulty?
 
     func recipe(privateAccess: Bool = true, remoteImage: Bool? = nil) -> Recipe? {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil,
@@ -44,7 +45,7 @@ struct PrivateRecipePayload: Codable {
               }),
               unquantifiedIngredients?.allSatisfy({ !$0.name.isEmpty && $0.amount == nil && !$0.unit.isEmpty }) ?? true,
               nutrients?.values.allSatisfy({ $0.amount.isFinite && $0.amount >= 0 && $0.coverage.isFinite && (0...1).contains($0.coverage) && !$0.unit.isEmpty && !$0.source.isEmpty }) ?? true else { return nil }
-        return Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:], remoteImage: remoteImage ?? (imageSource != "bundled"), stepImageIDs: stepImageIDs ?? [])
+        return Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:], remoteImage: remoteImage ?? (imageSource != "bundled"), stepImageIDs: stepImageIDs ?? [], difficulty: difficulty)
     }
 }
 

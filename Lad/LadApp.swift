@@ -240,14 +240,19 @@ struct MealRow: View {
                     store.toggleSkipped(slot)
                 }.font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
             }
-            Button {
-                store.proposeNotToday(slot)
-            } label: {
-                Label(slot.day == store.currentDay ? "Сегодня не хочу — подобрать другое" : "В этот день не хочу — подобрать другое",
-                      systemImage: "arrow.triangle.2.circlepath")
-                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
-                    .frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 3)
-            }.buttonStyle(.plain)
+            if slot.day >= store.currentDay,
+               !store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
+                Button {
+                    store.proposeNotToday(slot)
+                } label: {
+                    Label(slot.day == store.currentDay
+                          ? (store.isPastWindow(slot) ? "Поздний приём — подобрать другое" : "Сегодня не хочу — подобрать другое")
+                          : "В этот день не хочу — подобрать другое",
+                          systemImage: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 3)
+                }.buttonStyle(.plain)
+            }
         }.padding(10).background(.white, in: RoundedRectangle(cornerRadius: 20))
     }
 }

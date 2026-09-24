@@ -31,6 +31,18 @@ struct Ingredient: Identifiable, Codable {
     var id: String { "\(name)|\(unit)" }
 }
 
+enum CookingDifficulty: String, Codable {
+    case easy, moderate, involved
+
+    var label: String {
+        switch self {
+        case .easy: return "Легко"
+        case .moderate: return "Средняя"
+        case .involved: return "Много действий"
+        }
+    }
+}
+
 struct NutrientValue: Codable {
     var amount: Double
     var unit: String
@@ -55,6 +67,7 @@ struct Recipe: Identifiable {
     var nutrients: [String: NutrientValue] = [:]
     var remoteImage: Bool = false
     var stepImageIDs: [String?] = []
+    var difficulty: CookingDifficulty? = nil
     var isPrivate: Bool { id.hasPrefix("private:") }
     var isUnavailable: Bool { id == "unavailable" }
     var isPlanEligible: Bool {
@@ -232,6 +245,7 @@ struct ReplanPreview: Identifiable {
     let emptyMessage: String
     let expectedRevision: Int
     let expectedCatalogRevision: Int
+    let lateCorrectionSlotID: String?
 }
 
 struct AvoidedRecipe: Equatable {
@@ -613,7 +627,8 @@ struct AvoidedRecipe: Equatable {
                                                   pantry: pantry, startDate: state.startDate, now: now,
                                                   eatenIDs: state.eatenIDs, skippedIDs: state.skippedSlotIDs ?? [],
                                                   schedule: mealSchedule)
-        guard let match = resolution.slots[slot.id], match.availability == .active else { return -.infinity }
+        guard let match = resolution.slots[slot.id],
+              match.availability == .active || (slot.day == currentDay && match.availability == .past) else { return -.infinity }
         var value = match.isReady ? (slot.day == currentDay ? 1_000.0 : 80.0) : 0
         value += Double(match.ingredients.filter(\.isReady).count) * 5
         value -= Double(match.shortageCount) * 18
@@ -657,6 +672,7 @@ struct AvoidedRecipe: Equatable {
         return ranked.map(\.recipe)
     }
     private func makePreview(title: String, explanation: String, changes: [PlannedChange], pendingAvoid: AvoidedRecipe? = nil,
+                             lateCorrectionSlotID: String? = nil,
                              emptyMessage: String = "Подходящей замены с меньшим числом недостающих продуктов не нашлось. Текущее меню остаётся, список покупок уже обновлён.") -> ReplanPreview {
         var proposedSlots = state.slots
         for change in changes {
@@ -682,7 +698,7 @@ struct AvoidedRecipe: Equatable {
         }
         return ReplanPreview(title: title, explanation: explanation, changes: changes, shoppingDelta: delta,
                              pendingAvoid: pendingAvoid, emptyMessage: emptyMessage, expectedRevision: stateRevision,
-                             expectedCatalogRevision: catalogRevision)
+                             expectedCatalogRevision: catalogRevision, lateCorrectionSlotID: lateCorrectionSlotID)
     }
     func proposeDayMenu(_ day: Int) {
         proposeMenu(days: [day], title: "Подбор на \(dateLabel(day))")
@@ -716,26 +732,44 @@ struct AvoidedRecipe: Equatable {
                                     explanation: "Сопоставили продукты на всю неделю, даты готовки и ограничения участников. Если запасы не внесены, список покупок предварительный. Меню изменится только после подтверждения.",
                                     changes: changes)
     }
-    func proposeNotToday(_ slot: MealSlot) {
-        guard !isPastWindow(slot) else {
-            replanPreview = makePreview(title: "Другое блюдо", explanation: "Время этого приёма пищи уже прошло.", changes: [],
-                                        emptyMessage: "Изменяйте только будущий план; съеденное можно отметить отдельно.")
+    func proposeNotToday(_ requestedSlot: MealSlot) {
+        guard let slot = state.slots.first(where: { $0.id == requestedSlot.id }) else {
+            replanPreview = makePreview(title: L10n.text("Другое блюдо"), explanation: L10n.text("Этот приём больше не найден в плане."), changes: [],
+                                        emptyMessage: L10n.text("Откройте актуальный день и попробуйте снова."))
             return
         }
         guard !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) else {
-            replanPreview = makePreview(title: "Другое блюдо", explanation: "Этот приём пищи уже отмечен съеденным.", changes: [],
-                                        emptyMessage: "Отмените отметку о съеденном, если хотите поменять блюдо.")
+            replanPreview = makePreview(title: L10n.text("Другое блюдо"), explanation: L10n.text("Этот приём пищи уже отмечен съеденным."), changes: [],
+                                        emptyMessage: L10n.text("Отмените отметку о съеденном, если хотите поменять блюдо."))
+            return
+        }
+        guard !isSkipped(slot), !slot.memberIDs.isEmpty else {
+            replanPreview = makePreview(title: L10n.text("Другое блюдо"), explanation: L10n.text("В этом приёме сейчас никто не участвует или он пропущен."), changes: [],
+                                        emptyMessage: L10n.text("Верните приём в план и проверьте участников перед подбором."))
+            return
+        }
+        guard !isPastWindow(slot) || slot.day == currentDay else {
+            replanPreview = makePreview(title: L10n.text("Другое блюдо"), explanation: L10n.text("Этот день уже завершён."), changes: [],
+                                        emptyMessage: L10n.text("Для прошедших дней сохраняйте факты отдельно; менять старый план нельзя."))
             return
         }
         let used = Set(state.slots.filter { $0.day == slot.day && $0.id != slot.id }.map(\.recipeID))
         let alternatives = eligibleRecipes(for: slot).filter { $0.id != slot.recipeID }
         let choice = rankedRecipes(alternatives, slot: slot, usedToday: used, plannedSlots: state.slots).first
         let changes = choice.map { [PlannedChange(slotID: slot.id, previousID: slot.recipeID, nextID: $0.id)] } ?? []
-        let avoid = choice.map { _ in AvoidedRecipe(slotID: slot.id, memberID: state.selectedMemberID, recipeID: slot.recipeID) }
-        replanPreview = makePreview(title: "Другое блюдо на \(dateLabel(slot.day))",
-                                    explanation: "Учтём, что \(currentMember.name) не хочет это блюдо в выбранный день. Замена учитывает продукты дома и ограничения всех за столом; предпочтение сохранится только для этого приёма пищи.",
-                                    changes: changes, pendingAvoid: avoid,
-                                    emptyMessage: "Пока нет другого совместимого блюда для этого приёма пищи. Меню не меняется.")
+        let selectedParticipates = slot.memberIDs.contains(state.selectedMemberID)
+        let avoid = selectedParticipates ? choice.map { _ in AvoidedRecipe(slotID: slot.id, memberID: state.selectedMemberID, recipeID: slot.recipeID) } : nil
+        let lateCorrection = isPastWindow(slot) ? slot.id : nil
+        replanPreview = makePreview(title: L10n.format("Другое блюдо на %@", dateLabel(slot.day)),
+                                    explanation: lateCorrection == nil
+                                        ? (selectedParticipates
+                                            ? L10n.format("Учтём, что %@ не хочет это блюдо в выбранный день. Замена учитывает продукты дома и ограничения всех за столом; предпочтение сохранится только для этого приёма пищи.", currentMember.name)
+                                            : L10n.text("Выбранный человек не участвует в этом приёме. Подберём другое блюдо для участников, не записывая ему личный отказ."))
+                                        : L10n.text("Обычное время прошло, но приём не отмечен съеденным. Можно явно заменить его сегодня; это не означает, что еда была съедена. Проверим продукты и ограничения всех участников."),
+                                    changes: changes, pendingAvoid: avoid, lateCorrectionSlotID: lateCorrection,
+                                    emptyMessage: activeCourseRecipeIDs == nil
+                                        ? L10n.text("Пока нет другого совместимого блюда для этого приёма пищи. Меню не меняется.")
+                                        : L10n.text("В выбранных курсах пока нет другого проверенного блюда для этого приёма. Меню не меняется; черновики с неизвестными количествами не подставляются автоматически."))
     }
     func proposeReplan(affectedBy ingredientName: String) {
         var changes: [PlannedChange] = []
@@ -773,7 +807,9 @@ struct AvoidedRecipe: Equatable {
         var next = state
         for change in preview.changes {
             guard let index = next.slots.firstIndex(where: { $0.id == change.slotID && $0.recipeID == change.previousID }),
-                  !isPastWindow(next.slots[index]),
+                  (!isPastWindow(next.slots[index]) ||
+                   (preview.lateCorrectionSlotID == change.slotID && next.slots[index].day == currentDay &&
+                    !isSkipped(next.slots[index]))),
                   !state.eatenIDs.contains(where: { $0.hasPrefix("\(change.slotID)-") }),
                   let replacement = allRecipes.first(where: { $0.id == change.nextID }),
                   replacement.isPlanEligible,
@@ -785,17 +821,18 @@ struct AvoidedRecipe: Equatable {
             next.slots[index].recipeID = change.nextID
         }
         guard !preview.changes.isEmpty else { replanPreview = nil; return }
-        lastAppliedChanges = preview.changes
-        lastAppliedAvoid = nil
+        var appliedAvoid: AvoidedRecipe?
         if let avoid = preview.pendingAvoid {
             var all = next.avoidedRecipesBySlot ?? [:]
             if !all[avoid.key, default: []].contains(avoid.recipeID) {
                 all[avoid.key, default: []].insert(avoid.recipeID)
                 next.avoidedRecipesBySlot = all
-                lastAppliedAvoid = avoid
+                appliedAvoid = avoid
             }
         }
         state = next
+        lastAppliedChanges = preview.changes
+        lastAppliedAvoid = appliedAvoid
         undoRevision = stateRevision
         undoCatalogRevision = catalogRevision
         canUndoReplan = true

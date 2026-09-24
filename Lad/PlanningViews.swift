@@ -259,6 +259,8 @@ struct RecipesView: View {
                                     Text(recipe.kcal.map { L10n.format("%d минут · ~%d ккал на базовую порцию", recipe.minutes, $0) } ??
                                          L10n.format("%d минут · калорийность не рассчитана", recipe.minutes))
                                         .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                    Text(L10n.format("Сложность: %@", L10n.text(recipe.difficulty?.label ?? "Не оценена")))
+                                        .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.sage)
                                     let match = store.readiness(recipe)
                                     Text(match.missing.isEmpty && match.uncertain.isEmpty ? L10n.text("Можно приготовить из свободных запасов") :
                                          L10n.format("Не хватает после плана: %@", (match.missing + match.uncertain).map(L10n.text).joined(separator: ", ")))
@@ -310,6 +312,8 @@ struct RecipeDetailView: View {
                     Text(L10n.text(recipe.cuisine).uppercased()).font(.system(size: 11, weight: .bold)).tracking(1.8).foregroundStyle(Palette.terracotta)
                     Text(L10n.text(recipe.title)).font(.system(size: 33, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
                     Text(L10n.text(recipe.caption)).font(.system(size: 15)).foregroundStyle(Palette.muted)
+                    Label(L10n.format("Сложность: %@", L10n.text(recipe.difficulty?.label ?? "Не оценена")), systemImage: "hand.raised.fingers.spread")
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
                 }
                 HStack(spacing: 18) {
                     Button { store.toggleFavorite(recipe.id) } label: {
@@ -449,6 +453,8 @@ struct CookingView: View {
                     Button { dismiss() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 27)).foregroundStyle(Palette.muted) }
                 }
                 Text(L10n.text(recipe.title)).font(.system(size: 15)).foregroundStyle(Palette.muted)
+                Text(L10n.format("Сложность: %@", L10n.text(recipe.difficulty?.label ?? "Не оценена")))
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
                 ProgressView(value: Double(step + 1), total: Double(recipe.steps.count)).tint(Palette.sage)
                 Text(L10n.format("ШАГ %d ИЗ %d", step + 1, recipe.steps.count))
                     .font(.system(size: 12, weight: .bold)).tracking(1.7).foregroundStyle(Palette.terracotta)
