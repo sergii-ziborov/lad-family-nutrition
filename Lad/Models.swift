@@ -246,6 +246,7 @@ struct ReplanPreview: Identifiable {
     let expectedRevision: Int
     let expectedCatalogRevision: Int
     let lateCorrectionSlotID: String?
+    let outsideCourseSlotID: String?
 }
 
 struct AvoidedRecipe: Equatable {
@@ -646,9 +647,9 @@ struct AvoidedRecipe: Equatable {
         value -= Double(recipe.minutes) / 100
         return value
     }
-    private func eligibleRecipes(for slot: MealSlot) -> [Recipe] {
+    private func eligibleRecipes(for slot: MealSlot, limitingToCourses: Bool = true) -> [Recipe] {
         let people = participating(slot)
-        let source = activeCourseRecipeIDs
+        let source = limitingToCourses ? activeCourseRecipeIDs : nil
         let excluded = Set(people.flatMap { person in
             state.avoidedRecipesBySlot?["\(slot.id)|\(person.id)"] ?? []
         })
@@ -673,6 +674,7 @@ struct AvoidedRecipe: Equatable {
     }
     private func makePreview(title: String, explanation: String, changes: [PlannedChange], pendingAvoid: AvoidedRecipe? = nil,
                              lateCorrectionSlotID: String? = nil,
+                             outsideCourseSlotID: String? = nil,
                              emptyMessage: String = "Подходящей замены с меньшим числом недостающих продуктов не нашлось. Текущее меню остаётся, список покупок уже обновлён.") -> ReplanPreview {
         var proposedSlots = state.slots
         for change in changes {
@@ -698,7 +700,8 @@ struct AvoidedRecipe: Equatable {
         }
         return ReplanPreview(title: title, explanation: explanation, changes: changes, shoppingDelta: delta,
                              pendingAvoid: pendingAvoid, emptyMessage: emptyMessage, expectedRevision: stateRevision,
-                             expectedCatalogRevision: catalogRevision, lateCorrectionSlotID: lateCorrectionSlotID)
+                             expectedCatalogRevision: catalogRevision, lateCorrectionSlotID: lateCorrectionSlotID,
+                             outsideCourseSlotID: outsideCourseSlotID)
     }
     func proposeDayMenu(_ day: Int) {
         proposeMenu(days: [day], title: "Подбор на \(dateLabel(day))")
@@ -732,7 +735,7 @@ struct AvoidedRecipe: Equatable {
                                     explanation: "Сопоставили продукты на всю неделю, даты готовки и ограничения участников. Если запасы не внесены, список покупок предварительный. Меню изменится только после подтверждения.",
                                     changes: changes)
     }
-    func proposeNotToday(_ requestedSlot: MealSlot) {
+    func proposeNotToday(_ requestedSlot: MealSlot, includeOutsideCourses: Bool = false) {
         guard let slot = state.slots.first(where: { $0.id == requestedSlot.id }) else {
             replanPreview = makePreview(title: L10n.text("Другое блюдо"), explanation: L10n.text("Этот приём больше не найден в плане."), changes: [],
                                         emptyMessage: L10n.text("Откройте актуальный день и попробуйте снова."))
@@ -754,22 +757,29 @@ struct AvoidedRecipe: Equatable {
             return
         }
         let used = Set(state.slots.filter { $0.day == slot.day && $0.id != slot.id }.map(\.recipeID))
-        let alternatives = eligibleRecipes(for: slot).filter { $0.id != slot.recipeID }
+        let alternatives = eligibleRecipes(for: slot, limitingToCourses: !includeOutsideCourses).filter { $0.id != slot.recipeID }
         let choice = rankedRecipes(alternatives, slot: slot, usedToday: used, plannedSlots: state.slots).first
         let changes = choice.map { [PlannedChange(slotID: slot.id, previousID: slot.recipeID, nextID: $0.id)] } ?? []
         let selectedParticipates = slot.memberIDs.contains(state.selectedMemberID)
         let avoid = selectedParticipates ? choice.map { _ in AvoidedRecipe(slotID: slot.id, memberID: state.selectedMemberID, recipeID: slot.recipeID) } : nil
         let lateCorrection = isPastWindow(slot) ? slot.id : nil
-        replanPreview = makePreview(title: L10n.format("Другое блюдо на %@", dateLabel(slot.day)),
-                                    explanation: lateCorrection == nil
+        let normalExplanation = lateCorrection == nil
                                         ? (selectedParticipates
                                             ? L10n.format("Учтём, что %@ не хочет это блюдо в выбранный день. Замена учитывает продукты дома и ограничения всех за столом; предпочтение сохранится только для этого приёма пищи.", currentMember.name)
                                             : L10n.text("Выбранный человек не участвует в этом приёме. Подберём другое блюдо для участников, не записывая ему личный отказ."))
-                                        : L10n.text("Обычное время прошло, но приём не отмечен съеденным. Можно явно заменить его сегодня; это не означает, что еда была съедена. Проверим продукты и ограничения всех участников."),
+                                        : L10n.text("Обычное время прошло, но приём не отмечен съеденным. Можно явно заменить его сегодня; это не означает, что еда была съедена. Проверим продукты и ограничения всех участников.")
+        let explanation = includeOutsideCourses && activeCourseRecipeIDs != nil
+            ? L10n.text("Это предложение может быть вне выбранного курса. Оно не меняет сам курс и появится в меню только после подтверждения.") + " " + normalExplanation
+            : normalExplanation
+        replanPreview = makePreview(title: L10n.format("Другое блюдо на %@", dateLabel(slot.day)),
+                                    explanation: explanation,
                                     changes: changes, pendingAvoid: avoid, lateCorrectionSlotID: lateCorrection,
-                                    emptyMessage: activeCourseRecipeIDs == nil
-                                        ? L10n.text("Пока нет другого совместимого блюда для этого приёма пищи. Меню не меняется.")
-                                        : L10n.text("В выбранных курсах пока нет другого проверенного блюда для этого приёма. Меню не меняется; черновики с неизвестными количествами не подставляются автоматически."))
+                                    outsideCourseSlotID: choice == nil && !includeOutsideCourses && activeCourseRecipeIDs != nil ? slot.id : nil,
+                                    emptyMessage: includeOutsideCourses
+                                        ? L10n.text("Подходящего проверенного блюда не нашлось и вне курса. Меню не меняется.")
+                                        : (activeCourseRecipeIDs == nil
+                                            ? L10n.text("Пока нет другого совместимого блюда для этого приёма пищи. Меню не меняется.")
+                                            : L10n.text("В выбранных курсах пока нет другого проверенного блюда для этого приёма. Меню не меняется; черновики с неизвестными количествами не подставляются автоматически.")))
     }
     func proposeReplan(affectedBy ingredientName: String) {
         var changes: [PlannedChange] = []

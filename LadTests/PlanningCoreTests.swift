@@ -207,6 +207,26 @@ final class PlanningCoreTests: XCTestCase {
     }
 
     @MainActor
+    func testNotTodayOffersExplicitOutsideCourseFallbackWithoutSilentlyChangingCourse() throws {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        store.toggleCourse("mediterranean-ideas")
+        let breakfast = store.slot(0, 0)
+        store.proposeNotToday(breakfast)
+        let withinCourse = try XCTUnwrap(store.replanPreview)
+        XCTAssertTrue(withinCourse.changes.isEmpty)
+        XCTAssertEqual(withinCourse.outsideCourseSlotID, breakfast.id)
+
+        store.proposeNotToday(breakfast, includeOutsideCourses: true)
+        let outsideCourse = try XCTUnwrap(store.replanPreview)
+        XCTAssertFalse(outsideCourse.changes.isEmpty)
+        XCTAssertNil(outsideCourse.outsideCourseSlotID)
+        XCTAssertEqual(store.activeCourseIDs, ["mediterranean-ideas"])
+        XCTAssertEqual(store.slot(0, 0).recipeID, breakfast.recipeID)
+    }
+
+    @MainActor
     func testSecondNotTodayUndoRestoresTheImmediatelyPreviousRecipe() throws {
         let store = LadStore()
         store.state = .initial()

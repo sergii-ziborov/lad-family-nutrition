@@ -86,6 +86,9 @@
 "Обычное время прошло, но приём не отмечен съеденным. Можно явно заменить его сегодня; это не означает, что еда была съедена. Проверим продукты и ограничения всех участников." = "The usual time has passed, but this meal is not marked as eaten. You can explicitly replace it today; that does not record any food as eaten. We'll check supplies and everyone's restrictions.";
 "Пока нет другого совместимого блюда для этого приёма пищи. Меню не меняется." = "There is no other compatible dish for this meal yet. The menu is unchanged.";
 "В выбранных курсах пока нет другого проверенного блюда для этого приёма. Меню не меняется; черновики с неизвестными количествами не подставляются автоматически." = "The selected courses have no other verified dish for this meal yet. The menu is unchanged; drafts with unknown quantities are not inserted automatically.";
+"Показать проверенные блюда вне курса" = "Show verified dishes outside the course";
+"Это предложение может быть вне выбранного курса. Оно не меняет сам курс и появится в меню только после подтверждения." = "This suggestion may be outside the selected course. It does not change the course and will enter the menu only after you confirm.";
+"Подходящего проверенного блюда не нашлось и вне курса. Меню не меняется." = "No compatible verified dish was found outside the course either. The menu is unchanged.";
 "Поздний приём — подобрать другое" = "Late meal — suggest another dish";
 "Демо-каталог офлайн" = "Offline demo catalogue";
 "Найти блюдо" = "Find a dish";

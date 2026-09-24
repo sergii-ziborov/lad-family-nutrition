@@ -336,6 +336,17 @@ struct ReplanPreviewSheet: View {
                         Text(preview.emptyMessage)
                             .font(.system(size: 15)).foregroundStyle(Palette.ink)
                             .padding(17).background(.white, in: RoundedRectangle(cornerRadius: 17))
+                        if let slotID = preview.outsideCourseSlotID,
+                           let slot = store.state.slots.first(where: { $0.id == slotID }) {
+                            Button(L10n.text("Показать проверенные блюда вне курса")) {
+                                store.proposeNotToday(slot, includeOutsideCourses: true)
+                            }
+                            .font(.system(size: 15, weight: .semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(17)
+                            .foregroundStyle(Palette.sage)
+                            .background(.white, in: RoundedRectangle(cornerRadius: 16))
+                        }
                     }
                     ForEach(preview.changes) { change in
                         if let slot = store.state.slots.first(where: { $0.id == change.slotID }) {
