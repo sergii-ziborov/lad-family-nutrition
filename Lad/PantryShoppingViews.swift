@@ -362,7 +362,7 @@ struct ReplanPreviewSheet: View {
                             VStack(alignment: .leading, spacing: 7) {
                                 Text("\(store.dateLabel(slot.day)) · \(store.kinds[slot.kind])")
                                     .font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.terracotta)
-                                Text("\(store.allRecipes.first { $0.id == change.previousID }?.title ?? "Блюдо") → \(store.allRecipes.first { $0.id == change.nextID }?.title ?? "Блюдо")")
+                                Text("\(L10n.text(store.allRecipes.first { $0.id == change.previousID }?.title ?? "Блюдо")) → \(L10n.text(store.allRecipes.first { $0.id == change.nextID }?.title ?? "Блюдо"))")
                                     .font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink)
                                     .fixedSize(horizontal: false, vertical: true)
                                 if preview.reviewRecipeIDs.contains(change.nextID) {
@@ -376,12 +376,8 @@ struct ReplanPreviewSheet: View {
                     if !preview.shoppingDelta.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Как изменятся покупки").font(.system(size: 19, weight: .semibold, design: .serif))
-                            ForEach(preview.shoppingDelta.prefix(8), id: \.self) { line in
+                            ForEach(Array(preview.shoppingDelta.enumerated()), id: \.offset) { _, line in
                                 Text(line).font(.system(size: 12)).foregroundStyle(Palette.ink)
-                            }
-                            if preview.shoppingDelta.count > 8 {
-                                Text("И ещё \(preview.shoppingDelta.count - 8) изменений")
-                                    .font(.system(size: 11)).foregroundStyle(Palette.muted)
                             }
                         }.padding(17).frame(maxWidth: .infinity, alignment: .leading)
                             .background(Palette.paleSage.opacity(0.7), in: RoundedRectangle(cornerRadius: 17))

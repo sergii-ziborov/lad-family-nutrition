@@ -741,7 +741,7 @@ struct AvoidedRecipe: Equatable {
             let item = after[id] ?? before[id]!
             let old = oldAmount.formatted(.number.precision(.fractionLength(0...1)))
             let new = newAmount.formatted(.number.precision(.fractionLength(0...1)))
-            return "\(item.name): \(old) → \(new) \(item.unit)\(item.amountUnknown ? " · количество уточнить" : "")"
+            return "\(L10n.text(item.name)): \(old) → \(new) \(L10n.text(item.unit))\(item.amountUnknown ? " · " + L10n.text("количество уточнить") : "")"
         }
         return ReplanPreview(title: title, explanation: explanation, changes: changes, shoppingDelta: delta,
                              pendingAvoid: pendingAvoid, emptyMessage: emptyMessage, expectedRevision: stateRevision,

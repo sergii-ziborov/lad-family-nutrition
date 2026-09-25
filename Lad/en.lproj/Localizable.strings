@@ -90,6 +90,8 @@
 "Количества или аллергены требуют проверки" = "Quantities or allergens need checking";
 "В предложении есть рецепты с непроверенными количествами или аллергенами. Покупки и калории по ним неполные; перед готовкой проверьте состав." = "This proposal includes recipes with unverified quantities or allergens. Shopping amounts and calories are incomplete; check ingredients before cooking.";
 "Требует проверки перед готовкой" = "Needs checking before cooking";
+"количество уточнить" = "confirm amount";
+"Оставить меню" = "Keep current menu";
 "Курс снижения веса" = "Weight-management course";
 "Остальное" = "Other dishes";
 "План по дням" = "Day-by-day plan";
