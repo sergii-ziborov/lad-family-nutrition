@@ -115,6 +115,7 @@
 "Исходная закладка: ~%d ккал по указанным и восстановленным количествам" = "Original batch: ~%d kcal from source and AI-estimated amounts";
 "Оценки ИИ для: %@" = "AI-estimated amounts for: %@";
 "Восстановлено ИИ · проверьте" = "AI-estimated · check amount";
+"Исправлено с ИИ" = "AI-estimated amount";
 "Выход: ~%@ порции (оценка ИИ)" = "Yield: ~%@ servings (AI estimate)";
 "~%d ккал · ИИ" = "~%d kcal · AI estimate";
 "Калории и выход оценены ИИ" = "Calories and yield are AI estimates";
@@ -376,6 +377,7 @@
 " Закрытый каталог пока не загружен." = " The private catalog has not loaded yet.";
 "%d продуктов докупить" = "%d items to buy";
 "Известная потребность %@ · выделено из запасов %@ %@" = "Known need %@ · allocated from stock %@ %@";
+"Расчётная потребность %@ · выделено из запасов %@ %@" = "Calculated need %@ · allocated from stock %@ %@";
 "%@ · до %@" = "%@ · use by %@";
 "Для: %@%@" = "For: %@%@";
 " и ещё %d" = " and %d more";

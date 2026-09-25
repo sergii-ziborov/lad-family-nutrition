@@ -8,6 +8,7 @@ struct ShoppingNeed: Identifiable {
     let required: Double
     let available: Double
     let amountUnknown: Bool
+    let aiEstimated: Bool
     let sourceSlots: [String]
 
     var missing: Double { max(0, required - available) }
@@ -217,6 +218,7 @@ enum PlanningCore {
             var required: Double
             var allocated: Double
             var uncertain: Bool
+            var aiEstimated: Bool
             var sourceSlots: [String]
         }
         struct Lot {
@@ -269,15 +271,15 @@ enum PlanningCore {
             let portions = participants.filter { !eatenIDs.contains("\(slot.id)-\($0.id)") }
                 .map(\.portion).reduce(0, +)
             let useDate = calendar.date(byAdding: .day, value: slot.day, to: firstDay) ?? firstDay
-            var grouped: [String: (ingredient: Ingredient, amount: Double, unresolved: Bool)] = [:]
+            var grouped: [String: (ingredient: Ingredient, amount: Double, unresolved: Bool, aiEstimated: Bool)] = [:]
             for ingredient in recipe.ingredients {
                 let id = key(ingredient.name, ingredient.unit)
-                var entry = grouped[id] ?? (ingredient, 0, false)
+                var entry = grouped[id] ?? (ingredient, 0, false, false)
                 if let amount = ingredient.amount, amount > 0 {
                     entry.amount += amount * portions / max(1, recipe.baseServings)
                 }
                 else { entry.unresolved = true }
-                if ingredient.aiEstimated == true { entry.unresolved = true }
+                if ingredient.aiEstimated == true { entry.aiEstimated = true }
                 grouped[id] = entry
             }
             var lines: [ResolvedIngredient] = []
@@ -299,16 +301,17 @@ enum PlanningCore {
                        calendar.startOfDay(for: expiry) < calendar.startOfDay(for: useDate) { return false }
                     return lot.remaining == nil || (lot.key != id && (lot.remaining ?? 0) > 0)
                 }
-                let uncertain = group.unresolved || (toAllocate > 0.001 && uncertainStock)
+                let uncertain = group.unresolved || group.aiEstimated || (toAllocate > 0.001 && uncertainStock)
                 lines.append(ResolvedIngredient(id: id, name: group.ingredient.name, unit: group.ingredient.unit,
                                                 category: group.ingredient.category,
                                                 required: group.amount > 0 ? group.amount : nil,
                                                 allocated: allocated, uncertain: uncertain))
                 var entry = totals[id] ?? Aggregate(ingredient: group.ingredient, required: 0, allocated: 0,
-                                                    uncertain: false, sourceSlots: [])
+                                                    uncertain: false, aiEstimated: false, sourceSlots: [])
                 entry.required += group.amount
                 entry.allocated += allocated
-                entry.uncertain = entry.uncertain || uncertain
+                entry.uncertain = entry.uncertain || group.unresolved || (toAllocate > 0.001 && uncertainStock)
+                entry.aiEstimated = entry.aiEstimated || group.aiEstimated
                 if !entry.sourceSlots.contains(slot.id) { entry.sourceSlots.append(slot.id) }
                 totals[id] = entry
             }
@@ -319,6 +322,7 @@ enum PlanningCore {
             ShoppingNeed(id: id, name: aggregate.ingredient.name, unit: aggregate.ingredient.unit,
                                 category: aggregate.ingredient.category, required: aggregate.required,
                                 available: aggregate.allocated, amountUnknown: aggregate.uncertain,
+                                aiEstimated: aggregate.aiEstimated,
                                 sourceSlots: aggregate.sourceSlots)
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         let freePantry = lots.map {

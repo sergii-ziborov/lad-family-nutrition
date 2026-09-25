@@ -31,6 +31,12 @@ struct ShoppingView: View {
     }
     private var visibleSuggestions: [Ingredient] { Array(suggestions.prefix(visibleSuggestionCount)) }
     private var toBuy: [ShoppingNeed] { store.shoppingNeeds.filter { $0.missing > 0.001 || $0.amountUnknown } }
+    private func estimatedShoppingWeight(_ need: ShoppingNeed) -> String? {
+        guard need.unit != "г", need.missing > 0,
+              let grams = EnergyEstimator.estimatedGrams(for: Ingredient(name: need.name, amount: need.missing,
+                                                                        unit: need.unit, category: need.category)) else { return nil }
+        return "≈\(grams.formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text("г"))"
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -185,13 +191,20 @@ struct ShoppingView: View {
                         HStack(alignment: .top) {
                             Text(L10n.text(need.name)).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
                             Spacer()
-                            Text(need.amountUnknown ? L10n.text("уточнить") : "\(format(need.missing)) \(L10n.text(need.unit))")
+                            Text(need.required > 0 ? "\(format(need.missing)) \(L10n.text(need.unit))" : L10n.text("уточнить"))
                                 .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.sage)
                         }
                         if need.required > 0 {
-                            Text(L10n.format("Известная потребность %@ · выделено из запасов %@ %@",
+                            Text(L10n.format("Расчётная потребность %@ · выделено из запасов %@ %@",
                                              format(need.required), format(need.available), L10n.text(need.unit)))
                                 .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                        }
+                        if let weight = estimatedShoppingWeight(need) {
+                            Text(weight).font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.muted)
+                        }
+                        if need.aiEstimated || estimatedShoppingWeight(need) != nil {
+                            Label("Исправлено с ИИ", systemImage: "sparkles")
+                                .font(.system(size: 10, weight: .semibold)).foregroundStyle(Palette.terracotta)
                         }
                         if need.amountUnknown {
                             Label("Количество рецепта или остатка неизвестно — проверьте перед покупкой", systemImage: "questionmark.circle")

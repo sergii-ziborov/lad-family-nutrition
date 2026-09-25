@@ -101,6 +101,26 @@ final class PlanningCoreTests: XCTestCase {
         XCTAssertEqual(estimate.knownBatchKcal, 240)
     }
 
+    func testHouseholdMeasuresExposeGramEquivalentsWithoutChangingSourceAmount() {
+        let examples: [(String, Double, String, Double)] = [
+            ("Куриное филе", 1, "шт.", 200),
+            ("Морковь", 1, "шт.", 75),
+            ("Бурый рис", 1, "стакан", 180),
+            ("Растительное масло", 1, "ч. л.", 5),
+            ("Йогурт натуральный", 1, "ст. л.", 15),
+            ("Чеснок", 1, "зуб.", 3),
+            ("Минтай", 1, "филе", 150),
+            ("Сельдерей", 1, "ломтик", 10),
+            ("Разрыхлитель", 1, "щепотка", 0.5)
+        ]
+        for (name, amount, unit, grams) in examples {
+            let ingredient = Ingredient(name: name, amount: amount, unit: unit, category: "Test")
+            XCTAssertEqual(EnergyEstimator.estimatedGrams(for: ingredient), grams)
+            XCTAssertEqual(ingredient.amount, amount)
+            XCTAssertEqual(ingredient.unit, unit)
+        }
+    }
+
     func testAIInferredAmountIsVisibleAsUncertainShopping() {
         let recipe = Recipe(id: "estimate", title: "Test", caption: "", image: "", cuisine: "Test",
                             minutes: 10, kcal: nil, protein: nil, allergens: [],
@@ -111,7 +131,8 @@ final class PlanningCoreTests: XCTestCase {
         let plan = PlanningCore.resolvePlan(slots: [slot], members: [member], recipes: [recipe], pantry: [],
                                             startDate: Calendar.current.startOfDay(for: .now))
         XCTAssertEqual(plan.shoppingNeeds.first?.required, 70)
-        XCTAssertTrue(plan.shoppingNeeds.first?.amountUnknown == true)
+        XCTAssertEqual(plan.shoppingNeeds.first?.amountUnknown, false)
+        XCTAssertEqual(plan.shoppingNeeds.first?.aiEstimated, true)
     }
 
     func testEstimatedRecipeYieldScalesIngredientsAndCalories() throws {
@@ -133,7 +154,8 @@ final class PlanningCoreTests: XCTestCase {
         let plan = PlanningCore.resolvePlan(slots: [slot], members: [member], recipes: [recipe], pantry: [],
                                             startDate: Calendar.current.startOfDay(for: .now))
         XCTAssertEqual(plan.shoppingNeeds.first?.required, 35)
-        XCTAssertTrue(plan.shoppingNeeds.first?.amountUnknown == true)
+        XCTAssertEqual(plan.shoppingNeeds.first?.amountUnknown, false)
+        XCTAssertEqual(plan.shoppingNeeds.first?.aiEstimated, true)
     }
 
     @MainActor
@@ -781,7 +803,8 @@ final class PlanningCoreTests: XCTestCase {
         let old = PantryItem(name: "Томаты", quantity: nil, unit: "г", category: "Овощи", expiresOn: Date(timeIntervalSince1970: 0))
         store.savePantryItem(old)
         let need = ShoppingNeed(id: "томат|г", name: "Томаты", unit: "г", category: "Овощи",
-                                required: 200, available: 0, amountUnknown: true, sourceSlots: ["0-1"])
+                                required: 200, available: 0, amountUnknown: true, aiEstimated: false,
+                                sourceSlots: ["0-1"])
         store.addPurchasedToPantry(need, quantity: 150, commandID: "receipt-1")
         store.addPurchasedToPantry(need, quantity: 150, commandID: "receipt-1")
         XCTAssertEqual(store.pantry.count, 2)

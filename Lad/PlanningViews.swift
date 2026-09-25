@@ -379,6 +379,16 @@ struct RecipeDetailView: View {
     var slot: MealSlot? = nil
     @State private var showCooking = false
     private var portions: Double { slot.map { store.participating($0).reduce(0) { $0 + $1.portion } } ?? 1 }
+    private func estimatedWeightText(for ingredient: Ingredient) -> String? {
+        guard ingredient.unit != "г", let grams = EnergyEstimator.estimatedGrams(for: ingredient) else { return nil }
+        let minimum = (grams * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1)))
+        if let maximum = ingredient.amountMax, let amount = ingredient.amount, amount > 0 {
+            let upper = (grams * maximum / amount * portions / recipe.baseServings)
+                .formatted(.number.precision(.fractionLength(0...1)))
+            return "≈\(minimum)–\(upper) \(L10n.text("г"))"
+        }
+        return "≈\(minimum) \(L10n.text("г"))"
+    }
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 21) {
@@ -506,20 +516,26 @@ struct RecipeDetailView: View {
                                 Text(store.ingredientAvailabilityText(ingredient, in: slot))
                                     .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
                                     .fixedSize(horizontal: false, vertical: true)
-                                if ingredient.aiEstimated == true {
-                                    Label("Восстановлено ИИ · проверьте", systemImage: "sparkles")
-                                        .font(.system(size: 10, weight: .semibold))
-                                        .foregroundStyle(Palette.terracotta)
-                                }
                             }
-                            Spacer()
-                            if let amount = ingredient.amount, amount > 0 {
-                                Text(ingredient.amountMax.map { maxAmount in
-                                    "\((amount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1))))–\((maxAmount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))"
-                                } ?? "\((amount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))")
-                                    .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.sage)
-                            } else {
-                                Text("уточнить").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.muted)
+                            Spacer(minLength: 6)
+                            VStack(alignment: .trailing, spacing: 3) {
+                                if let amount = ingredient.amount, amount > 0 {
+                                    Text(ingredient.amountMax.map { maxAmount in
+                                        "\((amount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1))))–\((maxAmount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))"
+                                    } ?? "\((amount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))")
+                                        .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.sage)
+                                } else {
+                                    Text("уточнить").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.muted)
+                                }
+                                if let weight = estimatedWeightText(for: ingredient) {
+                                    Text(weight).font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.muted)
+                                }
+                                if ingredient.aiEstimated == true || estimatedWeightText(for: ingredient) != nil {
+                                    Label("Исправлено с ИИ", systemImage: "sparkles")
+                                        .font(.system(size: 9, weight: .semibold))
+                                        .foregroundStyle(Palette.terracotta)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                }
                             }
                         }.padding(.vertical, 5)
                         Rectangle().fill(Palette.line).frame(height: 1)

@@ -69,6 +69,24 @@ enum EnergyEstimator {
         "Сладкий перец": 120, "Перец сладкий": 120, "Шампиньоны": 18,
         "Яблоко": 150, "Чернослив": 10, "Огурец": 150
     ]
+    static func estimatedGrams(for ingredient: Ingredient) -> Double? {
+        guard let amount = ingredient.amount, amount > 0 else { return nil }
+        switch ingredient.unit {
+        case "г", "мл": return amount
+        case "шт.": return pieceGrams[ingredient.name].map { amount * $0 }
+        case "зуб.": return ingredient.name == "Чеснок" ? amount * 3 : nil
+        case "головка": return ingredient.name == "Чеснок" ? amount * 40 : nil
+        case "филе": return ["Куриное филе": 200, "Минтай": 150, "Хек": 150][ingredient.name].map { amount * $0 }
+        case "ст. л.": return ["Йогурт натуральный": 15, "Рисовая мука": 10,
+                                 "Ржаная мука": 10][ingredient.name].map { amount * $0 }
+        case "ч. л.": return ["Растительное масло": 5, "Сметана": 5,
+                                "Сельдерей": 3, "Майонез": 5][ingredient.name].map { amount * $0 }
+        case "стакан": return ["Бурый рис": 180, "Рис": 180][ingredient.name].map { amount * $0 }
+        case "ломтик": return ingredient.name == "Сельдерей" ? amount * 10 : nil
+        case "щепотка": return amount * 0.5
+        default: return nil
+        }
+    }
     static func evaluate(_ ingredients: [Ingredient]) -> EnergyEstimate {
         var known = 0.0
         var unresolved: [String] = []
@@ -81,23 +99,7 @@ enum EnergyEstimator {
                 unresolved.append(ingredient.name)
                 continue
             }
-            let grams: Double?
-            switch ingredient.unit {
-            case "г", "мл": grams = amount
-            case "шт.": grams = pieceGrams[ingredient.name].map { amount * $0 }
-            case "зуб.": grams = ingredient.name == "Чеснок" ? amount * 3 : nil
-            case "головка": grams = ingredient.name == "Чеснок" ? amount * 40 : nil
-            case "филе": grams = ["Куриное филе": 200, "Минтай": 150, "Хек": 150][ingredient.name].map { amount * $0 }
-            case "ст. л.": grams = ["Йогурт натуральный": 15, "Рисовая мука": 10,
-                                     "Ржаная мука": 10][ingredient.name].map { amount * $0 }
-            case "ч. л.": grams = ["Растительное масло": 5, "Сметана": 5,
-                                    "Сельдерей": 3, "Майонез": 5][ingredient.name].map { amount * $0 }
-            case "стакан": grams = ["Бурый рис": 180, "Рис": 180][ingredient.name].map { amount * $0 }
-            case "ломтик": grams = ingredient.name == "Сельдерей" ? amount * 10 : nil
-            case "щепотка": grams = amount * 0.5
-            default: grams = nil
-            }
-            guard let grams else { unresolved.append(ingredient.name); continue }
+            guard let grams = estimatedGrams(for: ingredient) else { unresolved.append(ingredient.name); continue }
             if ingredient.unit != "г" && ingredient.unit != "мл" { estimatedMeasure = true }
             let averageAmount = ingredient.amountMax.map { (amount + $0) / (2 * amount) } ?? 1
             known += grams * averageAmount * density / 100
