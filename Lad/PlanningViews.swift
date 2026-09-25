@@ -5,6 +5,7 @@ struct WeekView: View {
     @State private var editingSlot: MealSlot?
     @State private var warning: String?
     @State private var confirmClearOutside = false
+    @State private var showMealTimes = false
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 23) {
@@ -54,8 +55,13 @@ struct WeekView: View {
                     MenuActionButton(title: "Перегенерировать меню дня", icon: "arrow.clockwise", prominence: .primary) {
                         store.proposeDayMenu(store.selectedDay)
                     }
-                    MenuActionButton(title: "Пересчитать всё меню недели", icon: "calendar.badge.clock") {
-                        store.proposeWeekMenu()
+                    HStack(spacing: 8) {
+                        MenuActionButton(title: "Пересчитать неделю", icon: "calendar.badge.clock") {
+                            store.proposeWeekMenu()
+                        }
+                        MenuActionButton(title: "Время еды", icon: "clock") {
+                            showMealTimes = true
+                        }
                     }
                     if store.canUndoReplan {
                         Button("Отменить подбор") { store.undoReplan() }
@@ -88,6 +94,7 @@ struct WeekView: View {
                                     Text(L10n.text(recipe.title)).font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
                                     Text(L10n.format("%d мин · %d за столом", recipe.minutes, store.participating(slot).count))
                                         .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                    MealTimeContext(kind: kind)
                                     Text(store.courseSourceLabel(for: slot.recipeID))
                                         .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.sage)
                                         .fixedSize(horizontal: false, vertical: true)
@@ -138,6 +145,7 @@ struct WeekView: View {
                 }
             }.padding(.horizontal, 21).padding(.top, 20).padding(.bottom, 35)
         }.background(Palette.canvas.ignoresSafeArea())
+            .sheet(isPresented: $showMealTimes) { MealTimesSheet() }
             .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
             .sheet(item: $editingSlot) { slot in RecipeChooser(slot: slot) { recipe, allowDraft in
                 warning = store.assign(recipe, to: slot, allowUnverifiedCourseDraft: allowDraft)

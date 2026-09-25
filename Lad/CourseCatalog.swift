@@ -20,6 +20,17 @@ struct LadCourse: Identifiable, Codable {
     }
     var summary: String { L10n.languageCode == "en" ? summaryEn : summaryRu }
     var isFree: Bool { access == "free" }
+    // The supplied source pages state a breakfast rule only for this pilot course.
+    var hasSourceBreakfastTiming: Bool { id == "weight-week-pilot" }
+}
+
+enum WeightCourseBreakfastTiming {
+    static let idealEndMinute = 10 * 60
+    static let latestEndMinute = 11 * 60
+    static let minutesAfterWaking = 60
+    static var sourceText: String {
+        L10n.text("Из исходных страниц: завтрак в течение часа после пробуждения, желательно до 10:00 и не позже 11:00.")
+    }
 }
 
 struct CourseDay: Codable, Identifiable {

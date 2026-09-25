@@ -96,12 +96,17 @@ struct FamilyView: View {
                 }.padding(17).frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white, in: RoundedRectangle(cornerRadius: 19))
                 VStack(alignment: .leading, spacing: 10) {
-                    SectionHeading(title: "Время семьи")
-                    Text("Ориентиры помогают показать актуальный приём пищи. После них еда не исчезает из плана и не отмечается автоматически.")
+                    SectionHeading(title: "Время приёмов в меню")
+                    if let course = store.selectedBreakfastTimingCourse {
+                        Text(L10n.format("Ориентир курса «%@»: завтрак желательно до 10:00, не позже 11:00.", course.title))
+                            .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.sage)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text("Ваши часы определяют, когда приём перестаёт считаться предстоящим. Еда не исчезает из плана и не отмечается съеденной автоматически.")
                         .font(.system(size: 12)).foregroundStyle(Palette.muted)
                     Text(L10n.format("Завтрак до %@ · обед до %@ · ужин до %@",
-                                     mealTime(store.mealSchedule.breakfastEnds), mealTime(store.mealSchedule.lunchEnds),
-                                     mealTime(store.mealSchedule.dinnerEnds)))
+                                     store.mealCutoffText(for: 0), store.mealCutoffText(for: 1),
+                                     store.mealCutoffText(for: 2)))
                         .font(.system(size: 12)).foregroundStyle(Palette.ink)
                     Button("Изменить время") { showMealTimes = true }
                         .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
@@ -170,11 +175,6 @@ struct FamilyView: View {
                 Button("Отмена", role: .cancel) { supplementName = "" }
             } message: { Text("Прототип не проверяет состав, дозы и взаимодействия.") }
     }
-    private func mealTime(_ minute: Int) -> String {
-        let date = Calendar.current.date(bySettingHour: minute / 60, minute: minute % 60,
-                                         second: 0, of: store.now) ?? store.now
-        return date.formatted(date: .omitted, time: .shortened)
-    }
 }
 
 private struct LanguageSettingsSheet: View {
@@ -199,23 +199,53 @@ private struct LanguageSettingsSheet: View {
     }
 }
 
-private struct MealTimesSheet: View {
+struct MealTimesSheet: View {
     @EnvironmentObject var store: LadStore
     @Environment(\.dismiss) private var dismiss
-    @State private var breakfast = Date()
-    @State private var lunch = Date()
-    @State private var dinner = Date()
+    @State private var draftSchedule: MealSchedule?
     @State private var warning = ""
+    private var schedule: MealSchedule { draftSchedule ?? store.mealSchedule }
 
     var body: some View {
         NavigationStack {
             Form {
+                if let course = store.selectedBreakfastTimingCourse {
+                    Section {
+                        Label(L10n.format("Рекомендация курса «%@»", course.title), systemImage: "book.closed")
+                            .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.sage)
+                        Text(WeightCourseBreakfastTiming.sourceText)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("В предоставленных страницах время обеда и ужина не указано.")
+                            .foregroundStyle(Palette.muted)
+                        if schedule.breakfastEnds == WeightCourseBreakfastTiming.latestEndMinute {
+                            Label("Предел 11:00 уже используется в меню", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(Palette.sage)
+                        } else {
+                            Button("Применить предел 11:00 к меню") {
+                                var updated = schedule
+                                updated.breakfastEnds = WeightCourseBreakfastTiming.latestEndMinute
+                                guard updated.isValid else {
+                                    warning = L10n.text("Сначала установите обед позже 11:00.")
+                                    return
+                                }
+                                draftSchedule = updated
+                                warning = ""
+                            }
+                        }
+                    } header: {
+                        Text("Из выбранного курса")
+                    } footer: {
+                        Text("Это правило автора курса, а не универсальное медицинское требование.")
+                    }
+                }
                 Section {
-                    DatePicker("Завтрак до", selection: $breakfast, displayedComponents: .hourAndMinute)
-                    DatePicker("Обед до", selection: $lunch, displayedComponents: .hourAndMinute)
-                    DatePicker("Ужин до", selection: $dinner, displayedComponents: .hourAndMinute)
+                    DatePicker("Завтрак до", selection: timeBinding(for: 0), displayedComponents: .hourAndMinute)
+                    DatePicker("Обед до", selection: timeBinding(for: 1), displayedComponents: .hourAndMinute)
+                    DatePicker("Ужин до", selection: timeBinding(for: 2), displayedComponents: .hourAndMinute)
+                } header: {
+                    Text("Ваши часы для меню")
                 } footer: {
-                    Text("Это ваши привычные часы по местному времени телефона, а не медицинские ограничения. Прошедший приём можно отметить позднее.")
+                    Text("Часы по местному времени телефона. После них приём помечается прошедшим, но его можно отметить съеденным позднее.")
                 }
                 if !warning.isEmpty { Text(warning).foregroundStyle(Palette.terracotta) }
             }
@@ -224,8 +254,6 @@ private struct MealTimesSheet: View {
                 ToolbarItem(placement: .topBarLeading) { Button("Отмена") { dismiss() } }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Сохранить") {
-                        let schedule = MealSchedule(breakfastEnds: minutes(breakfast), lunchEnds: minutes(lunch),
-                                                    dinnerEnds: minutes(dinner))
                         guard schedule.isValid else {
                             warning = "Время должно идти по порядку: завтрак, обед, ужин."
                             return
@@ -236,17 +264,24 @@ private struct MealTimesSheet: View {
                 }
             }
         }
-        .onAppear {
-            breakfast = date(store.mealSchedule.breakfastEnds)
-            lunch = date(store.mealSchedule.lunchEnds)
-            dinner = date(store.mealSchedule.dinnerEnds)
-        }
+    }
+    private func timeBinding(for kind: Int) -> Binding<Date> {
+        Binding(get: { date(schedule.endMinute(for: kind)) }, set: { value in
+            var updated = schedule
+            switch kind {
+            case 0: updated.breakfastEnds = MealTiming.minuteOfDay(value)
+            case 1: updated.lunchEnds = MealTiming.minuteOfDay(value)
+            default: updated.dinnerEnds = MealTiming.minuteOfDay(value)
+            }
+            draftSchedule = updated
+            warning = ""
+        })
     }
     private func date(_ minute: Int) -> Date {
         Calendar.current.date(bySettingHour: minute / 60, minute: minute % 60,
-                              second: 0, of: store.now) ?? store.now
+                              second: 0, of: store.now) ??
+            Calendar.current.startOfDay(for: store.now).addingTimeInterval(TimeInterval(minute * 60))
     }
-    private func minutes(_ date: Date) -> Int { MealTiming.minuteOfDay(date) }
 }
 
 struct MemberEditor: View {

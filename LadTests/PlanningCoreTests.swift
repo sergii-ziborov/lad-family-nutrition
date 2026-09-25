@@ -4,6 +4,31 @@ import SwiftUI
 @testable import Lad
 
 final class PlanningCoreTests: XCTestCase {
+    @MainActor
+    func testSourceBreakfastTimingIsTiedToSelectedCourseAndPersonalSchedule() {
+        let store = LadStore()
+        store.state = .initial()
+        let pilot = LadCourse(id: "weight-week-pilot", titleRu: "Лёгкая домашняя кухня", titleEn: "Lighter home cooking",
+                              summaryRu: "", summaryEn: "", category: "weight-management", access: "members",
+                              status: "published", recipeIDs: [], days: nil)
+        let other = LadCourse(id: "other-weight-course", titleRu: "Другой", titleEn: "Other",
+                              summaryRu: "", summaryEn: "", category: "weight-management", access: "members",
+                              status: "published", recipeIDs: [], days: nil)
+        store.replaceCatalogForTesting(recipes: [], courses: [pilot, other])
+        XCTAssertNil(store.selectedBreakfastTimingCourse)
+        store.toggleCourse(other.id)
+        XCTAssertNil(store.selectedBreakfastTimingCourse)
+        store.toggleCourse(pilot.id)
+        XCTAssertEqual(store.selectedBreakfastTimingCourse?.id, pilot.id)
+        store.updateMealSchedule(MealSchedule(breakfastEnds: 12 * 60, lunchEnds: 16 * 60, dinnerEnds: 22 * 60))
+        XCTAssertEqual(store.mealCutoffText(for: 0), "12:00")
+        XCTAssertEqual(WeightCourseBreakfastTiming.idealEndMinute, 10 * 60)
+        XCTAssertEqual(WeightCourseBreakfastTiming.latestEndMinute, 11 * 60)
+        store.updateMealSchedule(MealSchedule(breakfastEnds: WeightCourseBreakfastTiming.latestEndMinute,
+                                              lunchEnds: 16 * 60, dinnerEnds: 22 * 60))
+        XCTAssertEqual(store.mealCutoffText(for: 0), "11:00")
+    }
+
     func testMeasuredBodyPercentagesAndOlderProfiles() throws {
         let legacy = #"{"id":"one","name":"Test","goal":"Баланс","portion":1,"allergies":[]}"#.data(using: .utf8)!
         var member = try JSONDecoder().decode(FamilyMember.self, from: legacy)

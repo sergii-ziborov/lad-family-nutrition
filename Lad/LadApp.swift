@@ -159,6 +159,7 @@ struct DayPicker: View {
 struct TodayView: View {
     @EnvironmentObject var store: LadStore
     @State private var showPersonPicker = false
+    @State private var showMealTimes = false
     @State private var editingSlot: MealSlot?
     @State private var warning: String?
     @State private var confirmClearOutside = false
@@ -201,8 +202,13 @@ struct TodayView: View {
                     MenuActionButton(title: "Перегенерировать меню дня", icon: "arrow.clockwise", prominence: .primary) {
                         store.proposeDayMenu(store.selectedDay)
                     }
-                    MenuActionButton(title: "Пересчитать всё меню недели", icon: "calendar.badge.clock", prominence: .secondary) {
-                        store.proposeWeekMenu()
+                    HStack(spacing: 8) {
+                        MenuActionButton(title: "Пересчитать неделю", icon: "calendar.badge.clock") {
+                            store.proposeWeekMenu()
+                        }
+                        MenuActionButton(title: "Время еды", icon: "clock") {
+                            showMealTimes = true
+                        }
                     }
                     if store.outsideFutureSlotCount > 0 {
                         Button { confirmClearOutside = true } label: {
@@ -291,6 +297,7 @@ struct TodayView: View {
         }
         .background(Palette.canvas.ignoresSafeArea())
         .sheet(isPresented: $showPersonPicker) { PersonPickerSheet() .presentationDetents([.medium]) }
+        .sheet(isPresented: $showMealTimes) { MealTimesSheet() }
         .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
         .sheet(item: $editingSlot) { slot in
             RecipeChooser(slot: slot) { recipe, allowDraft in
@@ -329,6 +336,7 @@ struct MealRow: View {
                         (recipe.kcal.map { L10n.format("~%d ккал · %d мин", Int(Double($0) * store.currentMember.portion), recipe.minutes) } ??
                          L10n.format("Калорийность неизвестна · %d мин", recipe.minutes)))
                         .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                    MealTimeContext(kind: slot.kind)
                     if recipe.kcalEstimated {
                         Label("Калории и выход оценены ИИ", systemImage: "sparkles")
                             .font(.system(size: 10, weight: .semibold)).foregroundStyle(Palette.terracotta)
@@ -358,6 +366,24 @@ struct MealRow: View {
             }
             MealActions(slot: slot, onEdit: onEdit)
         }.padding(10).background(.white, in: RoundedRectangle(cornerRadius: 20))
+    }
+}
+
+struct MealTimeContext: View {
+    @EnvironmentObject var store: LadStore
+    let kind: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Label(L10n.format("Ваше окно в меню: до %@", store.mealCutoffText(for: kind)),
+                  systemImage: "clock")
+                .font(.system(size: 11)).foregroundStyle(Palette.muted)
+            if kind == 0, let course = store.selectedBreakfastTimingCourse {
+                Text(L10n.format("Курс «%@»: завтрак желательно до 10:00, не позже 11:00", course.title))
+                    .font(.system(size: 10, weight: .medium)).foregroundStyle(Palette.sage)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }
 

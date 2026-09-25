@@ -522,6 +522,7 @@ struct AvoidedRecipe: Equatable {
     }
     var activeCourseIDs: Set<String> { state.activeCourseIDs ?? [] }
     var selectedCourses: [LadCourse] { courses.filter { activeCourseIDs.contains($0.id) } }
+    var selectedBreakfastTimingCourse: LadCourse? { selectedCourses.first { $0.hasSourceBreakfastTiming } }
     var hasSelectedCourses: Bool { !selectedCourses.isEmpty }
     private var activeCourseRecipeIDs: Set<String> {
         let existing = Set(allRecipes.map(\.id))
@@ -663,6 +664,10 @@ struct AvoidedRecipe: Equatable {
     }
     var pantry: [PantryItem] { state.pantryItems ?? [] }
     var mealSchedule: MealSchedule { state.mealSchedule ?? .standard }
+    func mealCutoffText(for kind: Int) -> String {
+        let minute = mealSchedule.endMinute(for: kind)
+        return String(format: "%02d:%02d", minute / 60, minute % 60)
+    }
     var planRequirements: PlanRequirements {
         let effectiveSlots = hasSelectedCourses ? state.slots : state.slots.map { slot in
             var empty = slot

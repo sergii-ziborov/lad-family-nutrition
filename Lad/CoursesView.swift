@@ -174,6 +174,19 @@ struct CourseDetailView: View {
                             .padding(14)
                             .background(Palette.peach.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
                     }
+                    if course.hasSourceBreakfastTiming {
+                        VStack(alignment: .leading, spacing: 7) {
+                            Label("Время завтрака из исходных страниц", systemImage: "clock")
+                                .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
+                            Text(WeightCourseBreakfastTiming.sourceText)
+                                .font(.system(size: 12)).foregroundStyle(Palette.ink)
+                            Text("Время обеда и ужина в источнике не задано; личные часы настраиваются в разделе «Семья» и отображаются в меню.")
+                                .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(14)
+                        .background(Palette.paleSage.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
+                    }
                     Button {
                         if store.activeCourseIDs.contains(course.id) { confirmRemoval = true }
                         else { store.toggleCourse(course.id) }
