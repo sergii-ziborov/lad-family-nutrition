@@ -96,6 +96,66 @@ final class PlanningCoreTests: XCTestCase {
         XCTAssertTrue(preview.changes.allSatisfy { $0.slotID.hasSuffix("-0") == false && allowed.contains($0.nextID) })
     }
 
+    @MainActor
+    func testCourseMealTagsDriveTodayEvenAfterUsualMealTime() throws {
+        let store = LadStore()
+        store.state = .initial()
+        let breakfast = Recipe(id: "private:tagged-breakfast", title: "Test breakfast", caption: "", image: "",
+                               cuisine: "Test", minutes: 10, kcal: nil, protein: nil, allergens: [],
+                               ingredients: [Ingredient(name: "Test oats", amount: nil, unit: "г", category: "Test")],
+                               steps: ["Cook"], allergensVerified: false, mealKinds: [0])
+        let lunch = Recipe(id: "private:tagged-lunch", title: "Test lunch", caption: "", image: "",
+                           cuisine: "Test", minutes: 20, kcal: nil, protein: nil, allergens: [],
+                           ingredients: [Ingredient(name: "Test beans", amount: nil, unit: "г", category: "Test")],
+                           steps: ["Cook"], allergensVerified: false, mealKinds: [1])
+        let course = LadCourse(id: "tagged-course", titleRu: "Тест", titleEn: "Test", summaryRu: "", summaryEn: "",
+                               category: "weight-management", access: "members", status: "published",
+                               recipeIDs: ["tagged-breakfast", "tagged-lunch"],
+                               days: [CourseDay(day: 1, lunchRecipeID: "tagged-breakfast", dinnerRecipeID: nil)])
+        store.replaceCatalogForTesting(recipes: [breakfast, lunch], courses: [course])
+        store.toggleCourse(course.id)
+        let late = try XCTUnwrap(Calendar.current.date(bySettingHour: 23, minute: 30, second: 0, of: store.state.startDate))
+        store.refreshClock(late)
+        XCTAssertEqual(store.chooserRecipes(for: store.slot(0, 0)).map(\.id), [breakfast.id])
+        XCTAssertEqual(store.chooserRecipes(for: store.slot(0, 1)).map(\.id), [lunch.id])
+        XCTAssertTrue(store.chooserRecipes(for: store.slot(0, 2)).isEmpty)
+        store.proposeDayMenu(0)
+        let preview = try XCTUnwrap(store.replanPreview)
+        XCTAssertEqual(Set(preview.changes.map(\.nextID)), [breakfast.id, lunch.id])
+        XCTAssertEqual(preview.reviewRecipeIDs, [breakfast.id, lunch.id])
+        XCTAssertEqual(preview.lateCorrectionSlotIDs, ["0-0", "0-1"])
+        store.applyReplan(preview)
+        XCTAssertEqual(store.slot(0, 0).recipeID, breakfast.id)
+        XCTAssertEqual(store.slot(0, 1).recipeID, lunch.id)
+        XCTAssertNil(store.recipe(store.slot(0, 0)).kcal)
+        XCTAssertEqual(store.slot(0, 2).recipeID, "salmon")
+        XCTAssertTrue(store.isOutsideSelectedCourses("salmon"))
+    }
+
+    @MainActor
+    func testUnverifiedCourseDraftCannotBypassLiveAllergyWithOldSlot() throws {
+        let store = LadStore()
+        store.state = .initial()
+        let draft = Recipe(id: "private:allergy-draft", title: "Test dish", caption: "", image: "",
+                           cuisine: "Test", minutes: 10, kcal: nil, protein: nil, allergens: [],
+                           ingredients: [Ingredient(name: "Test item", amount: nil, unit: "г", category: "Test")],
+                           steps: ["Cook"], allergensVerified: false, mealKinds: [1])
+        let course = LadCourse(id: "allergy-course", titleRu: "Тест", titleEn: "Test", summaryRu: "", summaryEn: "",
+                               category: "weight-management", access: "members", status: "published",
+                               recipeIDs: ["allergy-draft"], days: nil)
+        store.replaceCatalogForTesting(recipes: [draft], courses: [course])
+        store.toggleCourse(course.id)
+        store.refreshClock(store.state.startDate)
+        let oldSlot = store.slot(0, 1)
+        XCTAssertNotNil(store.assign(draft, to: oldSlot))
+        XCTAssertNil(store.assign(draft, to: oldSlot, allowUnverifiedCourseDraft: true))
+        store.state.slots[1].recipeID = "soup"
+        store.state.members[0].allergies = ["Test allergen"]
+        XCTAssertTrue(store.chooserRecipes(for: oldSlot).isEmpty)
+        XCTAssertNotNil(store.assign(draft, to: oldSlot, allowUnverifiedCourseDraft: true))
+        XCTAssertEqual(store.slot(0, 1).recipeID, "soup")
+    }
+
     func testCatalogPagesAdvanceAndStopAtEnd() {
         XCTAssertEqual(CatalogPaging.nextLimit(current: 0, total: 50, step: 24), 24)
         XCTAssertEqual(CatalogPaging.nextLimit(current: 24, total: 50, step: 24), 48)
@@ -558,7 +618,7 @@ final class PlanningCoreTests: XCTestCase {
     }
 
     @MainActor
-    func testPastMealCannotBeReplacedByOldProposalOrManualAssignment() throws {
+    func testOldPreviewCannotReplacePastMealButExplicitSameDayAssignmentCan() throws {
         let store = LadStore()
         store.state = .initial()
         store.refreshClock(store.state.startDate)
@@ -570,7 +630,8 @@ final class PlanningCoreTests: XCTestCase {
         store.refreshClock(noon)
         store.applyReplan(preview)
         XCTAssertEqual(store.slot(0, 0).recipeID, breakfast.recipeID)
-        XCTAssertNotNil(store.assign(Recipe.all.first { $0.id == "oats" }!, to: breakfast))
+        XCTAssertNil(store.assign(Recipe.all.first { $0.id == "oats" }!, to: breakfast))
+        XCTAssertEqual(store.slot(0, 0).recipeID, "oats")
     }
 
     @MainActor

@@ -332,6 +332,15 @@ struct ReplanPreviewSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(preview.explanation).font(.system(size: 14)).foregroundStyle(Palette.muted)
+                    if !preview.reviewRecipeIDs.isEmpty {
+                        Label("В предложении есть рецепты с непроверенными количествами или аллергенами. Покупки и калории по ним неполные; перед готовкой проверьте состав.",
+                              systemImage: "exclamationmark.triangle.fill")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Palette.terracotta)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(14)
+                            .background(Palette.peach.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
+                    }
                     if preview.changes.isEmpty {
                         Text(preview.emptyMessage)
                             .font(.system(size: 15)).foregroundStyle(Palette.ink)
@@ -355,6 +364,11 @@ struct ReplanPreviewSheet: View {
                                     .font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.terracotta)
                                 Text("\(store.allRecipes.first { $0.id == change.previousID }?.title ?? "Блюдо") → \(store.allRecipes.first { $0.id == change.nextID }?.title ?? "Блюдо")")
                                     .font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                if preview.reviewRecipeIDs.contains(change.nextID) {
+                                    Text("Требует проверки перед готовкой")
+                                        .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.terracotta)
+                                }
                             }.padding(17).frame(maxWidth: .infinity, alignment: .leading)
                                 .background(.white, in: RoundedRectangle(cornerRadius: 17))
                         }

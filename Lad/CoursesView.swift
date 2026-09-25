@@ -123,11 +123,6 @@ struct CourseDetailView: View {
             store.allRecipes.first { $0.id == id || $0.id == "private:\(id)" }
         }
     }
-    private func recipe(_ id: String?) -> Recipe? {
-        guard let id else { return nil }
-        return recipes.first { $0.id == id || $0.id == "private:\(id)" }
-    }
-
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 17) {
@@ -158,42 +153,42 @@ struct CourseDetailView: View {
                             .foregroundStyle(.white)
                             .background(Palette.sage, in: RoundedRectangle(cornerRadius: 16))
                     }.buttonStyle(.plain)
-                    if let days = course.days, !days.isEmpty {
-                        Text("План по дням")
-                            .font(.system(size: 23, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
-                        ForEach(days.sorted { $0.day < $1.day }) { day in
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(L10n.format("День %d", day.day))
-                                    .font(.system(size: 18, weight: .semibold, design: .serif))
-                                courseMeal("Обед", recipe: recipe(day.lunchRecipeID))
-                                courseMeal("Ужин", recipe: recipe(day.dinnerRecipeID))
-                            }
-                            .padding(16)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(.white, in: RoundedRectangle(cornerRadius: 18))
-                        }
-                    }
                     Text("Блюда программы")
                         .font(.system(size: 23, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
-                    ForEach(recipes) { recipe in
-                        NavigationLink { RecipeDetailView(recipe: recipe) } label: {
-                            HStack(spacing: 13) {
-                                RecipePicture(recipe: recipe).frame(width: 78, height: 78)
-                                    .clipShape(RoundedRectangle(cornerRadius: 13))
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text(L10n.text(recipe.title))
-                                        .font(.system(size: 16, weight: .semibold, design: .serif))
-                                        .foregroundStyle(Palette.ink)
-                                        .multilineTextAlignment(.leading)
-                                    Text(L10n.format("%d мин", recipe.minutes))
-                                        .font(.system(size: 12)).foregroundStyle(Palette.muted)
-                                }
-                                Spacer(minLength: 4)
-                                Image(systemName: "chevron.right").foregroundStyle(Palette.sage)
+                    Text("Завтрак, обед и ужин — теги блюд; курс не закрепляет блюда за конкретным днём.")
+                        .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    ForEach(0..<3, id: \.self) { kind in
+                        let tagged = recipes.filter { $0.mealKinds.contains(kind) }
+                        if !tagged.isEmpty {
+                            Text(store.kinds[kind])
+                                .font(.system(size: 19, weight: .semibold, design: .serif))
+                                .foregroundStyle(Palette.ink)
+                            ForEach(tagged) { recipe in
+                                NavigationLink { RecipeDetailView(recipe: recipe) } label: {
+                                    HStack(spacing: 13) {
+                                        RecipePicture(recipe: recipe).frame(width: 78, height: 78)
+                                            .clipShape(RoundedRectangle(cornerRadius: 13))
+                                        VStack(alignment: .leading, spacing: 5) {
+                                            Text(L10n.text(recipe.title))
+                                                .font(.system(size: 16, weight: .semibold, design: .serif))
+                                                .foregroundStyle(Palette.ink)
+                                                .multilineTextAlignment(.leading)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                            Text(L10n.format("%d мин", recipe.minutes))
+                                                .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                            if !recipe.isPlanEligible {
+                                                Text("Количества или аллергены требуют проверки")
+                                                    .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
+                                            }
+                                        }
+                                        Spacer(minLength: 4)
+                                        Image(systemName: "chevron.right").foregroundStyle(Palette.sage)
+                                    }
+                                    .padding(12)
+                                    .background(.white, in: RoundedRectangle(cornerRadius: 17))
+                                }.buttonStyle(.plain)
                             }
-                            .padding(12)
-                            .background(.white, in: RoundedRectangle(cornerRadius: 17))
-                        }.buttonStyle(.plain)
+                        }
                     }
                     if recipes.isEmpty {
                         Text("В курсе пока нет доступных блюд.")
@@ -212,26 +207,6 @@ struct CourseDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    @ViewBuilder
-    private func courseMeal(_ label: String, recipe: Recipe?) -> some View {
-        HStack(alignment: .top, spacing: 9) {
-            Text(L10n.text(label)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.muted)
-                .frame(width: 48, alignment: .leading)
-            if let recipe {
-                NavigationLink { RecipeDetailView(recipe: recipe) } label: {
-                    Text(L10n.text(recipe.title))
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Palette.sage)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            } else {
-                Text("Нет полной страницы рецепта — не добавлено в курс")
-                    .font(.system(size: 12)).foregroundStyle(Palette.terracotta)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 }
 
 struct CourseServerSheet: View {

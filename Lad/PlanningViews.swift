@@ -89,12 +89,12 @@ struct WeekView: View {
                             Spacer()
                             Button("Изменить блюдо") { editingSlot = slot }
                                 .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
-                                .disabled(store.isPastWindow(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
+                                .disabled(slot.day < store.currentDay || store.isSkipped(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
                         }
                         Button("Не хочу в этот день — подобрать другое") { store.proposeNotToday(slot) }
                             .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
                             .padding(.top, 11)
-                            .disabled(store.isPastWindow(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
+                            .disabled(slot.day < store.currentDay || store.isSkipped(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
                         if store.isPastWindow(slot), !slot.memberIDs.isEmpty,
                            !store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
                             Button(store.isSkipped(slot) ? "Вернуть в план" : "Пропустить приём") {
@@ -124,8 +124,8 @@ struct WeekView: View {
             }.padding(.horizontal, 21).padding(.top, 20).padding(.bottom, 35)
         }.background(Palette.canvas.ignoresSafeArea())
             .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
-            .sheet(item: $editingSlot) { slot in RecipeChooser(slot: slot) { recipe in
-                warning = store.assign(recipe, to: slot)
+            .sheet(item: $editingSlot) { slot in RecipeChooser(slot: slot) { recipe, allowDraft in
+                warning = store.assign(recipe, to: slot, allowUnverifiedCourseDraft: allowDraft)
                 if warning == nil { editingSlot = nil }
             }}
             .alert("Проверьте ограничения", isPresented: Binding(get: { warning != nil }, set: { if !$0 { warning = nil } })) {
@@ -138,25 +138,36 @@ struct RecipeChooser: View {
     @EnvironmentObject var store: LadStore
     @Environment(\.dismiss) private var dismiss
     let slot: MealSlot
-    let onChoose: (Recipe) -> Void
+    let onChoose: (Recipe, Bool) -> Void
     @State private var visibleCount = 12
+    @State private var pendingDraft: Recipe?
     private var candidates: [Recipe] {
-        store.allRecipes.filter { $0.mealKinds.contains(slot.kind) }
-            .sorted {
-                let left = store.requirements(for: $0, replacing: slot)
-                let right = store.requirements(for: $1, replacing: slot)
-                if (left?.isReady == true) != (right?.isReady == true) { return left?.isReady == true }
-                let leftProblems = (left?.shortageCount ?? .max) + (left?.hasUncertainty == true ? 1 : 0)
-                let rightProblems = (right?.shortageCount ?? .max) + (right?.hasUncertainty == true ? 1 : 0)
-                return leftProblems == rightProblems ? $0.title < $1.title : leftProblems < rightProblems
-            }
+        let ranked = store.chooserRecipes(for: slot).map { recipe in
+            let match = store.requirements(for: recipe, replacing: slot)
+            return (recipe: recipe, ready: match?.isReady == true,
+                    problems: (match?.shortageCount ?? .max) + (match?.hasUncertainty == true ? 1 : 0))
+        }
+        return ranked.sorted { left, right in
+            if left.ready != right.ready { return left.ready }
+            if left.problems != right.problems { return left.problems < right.problems }
+            return left.recipe.title < right.recipe.title
+        }.map(\.recipe)
     }
     var body: some View {
+        let options = candidates
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    ForEach(Array(candidates.prefix(visibleCount))) { recipe in
-                        Button { onChoose(recipe) } label: {
+                    if store.hasSelectedCourses {
+                        Text("Показаны только блюда выбранных курсов с тегом этого приёма пищи.")
+                            .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    ForEach(Array(options.prefix(visibleCount))) { recipe in
+                        Button {
+                            if recipe.isPlanEligible { onChoose(recipe, false) }
+                            else { pendingDraft = recipe }
+                        } label: {
                             HStack(spacing: 12) {
                                 RecipePicture(recipe: recipe).frame(width: 75, height: 75).clipped().clipShape(RoundedRectangle(cornerRadius: 13))
                                 VStack(alignment: .leading, spacing: 5) {
@@ -167,21 +178,40 @@ struct RecipeChooser: View {
                                     Text(store.availabilityTitle(for: recipe, replacing: slot))
                                         .font(.system(size: 11)).foregroundStyle(match?.isReady == true ? Palette.sage : Palette.terracotta)
                                         .lineLimit(2)
+                                    if !recipe.isPlanEligible {
+                                        Text("Черновик · количества и аллергены проверить")
+                                            .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.terracotta)
+                                    }
                                 }
                                 Spacer()
                                 Image(systemName: "plus.circle.fill").foregroundStyle(Palette.sage)
                             }.foregroundStyle(Palette.ink).padding(10).background(.white, in: RoundedRectangle(cornerRadius: 18))
                         }.buttonStyle(.plain)
                     }
-                    if visibleCount < candidates.count {
+                    if visibleCount < options.count {
                         ProgressView("Загружаем ещё блюда…")
                             .padding(12)
-                            .onAppear { visibleCount = CatalogPaging.nextLimit(current: visibleCount, total: candidates.count, step: 12) }
+                            .onAppear { visibleCount = CatalogPaging.nextLimit(current: visibleCount, total: options.count, step: 12) }
+                    }
+                    if options.isEmpty {
+                        Text(store.hasSelectedCourses
+                             ? "В выбранных курсах нет совместимого блюда с тегом этого приёма. Проверьте участников и ограничения."
+                             : "Нет совместимых блюд для этого приёма. Проверьте участников и ограничения.")
+                            .font(.system(size: 13)).foregroundStyle(Palette.muted)
                     }
                 }.padding(20)
             }.background(Palette.canvas.ignoresSafeArea()).navigationTitle("Выбрать блюдо")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
+        }
+        .alert("Рецепт требует проверки", isPresented: Binding(get: { pendingDraft != nil }, set: { if !$0 { pendingDraft = nil } })) {
+            Button("Добавить в план с пометкой") {
+                if let recipe = pendingDraft { onChoose(recipe, true) }
+                pendingDraft = nil
+            }
+            Button("Отмена", role: .cancel) { pendingDraft = nil }
+        } message: {
+            Text("Количество части ингредиентов и сведения об аллергенах не подтверждены. Точные покупки, порции и калории не рассчитаны. Не назначайте блюдо участнику с аллергией.")
         }
     }
 }

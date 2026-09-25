@@ -119,6 +119,8 @@ struct DayPicker: View {
 struct TodayView: View {
     @EnvironmentObject var store: LadStore
     @State private var showPersonPicker = false
+    @State private var editingSlot: MealSlot?
+    @State private var warning: String?
     private var featuredSlot: MealSlot { store.suggestedSlot() }
     var body: some View {
         GeometryReader { screen in
@@ -141,6 +143,26 @@ struct TodayView: View {
                         .lineLimit(2).minimumScaleFactor(0.75).foregroundStyle(Palette.ink)
                 }
                 DayPicker()
+                VStack(alignment: .leading, spacing: 11) {
+                    if store.hasSelectedCourses {
+                        Text("Выбраны курсы: меню изменится только после подтверждения. Блюда вне курсов отмечены ниже.")
+                            .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Button { store.proposeDayMenu(store.selectedDay) } label: {
+                        Label(store.hasSelectedCourses ? L10n.text("Меню дня из выбранных курсов") : L10n.text("Подобрать меню дня"),
+                              systemImage: "calendar.badge.plus")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    Button { store.proposeWeekMenu() } label: {
+                        Label("Пересчитать оставшуюся неделю", systemImage: "arrow.triangle.2.circlepath")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Palette.sage)
+                .padding(16)
+                .background(.white, in: RoundedRectangle(cornerRadius: 18))
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 11) {
                         Image(systemName: "heart.text.clipboard").font(.system(size: 19)).foregroundStyle(Palette.sage)
@@ -187,7 +209,7 @@ struct TodayView: View {
                     SectionHeading(title: "Ваш день", trailing: store.currentMember.name.uppercased())
                     ForEach(0..<3, id: \.self) { kind in
                         let slot = store.slot(store.selectedDay, kind)
-                        MealRow(slot: slot)
+                        MealRow(slot: slot) { editingSlot = $0 }
                     }
                     Text("План и съеденное отмечаются отдельно. Пищевая ценность в этой демоверсии приблизительная.")
                         .font(.system(size: 11)).foregroundStyle(Palette.muted).padding(.top, 3)
@@ -200,12 +222,22 @@ struct TodayView: View {
         .background(Palette.canvas.ignoresSafeArea())
         .sheet(isPresented: $showPersonPicker) { PersonPickerSheet() .presentationDetents([.medium]) }
         .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
+        .sheet(item: $editingSlot) { slot in
+            RecipeChooser(slot: slot) { recipe, allowDraft in
+                warning = store.assign(recipe, to: slot, allowUnverifiedCourseDraft: allowDraft)
+                if warning == nil { editingSlot = nil }
+            }
+        }
+        .alert("Проверьте ограничения", isPresented: Binding(get: { warning != nil }, set: { if !$0 { warning = nil } })) {
+            Button("Понятно", role: .cancel) { warning = nil }
+        } message: { Text(warning ?? "") }
     }
 }
 
 struct MealRow: View {
     @EnvironmentObject var store: LadStore
     let slot: MealSlot
+    let onEdit: (MealSlot) -> Void
     var body: some View {
         let recipe = store.recipe(slot)
         VStack(alignment: .leading, spacing: 8) {
@@ -215,10 +247,16 @@ struct MealRow: View {
                 }.buttonStyle(.plain)
                 VStack(alignment: .leading, spacing: 5) {
                     Text(store.kinds[slot.kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
-                    Text(L10n.text(recipe.title)).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink).lineLimit(1)
-                    Text(recipe.isUnavailable ? "Подключите закрытый каталог" :
-                        (recipe.kcal.map { "~\(Int(Double($0) * store.currentMember.portion)) ккал · \(recipe.minutes) мин" } ?? "Калорийность неизвестна · \(recipe.minutes) мин"))
+                    Text(L10n.text(recipe.title)).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(recipe.isUnavailable ? L10n.text("Подключите закрытый каталог") :
+                        (recipe.kcal.map { L10n.format("~%d ккал · %d мин", Int(Double($0) * store.currentMember.portion), recipe.minutes) } ??
+                         L10n.format("Калорийность неизвестна · %d мин", recipe.minutes)))
                         .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                    if store.isOutsideSelectedCourses(slot.recipeID) {
+                        Text("Вне выбранных курсов")
+                            .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.terracotta)
+                    }
                     Text(store.availabilityTitle(for: slot))
                         .font(.system(size: 11)).foregroundStyle(store.requirements(for: slot)?.isReady == true ? Palette.sage : Palette.terracotta)
                         .fixedSize(horizontal: false, vertical: true)
@@ -240,8 +278,11 @@ struct MealRow: View {
                     store.toggleSkipped(slot)
                 }.font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
             }
-            if slot.day >= store.currentDay,
+            if slot.day >= store.currentDay, !store.isSkipped(slot),
                !store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
+                Button("Изменить блюдо") { onEdit(slot) }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Palette.sage)
                 Button {
                     store.proposeNotToday(slot)
                 } label: {
