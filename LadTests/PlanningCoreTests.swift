@@ -4,6 +4,51 @@ import SwiftUI
 @testable import Lad
 
 final class PlanningCoreTests: XCTestCase {
+    func testMeasuredBodyPercentagesAndOlderProfiles() throws {
+        let legacy = #"{"id":"one","name":"Test","goal":"Баланс","portion":1,"allergies":[]}"#.data(using: .utf8)!
+        var member = try JSONDecoder().decode(FamilyMember.self, from: legacy)
+        XCTAssertNil(member.heightCm)
+        XCTAssertNil(member.fatPercent)
+        member.heightCm = 175
+        member.weightKg = 80
+        member.measuredFatMassKg = 20
+        member.measuredMuscleMassKg = 32
+        XCTAssertEqual(member.fatPercent, 25)
+        XCTAssertEqual(member.musclePercent, 40)
+        member.measuredFatMassKg = 90
+        XCTAssertNil(member.fatPercent)
+    }
+
+    func testGlutenGroupMatchesSpecificCerealAllergens() {
+        XCTAssertTrue(AllergenMatching.conflicts(selected: ["Злаки с глютеном"], recipe: ["Пшеница"]))
+        XCTAssertTrue(AllergenMatching.conflicts(selected: ["Овёс"], recipe: ["Злаки с глютеном"]))
+        XCTAssertFalse(AllergenMatching.conflicts(selected: ["Рыба"], recipe: ["Молоко"]))
+    }
+
+    func testAppLanguageChangesCourseTitlesAndInterfaceStrings() throws {
+        let original = UserDefaults.standard.string(forKey: L10n.languageKey)
+        defer { UserDefaults.standard.set(original, forKey: L10n.languageKey) }
+        let starter = try XCTUnwrap(CourseCatalogAccess.bundledCourses.first { $0.id == "lad-starter" })
+        UserDefaults.standard.set("en", forKey: L10n.languageKey)
+        XCTAssertEqual(L10n.text("Настройки"), "Settings")
+        XCTAssertEqual(starter.title, "Welcome to Lad")
+        UserDefaults.standard.set("ru", forKey: L10n.languageKey)
+        XCTAssertEqual(L10n.text("Настройки"), "Настройки")
+        XCTAssertEqual(starter.title, "Знакомство с Ладом")
+    }
+
+    @MainActor
+    func testRegenerateDayPrefersDifferentDishesAndFutureCanBeSkipped() {
+        let store = LadStore()
+        store.state = .initial(selectAllAvailableCourses: true)
+        let tomorrow = store.slot(1, 0)
+        store.toggleSkipped(tomorrow)
+        XCTAssertTrue(store.isSkipped(tomorrow))
+        store.proposeDayMenu(0)
+        XCTAssertNotNil(store.replanPreview)
+        XCTAssertTrue(store.replanPreview?.changes.contains(where: { $0.previousID != $0.nextID }) == true)
+    }
+
     func testCourseCatalogueDecodesOneRevisionAndRejectsMissingDishes() throws {
         let recipe: [String: Any] = [
             "id": "course-dish", "title": "Тестовое блюдо", "caption": "Тест", "cuisine": "Домашняя",

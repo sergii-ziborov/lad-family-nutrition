@@ -29,6 +29,7 @@ extension EnvironmentValues {
 
 struct AppShell: View {
     @EnvironmentObject var store: LadStore
+    @AppStorage(L10n.languageKey) private var language = "system"
     @State private var selected = 0
     init() {
         #if DEBUG
@@ -49,6 +50,7 @@ struct AppShell: View {
         }
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarBackground(Palette.canvas, for: .tabBar)
+        .environment(\.locale, Locale(identifier: language == "system" ? L10n.languageCode : language))
         .environment(\.openCatalogueTab) { selected = 2 }
         .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { date in
             store.refreshClock(date)
@@ -196,14 +198,11 @@ struct TodayView: View {
                             .font(.system(size: 12)).foregroundStyle(Palette.terracotta)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    Button { store.proposeDayMenu(store.selectedDay) } label: {
-                        Label(store.hasSelectedCourses ? L10n.text("Меню дня из выбранных курсов") : L10n.text("Подобрать меню дня"),
-                              systemImage: "calendar.badge.plus")
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    MenuActionButton(title: "Перегенерировать меню дня", icon: "arrow.clockwise", prominence: .primary) {
+                        store.proposeDayMenu(store.selectedDay)
                     }
-                    Button { store.proposeWeekMenu() } label: {
-                        Label("Пересчитать всё меню недели", systemImage: "arrow.triangle.2.circlepath")
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    MenuActionButton(title: "Пересчитать всё меню недели", icon: "calendar.badge.clock", prominence: .secondary) {
+                        store.proposeWeekMenu()
                     }
                     if store.outsideFutureSlotCount > 0 {
                         Button { confirmClearOutside = true } label: {
@@ -357,31 +356,60 @@ struct MealRow: View {
                     .disabled(recipe.isUnplanned)
                     .disabled(!slot.memberIDs.contains(store.currentMember.id))
             }
-            if store.isPastWindow(slot), !slot.memberIDs.isEmpty,
-               !store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
-                Button(store.isSkipped(slot) ? "Вернуть в план" : "Пропустить приём") {
-                    store.toggleSkipped(slot)
-                }.font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
-            }
-            if slot.day >= store.currentDay, !store.isSkipped(slot),
-               !store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
-                Button("Изменить блюдо") { onEdit(slot) }
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Palette.sage)
-                if !recipe.isUnplanned {
-                Button {
-                    store.proposeNotToday(slot)
-                } label: {
-                    Label(slot.day == store.currentDay
-                          ? (store.isPastWindow(slot) ? "Поздний приём — подобрать другое" : "Сегодня не хочу — подобрать другое")
-                          : "В этот день не хочу — подобрать другое",
-                          systemImage: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 3)
-                }.buttonStyle(.plain)
-                }
-            }
+            MealActions(slot: slot, onEdit: onEdit)
         }.padding(10).background(.white, in: RoundedRectangle(cornerRadius: 20))
+    }
+}
+
+struct MenuActionButton: View {
+    enum Prominence { case primary, secondary, caution }
+    let title: String
+    let icon: String
+    var prominence: Prominence = .secondary
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(L10n.text(title), systemImage: icon)
+                .font(.system(size: 13, weight: .semibold))
+                .lineLimit(2).minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity, minHeight: 46)
+                .padding(.horizontal, 9)
+                .foregroundStyle(prominence == .primary ? .white : prominence == .caution ? Palette.terracotta : Palette.sage)
+                .background(prominence == .primary ? Palette.sage : prominence == .caution ? Palette.peach.opacity(0.45) : Palette.paleSage.opacity(0.65),
+                            in: RoundedRectangle(cornerRadius: 14))
+        }.buttonStyle(.plain)
+    }
+}
+
+struct MealActions: View {
+    @EnvironmentObject var store: LadStore
+    let slot: MealSlot
+    let onEdit: (MealSlot) -> Void
+
+    private var hasLoggedMeal: Bool { store.state.eatenIDs.contains { $0.hasPrefix("\(slot.id)-") } }
+    var body: some View {
+        if slot.day >= store.currentDay && !hasLoggedMeal {
+            VStack(spacing: 8) {
+                if !store.isSkipped(slot) {
+                    HStack(spacing: 8) {
+                        MenuActionButton(title: "Изменить блюдо", icon: "square.and.pencil") { onEdit(slot) }
+                        if !store.recipe(slot).isUnplanned {
+                            MenuActionButton(title: "Предложить другое", icon: "arrow.triangle.2.circlepath") {
+                                store.proposeNotToday(slot)
+                            }
+                        }
+                    }
+                }
+                if !slot.memberIDs.isEmpty {
+                    MenuActionButton(title: store.isSkipped(slot) ? "Вернуть в план" : "Пропустить приём",
+                                     icon: store.isSkipped(slot) ? "arrow.uturn.backward" : "forward.end",
+                                     prominence: store.isSkipped(slot) ? .secondary : .caution) {
+                        store.toggleSkipped(slot)
+                    }
+                }
+            }.padding(.top, 8)
+        }
     }
 }
 

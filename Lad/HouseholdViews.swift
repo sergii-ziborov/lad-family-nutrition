@@ -9,10 +9,23 @@ struct FamilyView: View {
     @State private var showSupplement = false
     @State private var showCloud = false
     @State private var showMealTimes = false
+    @State private var showSettings = false
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 18) {
                 PageTitle(eyebrow: "КАЖДОМУ СВОЁ", title: "Наш круг")
+                Button { showSettings = true } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "gearshape").font(.system(size: 21)).foregroundStyle(Palette.sage)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Настройки").font(.system(size: 15, weight: .semibold))
+                            Text("Язык приложения").font(.system(size: 12)).foregroundStyle(Palette.muted)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(Palette.sage)
+                    }.foregroundStyle(Palette.ink).padding(16)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 18))
+                }.buttonStyle(.plain)
                 VStack(alignment: .leading, spacing: 7) {
                     Text("За одним столом").font(.system(size: 20, weight: .semibold, design: .serif))
                     Text("Одна готовка, личные настройки. Порции здесь примерные и задаются вручную; детям цели по весу не назначаются.")
@@ -32,7 +45,22 @@ struct FamilyView: View {
                                     .font(.system(size: 12)).foregroundStyle(Palette.muted)
                                 Text(L10n.format("Ручная порция: %d%% базовой", Int(member.portion * 100)))
                                     .font(.system(size: 11)).foregroundStyle(Palette.muted)
-                                if !member.allergies.isEmpty { Text("Исключить: \(member.allergies.joined(separator: ", "))").font(.system(size: 11)).foregroundStyle(Palette.terracotta) }
+                                if let height = member.heightCm, let weight = member.weightKg {
+                                    Text(L10n.format("Рост %.0f см · вес %.1f кг", height, weight))
+                                        .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                                }
+                                if let fat = member.fatPercent {
+                                    Text(L10n.format("Жир: %.1f%% массы тела", fat))
+                                        .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                                }
+                                if let muscle = member.musclePercent {
+                                    Text(L10n.format("Мышцы: %.1f%% массы тела", muscle))
+                                        .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                                }
+                                if !member.allergies.isEmpty {
+                                    Text(L10n.format("Исключить: %@", member.allergies.map(L10n.text).joined(separator: ", ")))
+                                        .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
+                                }
                             }
                             Spacer()
                             Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Palette.muted)
@@ -120,6 +148,7 @@ struct FamilyView: View {
             .sheet(item: $selectedPerson) { member in MemberEditor(member: member) }
             .sheet(isPresented: $showCloud) { PrivateCatalogSheet() }
             .sheet(isPresented: $showMealTimes) { MealTimesSheet() }
+            .sheet(isPresented: $showSettings) { LanguageSettingsSheet() }
             .alert("Новый профиль", isPresented: $showAdd) {
                 TextField("Имя", text: $newName)
                 Button("Добавить") {
@@ -145,6 +174,28 @@ struct FamilyView: View {
         let date = Calendar.current.date(bySettingHour: minute / 60, minute: minute % 60,
                                          second: 0, of: store.now) ?? store.now
         return date.formatted(date: .omitted, time: .shortened)
+    }
+}
+
+private struct LanguageSettingsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage(L10n.languageKey) private var language = "system"
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Picker("Язык приложения", selection: $language) {
+                        Text("Как на телефоне").tag("system")
+                        Text("English").tag("en")
+                        Text("Русский").tag("ru")
+                    }.pickerStyle(.inline)
+                } footer: {
+                    Text("Названия рецептов из подключённого каталога могут остаться на языке источника.")
+                }
+            }
+            .navigationTitle("Настройки")
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } } }
+        }
     }
 }
 
@@ -204,8 +255,43 @@ struct MemberEditor: View {
     @State var member: FamilyMember
     @State private var ageText = ""
     @State private var energyText = ""
+    @State private var heightText = ""
+    @State private var weightText = ""
+    @State private var fatMassText = ""
+    @State private var muscleMassText = ""
+    @State private var allergenQuery = ""
     private let goals = ["Баланс", "Поддержание", "Снижение", "Набор", "Без цели по весу"]
-    private let allergens = ["Молоко", "Яйцо", "Рыба", "Пшеница"]
+    private let allergens = ["Молоко", "Яйцо", "Рыба", "Злаки с глютеном", "Пшеница", "Рожь", "Ячмень", "Овёс",
+                             "Ракообразные", "Арахис", "Соя", "Орехи", "Сельдерей", "Горчица",
+                             "Кунжут", "Диоксид серы и сульфиты", "Люпин", "Моллюски"]
+    private var visibleAllergens: [String] {
+        guard !allergenQuery.isEmpty else { return allergens }
+        return allergens.filter { $0.localizedStandardContains(allergenQuery) ||
+            L10n.text($0).localizedStandardContains(allergenQuery) }
+    }
+    private func quantity(_ text: String, range: ClosedRange<Double>) -> Double? {
+        guard let value = Double(text.replacingOccurrences(of: ",", with: ".")), range.contains(value) else { return nil }
+        return value
+    }
+    private var measurementIssue: String? {
+        if !heightText.isEmpty && quantity(heightText, range: 50...250) == nil {
+            return L10n.text("Проверьте рост: от 50 до 250 см.")
+        }
+        if !weightText.isEmpty && quantity(weightText, range: 10...500) == nil {
+            return L10n.text("Проверьте вес: от 10 до 500 кг.")
+        }
+        if (Int(ageText) ?? 0) >= 18 && (!fatMassText.isEmpty || !muscleMassText.isEmpty) {
+            guard let weight = quantity(weightText, range: 10...500) else {
+                return L10n.text("Для расчёта состава тела сначала укажите вес.")
+            }
+            let fat = fatMassText.isEmpty ? 0 : quantity(fatMassText, range: 0...weight)
+            let muscle = muscleMassText.isEmpty ? 0 : quantity(muscleMassText, range: 0...weight)
+            guard let fat, let muscle, fat + muscle <= weight else {
+                return L10n.text("Масса жира и мышц не должна превышать вес тела.")
+            }
+        }
+        return nil
+    }
     var body: some View {
         NavigationStack {
             Form {
@@ -235,8 +321,39 @@ struct MemberEditor: View {
                         Text("Не рассчитывается приложением и не заменяет консультацию специалиста. Используется только для сравнения и сортировки блюд.")
                     }
                 }
+                Section {
+                    TextField(L10n.text("Рост, см"), text: $heightText).keyboardType(.decimalPad)
+                    TextField(L10n.text("Вес, кг"), text: $weightText).keyboardType(.decimalPad)
+                } header: {
+                    Text("Измерения")
+                } footer: {
+                    Text("Рост и вес вводятся вручную. По ним нельзя достоверно определить долю жира или мышц.")
+                }
+                if (Int(ageText) ?? 0) >= 18 {
+                    Section {
+                        TextField(L10n.text("Измеренная масса жира, кг"), text: $fatMassText).keyboardType(.decimalPad)
+                        TextField(L10n.text("Измеренная масса мышц, кг"), text: $muscleMassText).keyboardType(.decimalPad)
+                        if let weight = quantity(weightText, range: 10...500), weight > 0 {
+                            if let fat = quantity(fatMassText, range: 0...weight) {
+                                Text(L10n.format("Жир: %.1f%% массы тела", fat / weight * 100))
+                            }
+                            if let muscle = quantity(muscleMassText, range: 0...weight) {
+                                Text(L10n.format("Мышцы: %.1f%% массы тела", muscle / weight * 100))
+                            }
+                        }
+                    } header: {
+                        Text("Состав тела")
+                    } footer: {
+                        Text("Проценты = измеренная масса / вес × 100. Введите данные из измерения; это не оценка приложения и не медицинское заключение.")
+                    }
+                }
+                if let measurementIssue {
+                    Text(measurementIssue).font(.system(size: 12)).foregroundStyle(Palette.terracotta)
+                }
                 Section("Исключить аллергены") {
-                    ForEach(allergens, id: \.self) { allergen in
+                    TextField(L10n.text("Поиск аллергена"), text: $allergenQuery)
+                        .textInputAutocapitalization(.never)
+                    ForEach(visibleAllergens, id: \.self) { allergen in
                         Toggle(L10n.text(allergen), isOn: Binding(
                             get: { member.allergies.contains(allergen) },
                             set: { enabled in
@@ -245,6 +362,8 @@ struct MemberEditor: View {
                             }
                         )).tint(Palette.sage)
                     }
+                    Text("Список помогает фильтровать блюда, но у большинства рецептов состав аллергенов не подтверждён. Всегда проверяйте ингредиенты и упаковки.")
+                        .font(.system(size: 12)).foregroundStyle(Palette.muted)
                 }
                 Section { Text("Для ребёнка, беременности, аллергии и медицинских ограничений автоматический расчёт меню здесь не валидирован.")
                     .font(.system(size: 12)).foregroundStyle(Palette.muted) }
@@ -256,15 +375,25 @@ struct MemberEditor: View {
                         Button("Сохранить") {
                             member.ageYears = Int(ageText).flatMap { (0...120).contains($0) ? $0 : nil }
                             member.dailyEnergyTarget = (member.ageYears ?? 0) >= 18 ? Int(energyText).flatMap { (1000...5000).contains($0) ? $0 : nil } : nil
+                            member.heightCm = quantity(heightText, range: 50...250)
+                            member.weightKg = quantity(weightText, range: 10...500)
+                            member.measuredFatMassKg = (member.ageYears ?? 0) >= 18 ?
+                                quantity(fatMassText, range: 0...(member.weightKg ?? 0)) : nil
+                            member.measuredMuscleMassKg = (member.ageYears ?? 0) >= 18 ?
+                                quantity(muscleMassText, range: 0...(member.weightKg ?? 0)) : nil
                             if let age = member.ageYears, age < 18 { member.goal = "Без цели по весу" }
                             store.updateMember(member)
                             dismiss()
-                        }.bold()
+                        }.bold().disabled(measurementIssue != nil)
                     }
                 }
         }.onAppear {
             ageText = member.ageYears.map(String.init) ?? ""
             energyText = member.dailyEnergyTarget.map(String.init) ?? ""
+            heightText = member.heightCm.map { String($0) } ?? ""
+            weightText = member.weightKg.map { String($0) } ?? ""
+            fatMassText = member.measuredFatMassKg.map { String($0) } ?? ""
+            muscleMassText = member.measuredMuscleMassKg.map { String($0) } ?? ""
         }.onChange(of: ageText) { _, value in
             if let age = Int(value), age < 18 { member.goal = "Без цели по весу" }
         }

@@ -14,8 +14,11 @@ struct LadCourse: Identifiable, Codable {
     let recipeIDs: [String]
     let days: [CourseDay]?
 
-    var title: String { Locale.current.language.languageCode?.identifier == "en" ? titleEn : titleRu }
-    var summary: String { Locale.current.language.languageCode?.identifier == "en" ? summaryEn : summaryRu }
+    var title: String {
+        if L10n.languageCode == "en" && id == "lad-starter" { return "Welcome to Lad" }
+        return L10n.languageCode == "en" ? titleEn : titleRu
+    }
+    var summary: String { L10n.languageCode == "en" ? summaryEn : summaryRu }
     var isFree: Bool { access == "free" }
 }
 

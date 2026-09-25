@@ -2,11 +2,19 @@ import Foundation
 import SwiftUI
 
 enum L10n {
+    static let languageKey = "lad.language"
+    static var languageCode: String {
+        let saved = UserDefaults.standard.string(forKey: languageKey) ?? "system"
+        if saved == "en" || saved == "ru" { return saved }
+        return Locale.preferredLanguages.first?.hasPrefix("ru") == true ? "ru" : "en"
+    }
     static func text(_ source: String) -> String {
-        NSLocalizedString(source, tableName: "Localizable", bundle: .main, value: source, comment: "")
+        guard languageCode == "en", let path = Bundle.main.path(forResource: "en", ofType: "lproj"),
+              let bundle = Bundle(path: path) else { return source }
+        return NSLocalizedString(source, tableName: "Localizable", bundle: bundle, value: source, comment: "")
     }
     static func format(_ source: String, _ arguments: CVarArg...) -> String {
-        String(format: text(source), locale: .current, arguments: arguments)
+        String(format: text(source), locale: Locale(identifier: languageCode), arguments: arguments)
     }
 }
 
@@ -19,6 +27,19 @@ enum Palette {
     static let peach = Color(red: 0.96, green: 0.87, blue: 0.79)
     static let muted = Color(red: 0.48, green: 0.52, blue: 0.47)
     static let line = Color(red: 0.90, green: 0.89, blue: 0.84)
+}
+
+enum AllergenMatching {
+    private static let glutenCereals: Set<String> = ["Пшеница", "Рожь", "Ячмень", "Овёс"]
+
+    static func conflicts(selected: [String], recipe: [String]) -> Bool {
+        let restrictions = Set(selected)
+        let listed = Set(recipe)
+        if !restrictions.isDisjoint(with: listed) { return true }
+        if restrictions.contains("Злаки с глютеном") && !listed.isDisjoint(with: glutenCereals) { return true }
+        if listed.contains("Злаки с глютеном") && !restrictions.isDisjoint(with: glutenCereals) { return true }
+        return false
+    }
 }
 
 struct Ingredient: Identifiable, Codable {
@@ -182,10 +203,24 @@ struct FamilyMember: Identifiable, Codable {
     var allergies: [String]
     var ageYears: Int? = nil
     var dailyEnergyTarget: Int? = nil
+    var heightCm: Double? = nil
+    var weightKg: Double? = nil
+    var measuredFatMassKg: Double? = nil
+    var measuredMuscleMassKg: Double? = nil
+    var fatPercent: Double? {
+        guard let weightKg, let measuredFatMassKg, weightKg > 0,
+              measuredFatMassKg >= 0, measuredFatMassKg <= weightKg else { return nil }
+        return measuredFatMassKg / weightKg * 100
+    }
+    var musclePercent: Double? {
+        guard let weightKg, let measuredMuscleMassKg, weightKg > 0,
+              measuredMuscleMassKg >= 0, measuredMuscleMassKg <= weightKg else { return nil }
+        return measuredMuscleMassKg / weightKg * 100
+    }
     var initials: String { String(name.prefix(1)) }
     var ageLabel: String? {
         guard let ageYears else { return nil }
-        if Locale.current.language.languageCode?.identifier == "en" { return "\(ageYears) years" }
+        if L10n.languageCode == "en" { return "\(ageYears) years" }
         let suffix: String
         if (11...14).contains(ageYears % 100) { suffix = "лет" }
         else if ageYears % 10 == 1 { suffix = "год" }
@@ -519,7 +554,7 @@ struct AvoidedRecipe: Equatable {
         if !recipe.allergensVerified && people.contains(where: { !$0.allergies.isEmpty }) {
             return L10n.text("Сведения об аллергенах блюда не проверены. Для участника с ограничениями его нельзя назначить.")
         }
-        let incompatible = people.filter { !Set($0.allergies).isDisjoint(with: recipe.allergens) }
+        let incompatible = people.filter { AllergenMatching.conflicts(selected: $0.allergies, recipe: recipe.allergens) }
         if !incompatible.isEmpty {
             return L10n.text("Блюдо противоречит ограничениям участников.")
         }
@@ -790,7 +825,7 @@ struct AvoidedRecipe: Equatable {
     }
     var dayLabels: [String] {
         let fmt = DateFormatter()
-        fmt.locale = .current
+        fmt.locale = Locale(identifier: L10n.languageCode)
         return (0..<7).map { offset in
             fmt.dateFormat = "EE"
             return fmt.string(from: Calendar.current.date(byAdding: .day, value: offset, to: state.startDate)!).replacingOccurrences(of: ".", with: "").capitalized
@@ -798,7 +833,7 @@ struct AvoidedRecipe: Equatable {
     }
     func dateLabel(_ offset: Int) -> String {
         let fmt = DateFormatter()
-        fmt.locale = .current
+        fmt.locale = Locale(identifier: L10n.languageCode)
         fmt.dateFormat = "d MMMM"
         return fmt.string(from: Calendar.current.date(byAdding: .day, value: offset, to: state.startDate)!)
     }
@@ -825,7 +860,7 @@ struct AvoidedRecipe: Equatable {
     func isEaten(_ slot: MealSlot) -> Bool { state.eatenIDs.contains("\(slot.id)-\(state.selectedMemberID)") }
     func isSkipped(_ slot: MealSlot) -> Bool { state.skippedSlotIDs?.contains(slot.id) == true }
     func toggleSkipped(_ slot: MealSlot) {
-        guard isPastWindow(slot), !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) else { return }
+        guard slot.day >= currentDay, !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) else { return }
         var next = state
         var skipped = next.skippedSlotIDs ?? []
         if skipped.contains(slot.id) { skipped.remove(slot.id) } else { skipped.insert(slot.id) }
@@ -922,12 +957,12 @@ struct AvoidedRecipe: Equatable {
                              reviewRecipeIDs: reviewRecipeIDs)
     }
     func proposeDayMenu(_ day: Int) {
-        proposeMenu(days: [day], title: L10n.format("Подбор на %@", dateLabel(day)))
+        proposeMenu(days: [day], title: L10n.format("Подбор на %@", dateLabel(day)), preferDifferent: true)
     }
     func proposeWeekMenu() {
         proposeMenu(days: Array(currentDay..<7), title: L10n.text("Подбор недели"))
     }
-    private func proposeMenu(days: [Int], title: String) {
+    private func proposeMenu(days: [Int], title: String, preferDifferent: Bool = false) {
         guard hasSelectedCourses else {
             replanPreview = makePreview(title: title,
                                         explanation: L10n.text("Сначала выберите хотя бы один курс в каталоге. Пустой выбор не означает подбор из всех рецептов."),
@@ -951,7 +986,7 @@ struct AvoidedRecipe: Equatable {
                 guard !slot.memberIDs.isEmpty else { continue }
                 let ranked = rankedRecipes(eligibleRecipes(for: slot), slot: slot, usedToday: used,
                                            plannedSlots: proposedSlots)
-                guard let choice = ranked.first else {
+                guard let choice = (preferDifferent ? ranked.first(where: { $0.id != slot.recipeID }) : nil) ?? ranked.first else {
                     if slot.recipeID != Recipe.unplanned.id {
                         unmatched.append("\(dateLabel(day)) · \(kinds[kind])")
                         changes.append(PlannedChange(slotID: slot.id, previousID: slot.recipeID,
@@ -1169,8 +1204,10 @@ struct AvoidedRecipe: Equatable {
     func incompatibility(_ slot: MealSlot, recipe: Recipe? = nil) -> String? {
         let recipe = recipe ?? self.recipe(slot)
         if recipe.isUnavailable { return "Рецепт недоступен до подключения закрытого каталога." }
-        if recipe.isPrivate && !recipe.allergensVerified { return "Сведения об аллергенах закрытого рецепта не проверены." }
-        let incompatible = participating(slot).filter { !Set($0.allergies).isDisjoint(with: recipe.allergens) }
+        if !recipe.allergensVerified && participating(slot).contains(where: { !$0.allergies.isEmpty }) {
+            return L10n.text("Сведения об аллергенах блюда не проверены. Для участника с ограничениями его нельзя назначить.")
+        }
+        let incompatible = participating(slot).filter { AllergenMatching.conflicts(selected: $0.allergies, recipe: recipe.allergens) }
         guard !incompatible.isEmpty else { return nil }
         return "Ограничение у \(incompatible.map(\.name).joined(separator: ", ")): \(recipe.allergens.joined(separator: ", ")). Выберите другое блюдо или измените участников."
     }
@@ -1185,7 +1222,10 @@ struct AvoidedRecipe: Equatable {
         }
         else {
             let person = state.members.first { $0.id == id }
-            if let person, !Set(person.allergies).isDisjoint(with: recipe(slot).allergens) {
+            if let person, !person.allergies.isEmpty, !recipe(slot).allergensVerified {
+                return L10n.text("Сведения об аллергенах блюда не проверены. Для участника с ограничениями его нельзя назначить.")
+            }
+            if let person, AllergenMatching.conflicts(selected: person.allergies, recipe: recipe(slot).allergens) {
                 return "Блюдо содержит \(recipe(slot).allergens.joined(separator: ", ")). Для \(person.name) выберите совместимый вариант."
             }
             state.slots[index].memberIDs.append(id)
@@ -1241,6 +1281,10 @@ struct AvoidedRecipe: Equatable {
                     merged.portion = local.portion
                     merged.allergies = local.allergies
                     merged.dailyEnergyTarget = local.dailyEnergyTarget
+                    merged.heightCm = local.heightCm
+                    merged.weightKg = local.weightKg
+                    merged.measuredFatMassKg = local.measuredFatMassKg
+                    merged.measuredMuscleMassKg = local.measuredMuscleMassKg
                 }
                 return merged
             }

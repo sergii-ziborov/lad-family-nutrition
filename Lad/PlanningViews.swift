@@ -51,16 +51,16 @@ struct WeekView: View {
                     }
                     Text("Калории и белок демо-блюд приблизительные. Для жиров, углеводов и микронутриентов пока нет проверенных исходных данных — неизвестно не означает ноль.")
                         .font(.system(size: 11)).foregroundStyle(Palette.muted)
-                    HStack {
-                        Button("Подобрать меню") { store.proposeDayMenu(store.selectedDay) }
-                        Spacer()
-                        if store.canUndoReplan { Button("Отменить подбор") { store.undoReplan() } }
-                    }.font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
-                    Button { store.proposeWeekMenu() } label: {
-                        Label("Пересчитать всё меню недели", systemImage: "arrow.triangle.2.circlepath")
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    MenuActionButton(title: "Перегенерировать меню дня", icon: "arrow.clockwise", prominence: .primary) {
+                        store.proposeDayMenu(store.selectedDay)
                     }
-                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.sage)
+                    MenuActionButton(title: "Пересчитать всё меню недели", icon: "calendar.badge.clock") {
+                        store.proposeWeekMenu()
+                    }
+                    if store.canUndoReplan {
+                        Button("Отменить подбор") { store.undoReplan() }
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                    }
                     if store.outsideFutureSlotCount > 0 {
                         Button { confirmClearOutside = true } label: {
                             Label(L10n.format("Убрать блюда вне курсов: %d", store.outsideFutureSlotCount),
@@ -112,26 +112,8 @@ struct WeekView: View {
                                 .font(.system(size: 11)).foregroundStyle(Palette.muted)
                         }
                         Rectangle().fill(Palette.line).frame(height: 1).padding(.vertical, 15)
-                        HStack {
-                            PersonDots(members: store.participating(slot))
-                            Spacer()
-                            Button("Изменить блюдо") { editingSlot = slot }
-                                .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
-                                .disabled(slot.day < store.currentDay || store.isSkipped(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
-                        }
-                        if !recipe.isUnplanned {
-                        Button("Не хочу в этот день — подобрать другое") { store.proposeNotToday(slot) }
-                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
-                            .padding(.top, 11)
-                            .disabled(slot.day < store.currentDay || store.isSkipped(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
-                        }
-                        if store.isPastWindow(slot), !slot.memberIDs.isEmpty,
-                           !store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
-                            Button(store.isSkipped(slot) ? "Вернуть в план" : "Пропустить приём") {
-                                store.toggleSkipped(slot)
-                            }.font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
-                                .padding(.top, 11)
-                        }
+                        PersonDots(members: store.participating(slot))
+                        MealActions(slot: slot) { editingSlot = $0 }
                         HStack(spacing: 8) {
                             ForEach(store.state.members) { person in
                                 Button { warning = store.toggleParticipant(person.id, in: slot) } label: {
