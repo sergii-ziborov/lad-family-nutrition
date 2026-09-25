@@ -9,6 +9,11 @@ struct WeekView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 23) {
                 PageTitle(eyebrow: "МЕНЮ ДЛЯ ВСЕХ", title: "Неделя без суеты")
+                if store.hasSelectedCourses {
+                Label(L10n.format("Выбрано для меню: %@", store.selectedCourses.map(\.title).joined(separator: ", ")),
+                      systemImage: "checkmark.circle.fill")
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                    .fixedSize(horizontal: false, vertical: true)
                 DayPicker()
                 HStack(spacing: 12) {
                     Image(systemName: "sparkles.rectangle.stack").font(.system(size: 23)).foregroundStyle(Palette.sage)
@@ -146,6 +151,9 @@ struct WeekView: View {
                 }
                 Text("Участие задаётся для каждого приёма пищи. Изменения в плане автоматически отражаются в покупках.")
                     .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                } else {
+                    MenuSourceEmptyState()
+                }
             }.padding(.horizontal, 21).padding(.top, 20).padding(.bottom, 35)
         }.background(Palette.canvas.ignoresSafeArea())
             .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }

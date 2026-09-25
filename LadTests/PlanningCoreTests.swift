@@ -191,6 +191,56 @@ final class PlanningCoreTests: XCTestCase {
     }
 
     @MainActor
+    func testRemovingLastCourseClearsUneatenMealsAndKeepsEatenHistory() {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        let eaten = store.slot(0, 0)
+        store.state.eatenIDs = Set(eaten.memberIDs.map { "\(eaten.id)-\($0)" })
+        store.toggleCourse("lad-starter")
+        XCTAssertFalse(store.hasSelectedCourses)
+        XCTAssertTrue(store.selectedCourses.isEmpty)
+        XCTAssertEqual(store.slot(0, 0).recipeID, eaten.recipeID)
+        XCTAssertTrue(store.state.slots.filter { $0.id != eaten.id }
+            .allSatisfy { $0.recipeID == Recipe.unplanned.id })
+        XCTAssertTrue(store.shoppingNeeds.isEmpty)
+        store.toggleCourse("mediterranean-ideas")
+        XCTAssertTrue(store.hasSelectedCourses)
+        XCTAssertTrue(store.state.slots.filter { $0.id != eaten.id }
+            .allSatisfy { $0.recipeID == Recipe.unplanned.id })
+    }
+
+    @MainActor
+    func testEmptyCatalogueCannotActAsAnImplicitSelectedSource() {
+        let store = LadStore()
+        store.state = .initial()
+        store.replaceCatalogForTesting(recipes: [], courses: [])
+        XCTAssertEqual(store.activeCourseIDs, ["lad-starter"])
+        XCTAssertFalse(store.hasSelectedCourses)
+        XCTAssertTrue(store.selectedCourses.isEmpty)
+        XCTAssertTrue(store.chooserRecipes(for: store.slot(0, 0)).isEmpty)
+        XCTAssertTrue(store.shoppingNeeds.isEmpty)
+    }
+
+    @MainActor
+    func testSelectAllThenClearSelectionLeavesNoUneatenMenu() {
+        let store = LadStore()
+        store.state = .initial()
+        store.selectAllCourses()
+        XCTAssertEqual(store.activeCourseIDs, Set(store.courses.map(\.id)))
+        XCTAssertEqual(store.selectedCourses.count, store.courses.count)
+        store.deselectAllCourses()
+        XCTAssertFalse(store.hasSelectedCourses)
+        XCTAssertTrue(store.state.slots.allSatisfy { $0.recipeID == Recipe.unplanned.id })
+        XCTAssertTrue(store.shoppingNeeds.isEmpty)
+    }
+
+    func testFreshAccountCanStartWithEveryBundledCourseSelected() {
+        let state = DemoState.initial(selectAllAvailableCourses: true)
+        XCTAssertEqual(state.activeCourseIDs, Set(CourseCatalogAccess.bundledCourses.map(\.id)))
+    }
+
+    @MainActor
     func testClearingOutsideCoursesPreservesEatenMealsAndReleasesShopping() {
         let store = LadStore()
         store.state = .initial()

@@ -240,7 +240,7 @@ struct DemoState: Codable {
     var mealSchedule: MealSchedule? = nil
     var purchaseReceipts: [PurchaseReceipt]? = nil
 
-    static func initial() -> DemoState {
+    static func initial(selectAllAvailableCourses: Bool = false) -> DemoState {
         let family = [
             FamilyMember(id: "anna", name: "Анна", goal: "Баланс", portion: 1.0, allergies: []),
             FamilyMember(id: "igor", name: "Игорь", goal: "Поддержание", portion: 1.25, allergies: []),
@@ -256,7 +256,9 @@ struct DemoState: Codable {
                 slots.append(MealSlot(id: "\(day)-\(kind)", day: day, kind: kind, recipeID: recipeID, memberIDs: family.map(\.id)))
             }
         }
-        return DemoState(startDate: Calendar.current.startOfDay(for: .now), members: family, slots: slots, selectedMemberID: "anna", eatenIDs: [], boughtNames: [], pantryNames: [], favorites: ["anna|salmon"], extraShopping: [], supplementsByMember: [:], takenSupplements: [], activeCourseIDs: ["lad-starter"])
+        let initialCourses = selectAllAvailableCourses
+            ? Set(CourseCatalogAccess.bundledCourses.map(\.id)) : Set(["lad-starter"])
+        return DemoState(startDate: Calendar.current.startOfDay(for: .now), members: family, slots: slots, selectedMemberID: "anna", eatenIDs: [], boughtNames: [], pantryNames: [], favorites: ["anna|salmon"], extraShopping: [], supplementsByMember: [:], takenSupplements: [], activeCourseIDs: initialCourses)
     }
 
     static func nextWeek(after previous: DemoState, now: Date) -> DemoState {
@@ -391,6 +393,9 @@ struct AvoidedRecipe: Equatable {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--screenshots") {
             state = .initial()
+            if ProcessInfo.processInfo.arguments.contains("--empty-courses") {
+                state.activeCourseIDs = []
+            }
             return
         }
         #endif
@@ -418,11 +423,19 @@ struct AvoidedRecipe: Equatable {
             state = .initial()
             storageWarning = L10n.text("Старые данные не удалось прочитать. Они сохранены для восстановления; показан новый демо-план.")
         } else {
-            state = .initial()
+            state = .initial(selectAllAvailableCourses: true)
         }
         // Older installs had an implicit demo source. Record it explicitly so an empty
         // course selection is never confused with permission to use every recipe.
         if state.activeCourseIDs == nil { state.activeCourseIDs = ["lad-starter"] }
+        if state.activeCourseIDs?.isEmpty == true {
+            for index in state.slots.indices {
+                let slot = state.slots[index]
+                if !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
+                    state.slots[index].recipeID = Recipe.unplanned.id
+                }
+            }
+        }
         let legacyFavorites = state.favorites.filter { !$0.contains("|") }
         for favorite in legacyFavorites {
             state.favorites.remove(favorite)
@@ -473,10 +486,11 @@ struct AvoidedRecipe: Equatable {
         return (catalogueRecipes + Recipe.all + privateRecipes).filter { seen.insert($0.id).inserted }
     }
     var activeCourseIDs: Set<String> { state.activeCourseIDs ?? [] }
-    var hasSelectedCourses: Bool { !activeCourseIDs.isEmpty }
+    var selectedCourses: [LadCourse] { courses.filter { activeCourseIDs.contains($0.id) } }
+    var hasSelectedCourses: Bool { !selectedCourses.isEmpty }
     private var activeCourseRecipeIDs: Set<String> {
         let existing = Set(allRecipes.map(\.id))
-        return Set(courses.filter { activeCourseIDs.contains($0.id) }.flatMap(\.recipeIDs).map { id in
+        return Set(selectedCourses.flatMap(\.recipeIDs).map { id in
             existing.contains(id) ? id : "private:\(id)"
         })
     }
@@ -524,9 +538,38 @@ struct AvoidedRecipe: Equatable {
     #endif
     func toggleCourse(_ id: String) {
         guard courses.contains(where: { $0.id == id }) else { return }
-        var next = state.activeCourseIDs ?? []
-        if !next.insert(id).inserted { next.remove(id) }
-        state.activeCourseIDs = next
+        var next = state
+        var selected = next.activeCourseIDs ?? []
+        let removing = !selected.insert(id).inserted
+        if removing {
+            selected.remove(id)
+            clearUnselectedMeals(in: &next, selected: selected)
+        }
+        next.activeCourseIDs = selected
+        state = next
+    }
+    func selectAllCourses() {
+        var next = state
+        next.activeCourseIDs = Set(courses.map(\.id))
+        state = next
+    }
+    func deselectAllCourses() {
+        var next = state
+        next.activeCourseIDs = []
+        clearUnselectedMeals(in: &next, selected: [])
+        state = next
+    }
+    private func clearUnselectedMeals(in next: inout DemoState, selected: Set<String>) {
+        let existing = Set(allRecipes.map(\.id))
+        let allowed = Set(courses.filter { selected.contains($0.id) }.flatMap(\.recipeIDs).map { recipeID in
+            existing.contains(recipeID) ? recipeID : "private:\(recipeID)"
+        })
+        for index in next.slots.indices {
+            let slot = next.slots[index]
+            guard !next.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }),
+                  !allowed.contains(slot.recipeID) else { continue }
+            next.slots[index].recipeID = Recipe.unplanned.id
+        }
     }
     var outsideFutureSlotCount: Int {
         state.slots.filter { slot in
@@ -562,6 +605,13 @@ struct AvoidedRecipe: Equatable {
             guard session == privateSessionRevision else { return }
             catalogueRecipes = snapshot.recipes
             courses = snapshot.courses
+            let remaining = activeCourseIDs.intersection(Set(courses.map(\.id)))
+            if remaining != activeCourseIDs {
+                var next = state
+                next.activeCourseIDs = remaining
+                clearUnselectedMeals(in: &next, selected: remaining)
+                state = next
+            }
             catalogRevision += 1
             courseCatalogStatus = L10n.format("Загружено программ: %d", courses.count)
         } catch {
@@ -579,7 +629,12 @@ struct AvoidedRecipe: Equatable {
     var pantry: [PantryItem] { state.pantryItems ?? [] }
     var mealSchedule: MealSchedule { state.mealSchedule ?? .standard }
     var planRequirements: PlanRequirements {
-        PlanningCore.resolvePlan(slots: state.slots, members: state.members, recipes: allRecipes,
+        let effectiveSlots = hasSelectedCourses ? state.slots : state.slots.map { slot in
+            var empty = slot
+            empty.recipeID = Recipe.unplanned.id
+            return empty
+        }
+        return PlanningCore.resolvePlan(slots: effectiveSlots, members: state.members, recipes: allRecipes,
                                  pantry: pantry, startDate: state.startDate, now: now,
                                  eatenIDs: state.eatenIDs, skippedIDs: state.skippedSlotIDs ?? [],
                                  schedule: mealSchedule)

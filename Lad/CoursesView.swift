@@ -24,6 +24,7 @@ struct CatalogHubView: View {
 struct CoursesView: View {
     @EnvironmentObject var store: LadStore
     @State private var showServer = false
+    @State private var confirmDeselectAll = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -32,6 +33,26 @@ struct CoursesView: View {
                 Text("Курс объединяет блюда и тему: домашняя кухня, кухни мира или индивидуальная программа. Выбранные курсы служат источником будущего меню; уже составленная неделя меняется только после подтверждения.")
                     .font(.system(size: 13)).foregroundStyle(Palette.muted)
                     .fixedSize(horizontal: false, vertical: true)
+                if store.selectedCourses.isEmpty {
+                    Label("Ничего не выбрано · меню дня и недели пустое", systemImage: "circle.dashed")
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
+                } else {
+                    Label(L10n.format("Выбрано курсов: %d · %@", store.selectedCourses.count,
+                                      store.selectedCourses.map(\.title).joined(separator: ", ")),
+                          systemImage: "checkmark.circle.fill")
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if !store.courses.isEmpty {
+                    HStack(spacing: 12) {
+                        Button("Выбрать все") { store.selectAllCourses() }
+                            .disabled(store.selectedCourses.count == store.courses.count)
+                        Button("Снять весь выбор") { confirmDeselectAll = true }
+                            .disabled(store.selectedCourses.isEmpty)
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Palette.sage)
+                }
                 Button { showServer = true } label: {
                     HStack(spacing: 11) {
                         Image(systemName: "server.rack").foregroundStyle(Palette.sage)
@@ -68,6 +89,7 @@ struct CoursesView: View {
                         }.buttonStyle(.plain)
                     }
                     ForEach(store.courses) { course in
+                        let isSelected = store.activeCourseIDs.contains(course.id)
                         NavigationLink { CourseDetailView(courseID: course.id) } label: {
                             VStack(alignment: .leading, spacing: 10) {
                                 HStack(alignment: .top, spacing: 12) {
@@ -84,20 +106,21 @@ struct CoursesView: View {
                                     Spacer(minLength: 4)
                                     Image(systemName: "chevron.right").foregroundStyle(Palette.sage)
                                 }
+                                Label(isSelected ? "Выбрано" : "Не выбрано",
+                                      systemImage: isSelected ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(isSelected ? Palette.sage : Palette.muted)
                                 Text(course.summary)
                                     .font(.system(size: 13)).foregroundStyle(Palette.muted)
                                     .multilineTextAlignment(.leading)
                                     .fixedSize(horizontal: false, vertical: true)
                                 Text(L10n.format("Блюд в программе: %d", course.recipeIDs.count))
                                     .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.sage)
-                                if store.activeCourseIDs.contains(course.id) {
-                                    Label("Используется для подбора меню", systemImage: "checkmark.circle.fill")
-                                        .font(.system(size: 12)).foregroundStyle(Palette.sage)
-                                }
                             }
                             .padding(19)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(.white, in: RoundedRectangle(cornerRadius: 20))
+                            .overlay(RoundedRectangle(cornerRadius: 20).stroke(isSelected ? Palette.sage : .clear, lineWidth: 1.5))
                         }.buttonStyle(.plain)
                     }
                 }
@@ -109,6 +132,12 @@ struct CoursesView: View {
         .refreshable { await store.refreshCourseCatalog() }
         .sheet(isPresented: $showServer) { CourseServerSheet() }
         .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
+        .confirmationDialog("Убрать все курсы из меню?", isPresented: $confirmDeselectAll) {
+            Button("Очистить меню дня и недели") { store.deselectAllCourses() }
+            Button("Отмена", role: .cancel) { }
+        } message: {
+            Text("Меню и покупки очистятся; уже отмеченные съеденными блюда останутся в истории.")
+        }
     }
 }
 
@@ -212,13 +241,10 @@ struct CourseDetailView: View {
         .background(Palette.canvas.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Убрать курс из подбора?", isPresented: $confirmRemoval) {
-            Button("Убрать курс и очистить будущие блюда") {
-                store.toggleCourse(courseID)
-                store.clearFutureDishesOutsideCourses()
-            }
+            Button("Убрать курс и очистить его блюда") { store.toggleCourse(courseID) }
             Button("Отмена", role: .cancel) { }
         } message: {
-            Text("Уже отмеченные съеденными блюда сохранятся. Остальные блюда вне выбранных курсов можно убрать из меню.")
+            Text("Уже отмеченные съеденными блюда сохранятся. Остальные блюда этого курса исчезнут из плана и покупок.")
         }
     }
 

@@ -1,5 +1,16 @@
 import SwiftUI
 
+private struct OpenCatalogueTabKey: EnvironmentKey {
+    static let defaultValue: () -> Void = {}
+}
+
+extension EnvironmentValues {
+    var openCatalogueTab: () -> Void {
+        get { self[OpenCatalogueTabKey.self] }
+        set { self[OpenCatalogueTabKey.self] = newValue }
+    }
+}
+
 @main struct LadApp: App {
     @StateObject private var store = LadStore()
     @Environment(\.scenePhase) private var scenePhase
@@ -38,12 +49,39 @@ struct AppShell: View {
         }
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarBackground(Palette.canvas, for: .tabBar)
+        .environment(\.openCatalogueTab) { selected = 2 }
         .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { date in
             store.refreshClock(date)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
             store.refreshClock()
         }
+    }
+}
+
+struct MenuSourceEmptyState: View {
+    @Environment(\.openCatalogueTab) private var openCatalogueTab
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            Image(systemName: "books.vertical.circle")
+                .font(.system(size: 36, weight: .ultraLight)).foregroundStyle(Palette.sage)
+            Text("Меню пока пустое")
+                .font(.system(size: 23, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
+            Text("Выберите кухню или курс в каталоге. Пока ничего не выбрано, блюда не появятся ни в дне, ни в неделе.")
+                .font(.system(size: 13)).foregroundStyle(Palette.muted)
+                .fixedSize(horizontal: false, vertical: true)
+            Button(action: openCatalogueTab) {
+                Label("Выбрать меню в каталоге", systemImage: "arrow.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(maxWidth: .infinity).padding(14)
+                    .foregroundStyle(.white)
+                    .background(Palette.sage, in: RoundedRectangle(cornerRadius: 14))
+            }.buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(21)
+        .background(.white, in: RoundedRectangle(cornerRadius: 22))
     }
 }
 
@@ -143,10 +181,14 @@ struct TodayView: View {
                         .font(.system(size: 34, weight: .semibold, design: .serif)).tracking(-1.1)
                         .lineLimit(2).minimumScaleFactor(0.75).foregroundStyle(Palette.ink)
                 }
+                if store.hasSelectedCourses {
                 DayPicker()
                 VStack(alignment: .leading, spacing: 11) {
                     if store.hasSelectedCourses {
-                        Text("Выбраны курсы: меню изменится только после подтверждения. Блюда вне курсов отмечены ниже.")
+                        Text(L10n.format("Выбрано для меню: %@", store.selectedCourses.map(\.title).joined(separator: ", ")))
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("Меню изменится после подтверждения. Блюда вне курсов отмечены ниже.")
                             .font(.system(size: 12)).foregroundStyle(Palette.muted)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
@@ -239,6 +281,9 @@ struct TodayView: View {
                     }
                     Text("План и съеденное отмечаются отдельно. Пищевая ценность в этой демоверсии приблизительная.")
                         .font(.system(size: 11)).foregroundStyle(Palette.muted).padding(.top, 3)
+                }
+                } else {
+                    MenuSourceEmptyState()
                 }
                 }
                 .frame(width: max(0, screen.size.width - 42), alignment: .leading)
