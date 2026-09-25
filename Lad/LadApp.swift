@@ -121,6 +121,7 @@ struct TodayView: View {
     @State private var showPersonPicker = false
     @State private var editingSlot: MealSlot?
     @State private var warning: String?
+    @State private var confirmClearOutside = false
     private var featuredSlot: MealSlot { store.suggestedSlot() }
     var body: some View {
         GeometryReader { screen in
@@ -148,6 +149,10 @@ struct TodayView: View {
                         Text("Выбраны курсы: меню изменится только после подтверждения. Блюда вне курсов отмечены ниже.")
                             .font(.system(size: 12)).foregroundStyle(Palette.muted)
                             .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("Курс не выбран. Новые блюда из демо-каталога не подбираются; выберите курс перед пересчётом.")
+                            .font(.system(size: 12)).foregroundStyle(Palette.terracotta)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Button { store.proposeDayMenu(store.selectedDay) } label: {
                         Label(store.hasSelectedCourses ? L10n.text("Меню дня из выбранных курсов") : L10n.text("Подобрать меню дня"),
@@ -155,8 +160,16 @@ struct TodayView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     Button { store.proposeWeekMenu() } label: {
-                        Label("Пересчитать оставшуюся неделю", systemImage: "arrow.triangle.2.circlepath")
+                        Label("Пересчитать всё меню недели", systemImage: "arrow.triangle.2.circlepath")
                             .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    if store.outsideFutureSlotCount > 0 {
+                        Button { confirmClearOutside = true } label: {
+                            Label(L10n.format("Убрать блюда вне курсов: %d", store.outsideFutureSlotCount),
+                                  systemImage: "xmark.circle")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .foregroundStyle(Palette.terracotta)
                     }
                 }
                 .font(.system(size: 13, weight: .semibold))
@@ -179,6 +192,16 @@ struct TodayView: View {
 
                 VStack(alignment: .leading, spacing: 14) {
                     SectionHeading(title: "Следующее на кухне", trailing: featuredSlot.day == store.currentDay ? store.kinds[featuredSlot.kind].uppercased() : "СЛЕДУЮЩИЙ ДЕНЬ")
+                    if store.recipe(featuredSlot).isUnplanned {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Image(systemName: "calendar.badge.plus").font(.system(size: 30)).foregroundStyle(Palette.sage)
+                            Text("Блюдо пока не выбрано").font(.system(size: 22, weight: .semibold, design: .serif))
+                            Text("Выберите курс в каталоге и пересчитайте меню недели.")
+                                .font(.system(size: 13)).foregroundStyle(Palette.muted)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(23).background(.white, in: RoundedRectangle(cornerRadius: 22))
+                    } else {
                     NavigationLink { RecipeDetailView(recipe: store.recipe(featuredSlot), slot: featuredSlot) } label: {
                         ZStack(alignment: .bottomLeading) {
                             RecipePicture(recipe: store.recipe(featuredSlot))
@@ -199,10 +222,13 @@ struct TodayView: View {
                                     Spacer()
                                     Image(systemName: "arrow.up.right").font(.system(size: 15, weight: .semibold))
                                 }
+                                Text(store.courseSourceLabel(for: featuredSlot.recipeID))
+                                    .font(.system(size: 11, weight: .medium)).lineLimit(1)
                             }.foregroundStyle(.white).padding(20)
                         }.frame(width: max(0, screen.size.width - 42), height: 260)
                             .clipShape(RoundedRectangle(cornerRadius: 25))
                     }.buttonStyle(.plain)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 13) {
@@ -231,6 +257,12 @@ struct TodayView: View {
         .alert("Проверьте ограничения", isPresented: Binding(get: { warning != nil }, set: { if !$0 { warning = nil } })) {
             Button("Понятно", role: .cancel) { warning = nil }
         } message: { Text(warning ?? "") }
+        .confirmationDialog("Очистить будущие блюда вне выбранных курсов?", isPresented: $confirmClearOutside) {
+            Button("Очистить будущий план") { store.clearFutureDishesOutsideCourses() }
+            Button("Отмена", role: .cancel) { }
+        } message: {
+            Text("Отмеченные съеденными блюда останутся в истории. Пустые приёмы можно заполнить после выбора курса и пересчёта меню.")
+        }
     }
 }
 
@@ -249,11 +281,18 @@ struct MealRow: View {
                     Text(store.kinds[slot.kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
                     Text(L10n.text(recipe.title)).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(recipe.isUnavailable ? L10n.text("Подключите закрытый каталог") :
+                    Text(recipe.isUnplanned ? L10n.text("Выберите курс и составьте меню") : recipe.isUnavailable ? L10n.text("Подключите закрытый каталог") :
                         (recipe.kcal.map { L10n.format("~%d ккал · %d мин", Int(Double($0) * store.currentMember.portion), recipe.minutes) } ??
                          L10n.format("Калорийность неизвестна · %d мин", recipe.minutes)))
                         .font(.system(size: 11)).foregroundStyle(Palette.muted)
-                    if store.isOutsideSelectedCourses(slot.recipeID) {
+                    if recipe.kcalEstimated {
+                        Label("Калории и выход оценены ИИ", systemImage: "sparkles")
+                            .font(.system(size: 10, weight: .semibold)).foregroundStyle(Palette.terracotta)
+                    }
+                    if !recipe.isUnplanned { Text(store.courseSourceLabel(for: slot.recipeID))
+                        .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.sage)
+                        .fixedSize(horizontal: false, vertical: true) }
+                    if !recipe.isUnplanned && store.isOutsideSelectedCourses(slot.recipeID) {
                         Text("Вне выбранных курсов")
                             .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.terracotta)
                     }
@@ -270,6 +309,7 @@ struct MealRow: View {
                     Image(systemName: store.isEaten(slot) ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 26, weight: .light)).foregroundStyle(store.isEaten(slot) ? Palette.sage : Palette.line)
                 }.accessibilityLabel(store.isEaten(slot) ? "Убрать отметку о съеденном" : "Отметить как съеденное")
+                    .disabled(recipe.isUnplanned)
                     .disabled(!slot.memberIDs.contains(store.currentMember.id))
             }
             if store.isPastWindow(slot), !slot.memberIDs.isEmpty,
@@ -283,6 +323,7 @@ struct MealRow: View {
                 Button("Изменить блюдо") { onEdit(slot) }
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Palette.sage)
+                if !recipe.isUnplanned {
                 Button {
                     store.proposeNotToday(slot)
                 } label: {
@@ -293,6 +334,7 @@ struct MealRow: View {
                         .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 3)
                 }.buttonStyle(.plain)
+                }
             }
         }.padding(10).background(.white, in: RoundedRectangle(cornerRadius: 20))
     }

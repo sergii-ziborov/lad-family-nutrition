@@ -29,6 +29,7 @@ struct PrivateRecipePayload: Codable {
     let imageSource: String?
     let stepImageIDs: [String?]?
     let difficulty: CookingDifficulty?
+    let estimatedServings: Double?
 
     func recipe(privateAccess: Bool = true, remoteImage: Bool? = nil) -> Recipe? {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil,
@@ -45,7 +46,25 @@ struct PrivateRecipePayload: Codable {
               }),
               unquantifiedIngredients?.allSatisfy({ !$0.name.isEmpty && $0.amount == nil && !$0.unit.isEmpty }) ?? true,
               nutrients?.values.allSatisfy({ $0.amount.isFinite && $0.amount >= 0 && $0.coverage.isFinite && (0...1).contains($0.coverage) && !$0.unit.isEmpty && !$0.source.isEmpty }) ?? true else { return nil }
-        return Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption, image: imageId ?? "", cuisine: cuisine, minutes: minutes, kcal: kcal, protein: protein, allergens: allergens, ingredients: ingredients + (unquantifiedIngredients ?? []), steps: steps, allergensVerified: allergensVerified, mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:], remoteImage: remoteImage ?? (imageSource != "bundled"), stepImageIDs: stepImageIDs ?? [], difficulty: difficulty)
+        guard estimatedServings.map({ $0.isFinite && (1...12).contains($0) }) ?? true else { return nil }
+        let completeIngredients = ingredients + (unquantifiedIngredients ?? [])
+        let estimate = EnergyEstimator.evaluate(completeIngredients)
+        let calculatedPublicKcal = !privateAccess && imageSource == "bundled" && estimate.unresolvedNames.isEmpty
+            ? estimate.knownBatchKcal : nil
+        let calculatedPrivateKcal = privateAccess && estimatedServings != nil && estimate.unresolvedNames.isEmpty
+            ? Int((Double(estimate.knownBatchKcal) / estimatedServings!).rounded()) : nil
+        var recipe = Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption,
+                            image: imageId ?? "", cuisine: cuisine, minutes: minutes,
+                            kcal: calculatedPublicKcal ?? calculatedPrivateKcal ?? kcal, protein: protein, allergens: allergens,
+                            ingredients: completeIngredients, steps: steps, allergensVerified: allergensVerified,
+                            mealKinds: mealKinds ?? [0, 1, 2], nutrients: nutrients ?? [:],
+                            remoteImage: remoteImage ?? (imageSource != "bundled"),
+                            stepImageIDs: stepImageIDs ?? [], difficulty: difficulty)
+        recipe.energyEstimate = estimate
+        recipe.baseServings = estimatedServings ?? 1
+        recipe.servingsEstimated = estimatedServings != nil
+        recipe.kcalEstimated = calculatedPrivateKcal != nil
+        return recipe
     }
 }
 
@@ -106,6 +125,7 @@ enum PrivateRecipeAccess {
               parsed.user == nil, parsed.password == nil, parsed.query == nil, parsed.fragment == nil else { throw PrivateCatalogError.invalidURL }
         let normalizedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedToken.isEmpty else { throw PrivateCatalogError.emptyToken }
+        let previousAccountConfigured = savedURL != nil && self.token() != nil
         let changedAccount = savedURL != normalized || self.token() != normalizedToken
         let data = Data(normalizedToken.utf8)
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
@@ -124,6 +144,7 @@ enum PrivateRecipeAccess {
         }
         if changedAccount {
             removeCached()
+            if previousAccountConfigured { removeCachedImages() }
             catalogGeneration += 1
         }
         UserDefaults.standard.set(normalized, forKey: urlKey)
@@ -132,6 +153,7 @@ enum PrivateRecipeAccess {
 
     static func clear() {
         removeCached()
+        removeCachedImages()
         catalogGeneration += 1
         CourseCatalogAccess.clearCache()
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
@@ -210,12 +232,39 @@ enum PrivateRecipeAccess {
 
     static func fetchImage(id: String) async throws -> UIImage {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil else { throw PrivateCatalogError.invalidURL }
+        if let cached = cachedImage(id: id) { return cached }
         let requestedURL = savedURL
         let requestedToken = token()
         let data = try await request(path: "/v1/recipe-images/\(id)", maxBytes: 1_500_000, accept: "image/jpeg")
         guard savedURL == requestedURL, token() == requestedToken else { throw PrivateCatalogError.configurationChanged }
         guard data.starts(with: [0xff, 0xd8, 0xff]), let image = UIImage(data: data) else { throw PrivateCatalogError.invalidResponse }
+        if let imageURL = imageCacheURL(id: id) {
+            try? FileManager.default.createDirectory(at: imageURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? data.write(to: imageURL, options: [.atomic, .completeFileProtection])
+            var directoryURL = imageURL.deletingLastPathComponent()
+            var values = URLResourceValues()
+            values.isExcludedFromBackup = true
+            try? directoryURL.setResourceValues(values)
+        }
         return image
+    }
+
+    private static func imageCacheURL(id: String) -> URL? {
+        guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil,
+              let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return nil }
+        return support.appendingPathComponent("recipe-images", isDirectory: true).appendingPathComponent("\(id).jpg")
+    }
+
+    private static func removeCachedImages() {
+        guard let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        try? FileManager.default.removeItem(at: support.appendingPathComponent("recipe-images", isDirectory: true))
+    }
+
+    static func cachedImage(id: String) -> UIImage? {
+        guard let imageURL = imageCacheURL(id: id),
+              let data = try? Data(contentsOf: imageURL), data.count <= 1_500_000,
+              data.starts(with: [0xff, 0xd8, 0xff]) else { return nil }
+        return UIImage(data: data)
     }
 
     private static func request(path: String, maxBytes: Int, accept: String = "application/json") async throws -> Data {
@@ -225,6 +274,11 @@ enum PrivateRecipeAccess {
         request.setValue(accept, forHTTPHeaderField: "Accept")
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw PrivateCatalogError.invalidResponse }
+        #if DEBUG
+        if path.hasPrefix("/v1/recipe-images/") {
+            print("Lad image response: \(response.statusCode), \(data.count) bytes")
+        }
+        #endif
         if response.statusCode == 401 || response.statusCode == 403 { throw PrivateCatalogError.unauthorized }
         guard response.statusCode == 200 else { throw PrivateCatalogError.serverError }
         guard data.count <= maxBytes else { throw PrivateCatalogError.invalidResponse }
@@ -235,8 +289,10 @@ enum PrivateRecipeAccess {
 struct RecipePicture: View {
     let recipe: Recipe
     @State private var remoteImage: UIImage?
+    @State private var loadFailed = false
+    @State private var retry = 0
     private var imageContext: String {
-        "\(recipe.id)|\(recipe.image)|\(CourseCatalogAccess.savedURL ?? "")|\(PrivateRecipeAccess.catalogGeneration)"
+        "\(recipe.id)|\(recipe.image)|\(CourseCatalogAccess.savedURL ?? "")|\(PrivateRecipeAccess.catalogGeneration)|\(retry)"
     }
     var body: some View {
         GeometryReader { bounds in
@@ -248,6 +304,17 @@ struct RecipePicture: View {
                         LinearGradient(colors: [Palette.paleSage, Palette.peach], startPoint: .topLeading, endPoint: .bottomTrailing)
                         Image(systemName: recipe.isUnavailable ? "lock.slash" : "fork.knife")
                             .font(.system(size: 38, weight: .ultraLight)).foregroundStyle(Palette.sage)
+                        if loadFailed {
+                            Button { retry += 1 } label: {
+                                Label("Повторить загрузку фото", systemImage: "arrow.clockwise")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .padding(7)
+                                    .background(.regularMaterial, in: Capsule())
+                            }
+                            .foregroundStyle(Palette.ink)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                            .padding(8)
+                        }
                     }
                 } else {
                     Image(recipe.image).resizable().scaledToFill()
@@ -258,13 +325,21 @@ struct RecipePicture: View {
         }
         .task(id: imageContext) {
             remoteImage = nil
+            loadFailed = false
             guard !recipe.image.isEmpty else { return }
-            if recipe.remoteImage && recipe.isPrivate {
-                let result = try? await PrivateRecipeAccess.fetchImage(id: recipe.image)
+            guard recipe.remoteImage else { return }
+            do {
+                let result = try await (recipe.isPrivate
+                    ? PrivateRecipeAccess.fetchImage(id: recipe.image)
+                    : CourseCatalogAccess.fetchPublicImage(id: recipe.image))
                 if !Task.isCancelled { remoteImage = result }
-            } else if recipe.remoteImage {
-                let result = try? await CourseCatalogAccess.fetchPublicImage(id: recipe.image)
-                if !Task.isCancelled { remoteImage = result }
+            } catch {
+                if !Task.isCancelled {
+                    #if DEBUG
+                    print("Lad image failed: \(recipe.image), \(error.localizedDescription)")
+                    #endif
+                    loadFailed = true
+                }
             }
         }
     }

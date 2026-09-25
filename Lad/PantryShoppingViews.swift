@@ -333,7 +333,7 @@ struct ReplanPreviewSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(preview.explanation).font(.system(size: 14)).foregroundStyle(Palette.muted)
                     if !preview.reviewRecipeIDs.isEmpty {
-                        Label("В предложении есть рецепты с непроверенными количествами или аллергенами. Покупки и калории по ним неполные; перед готовкой проверьте состав.",
+                        Label("В предложении есть рецепты с оценочными граммовками, порциями или непроверенными аллергенами. Перед готовкой проверьте состав и количества.",
                               systemImage: "exclamationmark.triangle.fill")
                             .font(.system(size: 13))
                             .foregroundStyle(Palette.terracotta)
@@ -362,7 +362,7 @@ struct ReplanPreviewSheet: View {
                             VStack(alignment: .leading, spacing: 7) {
                                 Text("\(store.dateLabel(slot.day)) · \(store.kinds[slot.kind])")
                                     .font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.terracotta)
-                                Text("\(L10n.text(store.allRecipes.first { $0.id == change.previousID }?.title ?? "Блюдо")) → \(L10n.text(store.allRecipes.first { $0.id == change.nextID }?.title ?? "Блюдо"))")
+                                Text("\(L10n.text(store.allRecipes.first { $0.id == change.previousID }?.title ?? Recipe.unplanned.title)) → \(L10n.text(store.allRecipes.first { $0.id == change.nextID }?.title ?? Recipe.unplanned.title))")
                                     .font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink)
                                     .fixedSize(horizontal: false, vertical: true)
                                 if preview.reviewRecipeIDs.contains(change.nextID) {

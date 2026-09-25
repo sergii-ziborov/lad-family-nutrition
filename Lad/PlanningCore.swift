@@ -196,7 +196,7 @@ enum PlanningCore {
                 continue
             }
             let stock = stock(for: ingredient, pantry: pantry, now: now)
-            let required = amount * portions
+            let required = amount * portions / max(1, recipe.baseServings)
             if stock.known >= required {
                 covered += 1
             } else if stock.uncertain {
@@ -273,8 +273,11 @@ enum PlanningCore {
             for ingredient in recipe.ingredients {
                 let id = key(ingredient.name, ingredient.unit)
                 var entry = grouped[id] ?? (ingredient, 0, false)
-                if let amount = ingredient.amount, amount > 0 { entry.amount += amount * portions }
+                if let amount = ingredient.amount, amount > 0 {
+                    entry.amount += amount * portions / max(1, recipe.baseServings)
+                }
                 else { entry.unresolved = true }
+                if ingredient.aiEstimated == true { entry.unresolved = true }
                 grouped[id] = entry
             }
             var lines: [ResolvedIngredient] = []

@@ -80,6 +80,60 @@ final class PlanningCoreTests: XCTestCase {
         state.activeCourseIDs = ["home"]
         let next = DemoState.nextWeek(after: state, now: Calendar.current.date(byAdding: .day, value: 8, to: state.startDate)!)
         XCTAssertEqual(next.activeCourseIDs, ["home"])
+        XCTAssertTrue(next.slots.allSatisfy { $0.recipeID == Recipe.unplanned.id })
+    }
+
+    func testPublicCaloriesAreRecalculatedFromIngredients() throws {
+        let oats = try XCTUnwrap(Recipe.all.first { $0.id == "oats" })
+        let estimate = try XCTUnwrap(oats.energyEstimate)
+        XCTAssertTrue(estimate.unresolvedNames.isEmpty)
+        XCTAssertEqual(oats.kcal, estimate.knownBatchKcal)
+        XCTAssertGreaterThan(oats.kcal ?? 0, 310) // the old hard-coded figure omitted part of the recipe
+        XCTAssertTrue(Recipe.all.allSatisfy { $0.energyEstimate?.unresolvedNames.isEmpty == true })
+    }
+
+    func testChickenFilletCountHasExplicitEstimatedWeight() {
+        let estimate = EnergyEstimator.evaluate([
+            Ingredient(name: "Куриное филе", amount: 1, unit: "шт.", category: "Meat")
+        ])
+        XCTAssertTrue(estimate.unresolvedNames.isEmpty)
+        XCTAssertTrue(estimate.usesEstimatedMeasures)
+        XCTAssertEqual(estimate.knownBatchKcal, 240)
+    }
+
+    func testAIInferredAmountIsVisibleAsUncertainShopping() {
+        let recipe = Recipe(id: "estimate", title: "Test", caption: "", image: "", cuisine: "Test",
+                            minutes: 10, kcal: nil, protein: nil, allergens: [],
+                            ingredients: [Ingredient(name: "Rice", amount: 70, unit: "г", category: "Pantry",
+                                                     aiEstimated: true)], steps: ["Cook"])
+        let member = FamilyMember(id: "one", name: "One", goal: "", portion: 1, allergies: [])
+        let slot = MealSlot(id: "0-1", day: 0, kind: 1, recipeID: recipe.id, memberIDs: [member.id])
+        let plan = PlanningCore.resolvePlan(slots: [slot], members: [member], recipes: [recipe], pantry: [],
+                                            startDate: Calendar.current.startOfDay(for: .now))
+        XCTAssertEqual(plan.shoppingNeeds.first?.required, 70)
+        XCTAssertTrue(plan.shoppingNeeds.first?.amountUnknown == true)
+    }
+
+    func testEstimatedRecipeYieldScalesIngredientsAndCalories() throws {
+        let source: [String: Any] = [
+            "id": "estimated", "title": "Test", "caption": "", "cuisine": "Test", "minutes": 20,
+            "allergens": [], "allergensVerified": false, "steps": ["Cook"], "mealKinds": [1],
+            "estimatedServings": 2,
+            "ingredients": [["name": "Гречка", "amount": 70, "unit": "г", "category": "Pantry", "aiEstimated": true]]
+        ]
+        let payload = try JSONDecoder().decode(PrivateRecipePayload.self,
+                                               from: JSONSerialization.data(withJSONObject: source))
+        let recipe = try XCTUnwrap(payload.recipe())
+        XCTAssertTrue(recipe.servingsEstimated)
+        XCTAssertTrue(recipe.kcalEstimated)
+        XCTAssertEqual(recipe.baseServings, 2)
+        XCTAssertEqual(recipe.kcal, 120)
+        let member = FamilyMember(id: "one", name: "One", goal: "", portion: 1, allergies: [])
+        let slot = MealSlot(id: "0-1", day: 0, kind: 1, recipeID: recipe.id, memberIDs: [member.id])
+        let plan = PlanningCore.resolvePlan(slots: [slot], members: [member], recipes: [recipe], pantry: [],
+                                            startDate: Calendar.current.startOfDay(for: .now))
+        XCTAssertEqual(plan.shoppingNeeds.first?.required, 35)
+        XCTAssertTrue(plan.shoppingNeeds.first?.amountUnknown == true)
     }
 
     @MainActor
@@ -88,12 +142,47 @@ final class PlanningCoreTests: XCTestCase {
         store.state = .initial()
         store.refreshClock(store.state.startDate)
         let original = store.state.slots.map(\.recipeID)
+        store.state.activeCourseIDs = []
         store.toggleCourse("mediterranean-ideas")
         XCTAssertEqual(store.state.slots.map(\.recipeID), original)
         store.proposeWeekMenu()
         let preview = try XCTUnwrap(store.replanPreview)
         let allowed = Set(["soup", "vegetable-pasta", "lentil-stew"])
-        XCTAssertTrue(preview.changes.allSatisfy { $0.slotID.hasSuffix("-0") == false && allowed.contains($0.nextID) })
+        XCTAssertTrue(preview.changes.allSatisfy { $0.slotID.hasSuffix("-0")
+            ? $0.nextID == Recipe.unplanned.id : allowed.contains($0.nextID) })
+    }
+
+    @MainActor
+    func testEmptyCourseSelectionCannotSuggestOrAssignDemoRecipes() throws {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        store.state.activeCourseIDs = []
+        let breakfast = store.slot(0, 0)
+        XCTAssertTrue(store.chooserRecipes(for: breakfast).isEmpty)
+        XCTAssertTrue(store.isOutsideSelectedCourses(breakfast.recipeID))
+        store.proposeNotToday(breakfast)
+        XCTAssertTrue(try XCTUnwrap(store.replanPreview).changes.isEmpty)
+        store.proposeWeekMenu()
+        XCTAssertTrue(try XCTUnwrap(store.replanPreview).changes.isEmpty)
+        XCTAssertNotNil(store.assign(try XCTUnwrap(Recipe.all.first { $0.id == "oats" }), to: breakfast))
+    }
+
+    @MainActor
+    func testClearingOutsideCoursesPreservesEatenMealsAndReleasesShopping() {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        let eaten = store.slot(0, 0)
+        store.state.eatenIDs = Set(eaten.memberIDs.map { "\(eaten.id)-\($0)" })
+        store.state.activeCourseIDs = []
+        XCTAssertGreaterThan(store.outsideFutureSlotCount, 0)
+        store.clearFutureDishesOutsideCourses()
+        XCTAssertEqual(store.slot(0, 0).recipeID, eaten.recipeID)
+        XCTAssertTrue(store.isEaten(store.slot(0, 0)))
+        XCTAssertEqual(store.slot(0, 1).recipeID, Recipe.unplanned.id)
+        XCTAssertEqual(store.slot(1, 0).recipeID, Recipe.unplanned.id)
+        XCTAssertTrue(store.shoppingNeeds.isEmpty)
     }
 
     @MainActor
@@ -121,15 +210,14 @@ final class PlanningCoreTests: XCTestCase {
         XCTAssertTrue(store.chooserRecipes(for: store.slot(0, 2)).isEmpty)
         store.proposeDayMenu(0)
         let preview = try XCTUnwrap(store.replanPreview)
-        XCTAssertEqual(Set(preview.changes.map(\.nextID)), [breakfast.id, lunch.id])
+        XCTAssertEqual(Set(preview.changes.map(\.nextID)), [breakfast.id, lunch.id, Recipe.unplanned.id])
         XCTAssertEqual(preview.reviewRecipeIDs, [breakfast.id, lunch.id])
-        XCTAssertEqual(preview.lateCorrectionSlotIDs, ["0-0", "0-1"])
+        XCTAssertEqual(preview.lateCorrectionSlotIDs, ["0-0", "0-1", "0-2"])
         store.applyReplan(preview)
         XCTAssertEqual(store.slot(0, 0).recipeID, breakfast.id)
         XCTAssertEqual(store.slot(0, 1).recipeID, lunch.id)
         XCTAssertNil(store.recipe(store.slot(0, 0)).kcal)
-        XCTAssertEqual(store.slot(0, 2).recipeID, "salmon")
-        XCTAssertTrue(store.isOutsideSelectedCourses("salmon"))
+        XCTAssertEqual(store.slot(0, 2).recipeID, Recipe.unplanned.id)
     }
 
     @MainActor
@@ -271,6 +359,7 @@ final class PlanningCoreTests: XCTestCase {
         let store = LadStore()
         store.state = .initial()
         store.refreshClock(store.state.startDate)
+        store.state.activeCourseIDs = []
         store.toggleCourse("mediterranean-ideas")
         let breakfast = store.slot(0, 0)
         store.proposeNotToday(breakfast)

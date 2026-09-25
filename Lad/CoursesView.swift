@@ -59,7 +59,7 @@ struct CoursesView: View {
                 } else {
                     if !store.activeCourseIDs.isEmpty {
                         Button { store.proposeWeekMenu() } label: {
-                            Label("Подобрать блюда из выбранных курсов", systemImage: "calendar.badge.plus")
+                            Label("Пересчитать всё меню недели из выбранных курсов", systemImage: "calendar.badge.plus")
                                 .font(.system(size: 14, weight: .semibold))
                                 .frame(maxWidth: .infinity)
                                 .padding(16)
@@ -115,6 +115,7 @@ struct CoursesView: View {
 struct CourseDetailView: View {
     @EnvironmentObject var store: LadStore
     let courseID: String
+    @State private var confirmRemoval = false
 
     private var course: LadCourse? { store.courses.first { $0.id == courseID } }
     private var recipes: [Recipe] {
@@ -136,7 +137,7 @@ struct CourseDetailView: View {
                         .font(.system(size: 15)).foregroundStyle(Palette.muted)
                         .fixedSize(horizontal: false, vertical: true)
                     if course.category == "weight-management" {
-                        Label("Калорийность и порции уточняются: в исходных страницах не указаны веса части продуктов и выход блюд. Пока это подборка рецептов, а не рассчитанная программа снижения веса.",
+                        Label("Недостающие граммовки, выход и калорийность оценены ИИ. Проверяйте их и аллергены перед использованием курса для похудения.",
                               systemImage: "info.circle")
                             .font(.system(size: 12))
                             .foregroundStyle(Palette.terracotta)
@@ -144,7 +145,10 @@ struct CourseDetailView: View {
                             .padding(14)
                             .background(Palette.peach.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
                     }
-                    Button { store.toggleCourse(course.id) } label: {
+                    Button {
+                        if store.activeCourseIDs.contains(course.id) { confirmRemoval = true }
+                        else { store.toggleCourse(course.id) }
+                    } label: {
                         Label(store.activeCourseIDs.contains(course.id) ? "Убрать из подбора меню" : "Добавить в подбор меню",
                               systemImage: store.activeCourseIDs.contains(course.id) ? "checkmark.circle.fill" : "plus.circle")
                             .font(.system(size: 14, weight: .semibold))
@@ -176,6 +180,8 @@ struct CourseDetailView: View {
                                                 .fixedSize(horizontal: false, vertical: true)
                                             Text(L10n.format("%d мин", recipe.minutes))
                                                 .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                            Text(L10n.text(recipe.cuisine))
+                                                .font(.system(size: 11)).foregroundStyle(Palette.sage)
                                             if !recipe.isPlanEligible {
                                                 Text("Количества или аллергены требуют проверки")
                                                     .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
@@ -205,6 +211,15 @@ struct CourseDetailView: View {
         }
         .background(Palette.canvas.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog("Убрать курс из подбора?", isPresented: $confirmRemoval) {
+            Button("Убрать курс и очистить будущие блюда") {
+                store.toggleCourse(courseID)
+                store.clearFutureDishesOutsideCourses()
+            }
+            Button("Отмена", role: .cancel) { }
+        } message: {
+            Text("Уже отмеченные съеденными блюда сохранятся. Остальные блюда вне выбранных курсов можно убрать из меню.")
+        }
     }
 
 }

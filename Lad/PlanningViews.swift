@@ -4,6 +4,7 @@ struct WeekView: View {
     @EnvironmentObject var store: LadStore
     @State private var editingSlot: MealSlot?
     @State private var warning: String?
+    @State private var confirmClearOutside = false
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 23) {
@@ -20,7 +21,8 @@ struct WeekView: View {
                 VStack(alignment: .leading, spacing: 9) {
                     let dayRecipes = (0..<3).compactMap { kind -> Recipe? in
                         let slot = store.slot(store.selectedDay, kind)
-                        return slot.memberIDs.contains(store.currentMember.id) && !store.isSkipped(slot)
+                        return slot.memberIDs.contains(store.currentMember.id) && !store.isSkipped(slot) &&
+                            !store.recipe(slot).isUnplanned
                             ? store.recipe(slot) : nil
                     }
                     let energy = dayRecipes.compactMap(\.kcal).reduce(0) { $0 + Int(Double($1) * store.currentMember.portion) }
@@ -28,8 +30,15 @@ struct WeekView: View {
                     Text(dayRecipes.isEmpty ? L10n.format("В этот день %@ не участвует в плане", store.currentMember.name) :
                          dayRecipes.allSatisfy { $0.kcal != nil && $0.protein != nil } ?
                          L10n.format("План для %@: ~%d ккал · белок ~%d г", store.currentMember.name, energy, protein) :
+                         dayRecipes.allSatisfy { $0.kcal != nil } ?
+                         L10n.format("План для %@: ~%d ккал · белок не рассчитан", store.currentMember.name, energy) :
                          L10n.format("План для %@: нутриенты известны не для всех блюд", store.currentMember.name))
                         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
+                    if dayRecipes.contains(where: \.kcalEstimated) {
+                        Label("Часть калорий оценена ИИ по восстановленным граммовкам и выходу блюда.",
+                              systemImage: "sparkles")
+                            .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
+                    }
                     if let target = store.currentMember.dailyEnergyTarget, !dayRecipes.isEmpty,
                        dayRecipes.allSatisfy({ $0.kcal != nil }), (store.currentMember.ageYears ?? 0) >= 18 {
                         Text(L10n.format("Ручной ориентир: %d ккал/день · разница %d ккал", target, energy - target))
@@ -42,14 +51,25 @@ struct WeekView: View {
                         Spacer()
                         if store.canUndoReplan { Button("Отменить подбор") { store.undoReplan() } }
                     }.font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
-                    Button("Подобрать оставшуюся неделю с учётом запасов") { store.proposeWeekMenu() }
+                    Button { store.proposeWeekMenu() } label: {
+                        Label("Пересчитать всё меню недели", systemImage: "arrow.triangle.2.circlepath")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.sage)
+                    if store.outsideFutureSlotCount > 0 {
+                        Button { confirmClearOutside = true } label: {
+                            Label(L10n.format("Убрать блюда вне курсов: %d", store.outsideFutureSlotCount),
+                                  systemImage: "xmark.circle")
+                        }
                         .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
+                    }
                 }.padding(16).background(.white, in: RoundedRectangle(cornerRadius: 18))
                 SectionHeading(title: store.dateLabel(store.selectedDay).capitalized,
                                trailing: L10n.format("%d ПРИЁМА ПИЩИ",
                                                      (0..<3).filter {
                                                          let slot = store.slot(store.selectedDay, $0)
-                                                         return !slot.memberIDs.isEmpty && !store.isSkipped(slot)
+                                                         return !slot.memberIDs.isEmpty && !store.isSkipped(slot) &&
+                                                             !store.recipe(slot).isUnplanned
                                                      }.count))
                 ForEach(0..<3, id: \.self) { kind in
                     let slot = store.slot(store.selectedDay, kind)
@@ -63,6 +83,9 @@ struct WeekView: View {
                                     Text(L10n.text(recipe.title)).font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
                                     Text(L10n.format("%d мин · %d за столом", recipe.minutes, store.participating(slot).count))
                                         .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                    Text(store.courseSourceLabel(for: slot.recipeID))
+                                        .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.sage)
+                                        .fixedSize(horizontal: false, vertical: true)
                                     Text(store.availabilityTitle(for: slot))
                                         .font(.system(size: 11, weight: .medium))
                                         .foregroundStyle(store.requirements(for: slot)?.isReady == true ? Palette.sage : Palette.terracotta)
@@ -91,10 +114,12 @@ struct WeekView: View {
                                 .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
                                 .disabled(slot.day < store.currentDay || store.isSkipped(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
                         }
+                        if !recipe.isUnplanned {
                         Button("Не хочу в этот день — подобрать другое") { store.proposeNotToday(slot) }
                             .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
                             .padding(.top, 11)
                             .disabled(slot.day < store.currentDay || store.isSkipped(slot) || store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }))
+                        }
                         if store.isPastWindow(slot), !slot.memberIDs.isEmpty,
                            !store.state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) {
                             Button(store.isSkipped(slot) ? "Вернуть в план" : "Пропустить приём") {
@@ -131,6 +156,12 @@ struct WeekView: View {
             .alert("Проверьте ограничения", isPresented: Binding(get: { warning != nil }, set: { if !$0 { warning = nil } })) {
                 Button("Понятно", role: .cancel) { warning = nil }
             } message: { Text(warning ?? "") }
+            .confirmationDialog("Очистить будущие блюда вне выбранных курсов?", isPresented: $confirmClearOutside) {
+                Button("Очистить будущий план") { store.clearFutureDishesOutsideCourses() }
+                Button("Отмена", role: .cancel) { }
+            } message: {
+                Text("Отмеченные съеденными блюда останутся в истории. Пустые приёмы можно заполнить после выбора курса и пересчёта меню.")
+            }
     }
 }
 
@@ -161,6 +192,10 @@ struct RecipeChooser: View {
                     if store.hasSelectedCourses {
                         Text("Показаны только блюда выбранных курсов с тегом этого приёма пищи.")
                             .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Text("Курс не выбран. Сначала включите нужный курс в каталоге.")
+                            .font(.system(size: 12)).foregroundStyle(Palette.terracotta)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     ForEach(Array(options.prefix(visibleCount))) { recipe in
@@ -196,7 +231,7 @@ struct RecipeChooser: View {
                     if options.isEmpty {
                         Text(store.hasSelectedCourses
                              ? "В выбранных курсах нет совместимого блюда с тегом этого приёма. Проверьте участников и ограничения."
-                             : "Нет совместимых блюд для этого приёма. Проверьте участников и ограничения.")
+                             : "Выберите курс в каталоге, чтобы появились блюда для этого приёма.")
                             .font(.system(size: 13)).foregroundStyle(Palette.muted)
                     }
                 }.padding(20)
@@ -211,7 +246,7 @@ struct RecipeChooser: View {
             }
             Button("Отмена", role: .cancel) { pendingDraft = nil }
         } message: {
-            Text("Количество части ингредиентов и сведения об аллергенах не подтверждены. Точные покупки, порции и калории не рассчитаны. Не назначайте блюдо участнику с аллергией.")
+            Text("Часть граммовок, порции и калории оценены ИИ; аллергены не подтверждены. Проверьте состав перед готовкой и не назначайте блюдо участнику с аллергией.")
         }
     }
 }
@@ -222,7 +257,10 @@ struct RecipesView: View {
     @State private var filter = "Все"
     @State private var showPrivateAccess = false
     @State private var visibleCount = 12
-    private let filters = ["Все", "Курс снижения веса", "Остальное", "Есть дома", "Не хватает", "Любимые", "Закрытые", "Домашняя", "Средиземноморская"]
+    private var filters: [String] {
+        ["Все", "Курс снижения веса", "Остальное", "Есть дома", "Не хватает", "Любимые", "Закрытые"] +
+        Set(store.allRecipes.map(\.cuisine).filter { !$0.isEmpty }).sorted()
+    }
     private var weightCourseRecipeIDs: Set<String> {
         Set(store.courses.filter { $0.category == "weight-management" }.flatMap(\.recipeIDs))
     }
@@ -286,9 +324,17 @@ struct RecipesView: View {
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text((recipe.isPrivate ? L10n.text("ЗАКРЫТАЯ · ") : L10n.text("ДЕМО · ")) + L10n.text(recipe.cuisine).uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
                                     Text(L10n.text(recipe.title)).font(.system(size: 21, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
+                                    Text(store.courseSourceLabel(for: recipe.id))
+                                        .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.sage)
+                                    Text(recipe.mealKinds.map { store.kinds[$0] }.joined(separator: " · "))
+                                        .font(.system(size: 11)).foregroundStyle(Palette.muted)
                                     Text(recipe.kcal.map { L10n.format("%d минут · ~%d ккал на базовую порцию", recipe.minutes, $0) } ??
                                          L10n.format("%d минут · калорийность не рассчитана", recipe.minutes))
                                         .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                    if recipe.kcalEstimated {
+                                        Label("Калории и выход оценены ИИ", systemImage: "sparkles")
+                                            .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
+                                    }
                                     Text(L10n.format("Сложность: %@", L10n.text(recipe.difficulty?.label ?? "Не оценена")))
                                         .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.sage)
                                     let match = store.readiness(recipe)
@@ -340,10 +386,19 @@ struct RecipeDetailView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 25))
                 VStack(alignment: .leading, spacing: 9) {
                     Text(L10n.text(recipe.cuisine).uppercased()).font(.system(size: 11, weight: .bold)).tracking(1.8).foregroundStyle(Palette.terracotta)
+                    Text(store.courseSourceLabel(for: recipe.id))
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                    Text(recipe.mealKinds.map { store.kinds[$0] }.joined(separator: " · "))
+                        .font(.system(size: 12)).foregroundStyle(Palette.muted)
                     Text(L10n.text(recipe.title)).font(.system(size: 33, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
                     Text(L10n.text(recipe.caption)).font(.system(size: 15)).foregroundStyle(Palette.muted)
                     Label(L10n.format("Сложность: %@", L10n.text(recipe.difficulty?.label ?? "Не оценена")), systemImage: "hand.raised.fingers.spread")
                         .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                    if recipe.servingsEstimated {
+                        Label(L10n.format("Выход: ~%@ порции (оценка ИИ)", recipe.baseServings.formatted(.number.precision(.fractionLength(0...1)))),
+                              systemImage: "sparkles")
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
+                    }
                 }
                 HStack(spacing: 18) {
                     Button { store.toggleFavorite(recipe.id) } label: {
@@ -356,11 +411,33 @@ struct RecipeDetailView: View {
                 HStack(alignment: .top, spacing: 8) {
                     detailMetric("ВРЕМЯ", L10n.format("%d мин", recipe.minutes))
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    detailMetric("НА ПОРЦИЮ", recipe.kcal.map { L10n.format("~%d ккал", $0) } ?? L10n.text("нет данных"))
+                    detailMetric("НА ПОРЦИЮ", recipe.kcal.map {
+                        recipe.kcalEstimated ? L10n.format("~%d ккал · ИИ", $0) : L10n.format("~%d ккал", $0)
+                    } ?? L10n.text("нет данных"))
                         .frame(maxWidth: .infinity, alignment: .leading)
                     detailMetric("БЕЛОК", recipe.protein.map { L10n.format("~%d г", $0) } ?? L10n.text("нет данных"))
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }.padding(19).background(.white, in: RoundedRectangle(cornerRadius: 19))
+                if recipe.isPrivate, let estimate = recipe.energyEstimate, estimate.knownBatchKcal > 0 {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(L10n.format("Исходная закладка: ~%d ккал по указанным и восстановленным количествам", estimate.knownBatchKcal))
+                            .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                        if !estimate.unresolvedNames.isEmpty {
+                            Text(L10n.format("Не учтены: %@", estimate.unresolvedNames.map(L10n.text).joined(separator: ", ")))
+                                .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
+                        }
+                        if !estimate.aiEstimatedNames.isEmpty {
+                            Text(L10n.format("Оценки ИИ для: %@", estimate.aiEstimatedNames.map(L10n.text).joined(separator: ", ")))
+                                .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
+                        }
+                        Text(recipe.servingsEstimated
+                             ? "Калории на порцию и выход блюда оценены ИИ. Проверьте веса продуктов и число порций перед использованием для похудения."
+                             : "Это неполная оценка всего рецепта, не порции: выход блюда и некоторые меры не указаны в источнике.")
+                            .font(.system(size: 11)).foregroundStyle(Palette.muted)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(15).background(Palette.peach.opacity(0.45), in: RoundedRectangle(cornerRadius: 16))
+                }
                 if let slot {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Одна готовка, разные тарелки").font(.system(size: 19, weight: .semibold, design: .serif))
@@ -429,12 +506,17 @@ struct RecipeDetailView: View {
                                 Text(store.ingredientAvailabilityText(ingredient, in: slot))
                                     .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
                                     .fixedSize(horizontal: false, vertical: true)
+                                if ingredient.aiEstimated == true {
+                                    Label("Восстановлено ИИ · проверьте", systemImage: "sparkles")
+                                        .font(.system(size: 10, weight: .semibold))
+                                        .foregroundStyle(Palette.terracotta)
+                                }
                             }
                             Spacer()
                             if let amount = ingredient.amount, amount > 0 {
                                 Text(ingredient.amountMax.map { maxAmount in
-                                    "\((amount * portions).formatted(.number.precision(.fractionLength(0...1))))–\((maxAmount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))"
-                                } ?? "\((amount * portions).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))")
+                                    "\((amount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1))))–\((maxAmount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))"
+                                } ?? "\((amount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))")
                                     .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.sage)
                             } else {
                                 Text("уточнить").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.muted)

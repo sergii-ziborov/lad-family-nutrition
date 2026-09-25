@@ -28,7 +28,84 @@ struct Ingredient: Identifiable, Codable {
     var category: String
     var alternatives: [String]? = nil
     var amountMax: Double? = nil
+    var aiEstimated: Bool? = nil
     var id: String { "\(name)|\(unit)" }
+}
+
+struct EnergyEstimate {
+    let knownBatchKcal: Int
+    let unresolvedNames: [String]
+    let usesEstimatedMeasures: Bool
+    let aiEstimatedNames: [String]
+}
+
+enum EnergyEstimator {
+    // Approximate reference energy per 100 g of raw ingredient. A household unit
+    // is an editorial estimate, never an alteration of the source ingredient list.
+    private static let kcalPer100g: [String: Double] = [
+        "Лосось": 208, "Картофель": 77, "Брокколи": 34, "Йогурт натуральный": 60,
+        "Лимон": 29, "Творог": 121, "Яйцо": 143, "Мука": 364, "Ягоды": 50,
+        "Чечевица красная": 352, "Томаты": 18, "Лук": 40, "Морковь": 41,
+        "Овсяные хлопья": 389, "Молоко": 50, "Банан": 89, "Хлеб": 265,
+        "Куриное филе": 120, "Гречка": 343, "Огурец": 15, "Макароны": 350,
+        "Кабачок": 17, "Цукини": 17, "Сыр": 350, "Филе индейки": 114,
+        "Рис": 365, "Бурый рис": 370, "Перец сладкий": 26, "Сладкий перец": 26,
+        "Минтай": 72, "Хек": 82, "Сметана": 200, "Цветная капуста": 25,
+        "Шампиньоны": 22, "Рисовая мука": 366, "Ржаная мука": 335,
+        "Сельдерей": 16, "Мясной фарш": 250, "Растительное масло": 884,
+        "Капуста": 25, "Свёкла": 43, "Яблоко": 52, "Чеснок": 149,
+        "Чернослив": 240, "Говядина": 200, "Ванилин": 288, "Майоран": 271,
+        "Любисток": 42, "Сушёный чеснок": 331, "Соль": 0, "Чёрный перец": 251,
+        "Кориандр": 298, "Укроп": 43, "Аджика": 60, "Зелень": 30,
+        "Специи": 300, "Лимонный сок": 22, "Рисовая лапша": 364,
+        "Лавровый лист": 313, "Душистый перец": 263, "Специи для плова": 300,
+        "Зелёный лук": 32, "Паприка": 282, "Майонез": 680,
+        "Разрыхлитель": 53
+    ]
+    private static let pieceGrams: [String: Double] = [
+        "Лимон": 58, "Яйцо": 50, "Банан": 118, "Лук": 110,
+        "Морковь": 75, "Цукини": 200, "Кабачок": 200, "Томаты": 120,
+        "Куриное филе": 200,
+        "Сладкий перец": 120, "Перец сладкий": 120, "Шампиньоны": 18,
+        "Яблоко": 150, "Чернослив": 10, "Огурец": 150
+    ]
+    static func evaluate(_ ingredients: [Ingredient]) -> EnergyEstimate {
+        var known = 0.0
+        var unresolved: [String] = []
+        var estimatedMeasure = false
+        var aiEstimated: [String] = []
+        for ingredient in ingredients {
+            if ingredient.aiEstimated == true { aiEstimated.append(ingredient.name) }
+            guard let amount = ingredient.amount, amount > 0,
+                  let density = kcalPer100g[ingredient.name] else {
+                unresolved.append(ingredient.name)
+                continue
+            }
+            let grams: Double?
+            switch ingredient.unit {
+            case "г", "мл": grams = amount
+            case "шт.": grams = pieceGrams[ingredient.name].map { amount * $0 }
+            case "зуб.": grams = ingredient.name == "Чеснок" ? amount * 3 : nil
+            case "головка": grams = ingredient.name == "Чеснок" ? amount * 40 : nil
+            case "филе": grams = ["Куриное филе": 200, "Минтай": 150, "Хек": 150][ingredient.name].map { amount * $0 }
+            case "ст. л.": grams = ["Йогурт натуральный": 15, "Рисовая мука": 10,
+                                     "Ржаная мука": 10][ingredient.name].map { amount * $0 }
+            case "ч. л.": grams = ["Растительное масло": 5, "Сметана": 5,
+                                    "Сельдерей": 3, "Майонез": 5][ingredient.name].map { amount * $0 }
+            case "стакан": grams = ["Бурый рис": 180, "Рис": 180][ingredient.name].map { amount * $0 }
+            case "ломтик": grams = ingredient.name == "Сельдерей" ? amount * 10 : nil
+            case "щепотка": grams = amount * 0.5
+            default: grams = nil
+            }
+            guard let grams else { unresolved.append(ingredient.name); continue }
+            if ingredient.unit != "г" && ingredient.unit != "мл" { estimatedMeasure = true }
+            let averageAmount = ingredient.amountMax.map { (amount + $0) / (2 * amount) } ?? 1
+            known += grams * averageAmount * density / 100
+        }
+        return EnergyEstimate(knownBatchKcal: Int(known.rounded()),
+                              unresolvedNames: unresolved, usesEstimatedMeasures: estimatedMeasure,
+                              aiEstimatedNames: aiEstimated)
+    }
 }
 
 enum CookingDifficulty: String, Codable {
@@ -68,14 +145,20 @@ struct Recipe: Identifiable {
     var remoteImage: Bool = false
     var stepImageIDs: [String?] = []
     var difficulty: CookingDifficulty? = nil
+    var energyEstimate: EnergyEstimate? = nil
+    var baseServings: Double = 1
+    var servingsEstimated: Bool = false
+    var kcalEstimated: Bool = false
     var isPrivate: Bool { id.hasPrefix("private:") }
-    var isUnavailable: Bool { id == "unavailable" }
+    var isUnavailable: Bool { id == "unavailable" || id == "unplanned" }
+    var isUnplanned: Bool { id == "unplanned" }
     var isPlanEligible: Bool {
         !isUnavailable && !ingredients.isEmpty && ingredients.allSatisfy { ($0.amount ?? 0) > 0 } &&
         (!isPrivate || allergensVerified)
     }
 
     static let unavailable = Recipe(id: "unavailable", title: "Закрытый рецепт недоступен", caption: "Подключите каталог, чтобы снова открыть это блюдо.", image: "", cuisine: "Закрытая библиотека", minutes: 0, kcal: nil, protein: nil, allergens: [], ingredients: [], steps: [])
+    static let unplanned = Recipe(id: "unplanned", title: "Блюдо не выбрано", caption: "Выберите курс и составьте меню.", image: "", cuisine: "", minutes: 0, kcal: nil, protein: nil, allergens: [], ingredients: [], steps: [])
 
     private struct PublicDemoBundle: Decodable { let recipes: [PrivateRecipePayload] }
 
@@ -171,7 +254,7 @@ struct DemoState: Codable {
                 slots.append(MealSlot(id: "\(day)-\(kind)", day: day, kind: kind, recipeID: recipeID, memberIDs: family.map(\.id)))
             }
         }
-        return DemoState(startDate: Calendar.current.startOfDay(for: .now), members: family, slots: slots, selectedMemberID: "anna", eatenIDs: [], boughtNames: [], pantryNames: [], favorites: ["anna|salmon"], extraShopping: [], supplementsByMember: [:], takenSupplements: [])
+        return DemoState(startDate: Calendar.current.startOfDay(for: .now), members: family, slots: slots, selectedMemberID: "anna", eatenIDs: [], boughtNames: [], pantryNames: [], favorites: ["anna|salmon"], extraShopping: [], supplementsByMember: [:], takenSupplements: [], activeCourseIDs: ["lad-starter"])
     }
 
     static func nextWeek(after previous: DemoState, now: Date) -> DemoState {
@@ -182,6 +265,9 @@ struct DemoState: Codable {
         fresh.favorites = previous.favorites
         fresh.dislikes = previous.dislikes
         fresh.activeCourseIDs = previous.activeCourseIDs
+        if fresh.activeCourseIDs?.contains("lad-starter") != true {
+            for index in fresh.slots.indices { fresh.slots[index].recipeID = Recipe.unplanned.id }
+        }
         fresh.pantryNames = previous.pantryNames
         fresh.pantryItems = previous.pantryItems
         fresh.extraShopping = previous.extraShopping
@@ -332,6 +418,9 @@ struct AvoidedRecipe: Equatable {
         } else {
             state = .initial()
         }
+        // Older installs had an implicit demo source. Record it explicitly so an empty
+        // course selection is never confused with permission to use every recipe.
+        if state.activeCourseIDs == nil { state.activeCourseIDs = ["lad-starter"] }
         let legacyFavorites = state.favorites.filter { !$0.contains("|") }
         for favorite in legacyFavorites {
             state.favorites.remove(favorite)
@@ -348,7 +437,7 @@ struct AvoidedRecipe: Equatable {
         let oldPattern = state.slots.count == 21 && state.slots.allSatisfy { slot in
             slot.recipeID == (slot.kind == 0 ? "pancakes" : (slot.kind == 1 ? "soup" : "salmon"))
         }
-        if oldPattern {
+        if oldPattern && state.activeCourseIDs?.contains("lad-starter") == true {
             let improved = DemoState.initial().slots
             for index in state.slots.indices {
                 let slot = state.slots[index]
@@ -383,19 +472,23 @@ struct AvoidedRecipe: Equatable {
     }
     var activeCourseIDs: Set<String> { state.activeCourseIDs ?? [] }
     var hasSelectedCourses: Bool { !activeCourseIDs.isEmpty }
-    private var activeCourseRecipeIDs: Set<String>? {
-        guard !activeCourseIDs.isEmpty else { return nil }
+    private var activeCourseRecipeIDs: Set<String> {
         let existing = Set(allRecipes.map(\.id))
         return Set(courses.filter { activeCourseIDs.contains($0.id) }.flatMap(\.recipeIDs).map { id in
             existing.contains(id) ? id : "private:\(id)"
         })
     }
     func isOutsideSelectedCourses(_ recipeID: String) -> Bool {
-        guard let selected = activeCourseRecipeIDs else { return false }
-        return !selected.contains(recipeID)
+        return !activeCourseRecipeIDs.contains(recipeID)
     }
     func isSelectedCourseRecipe(_ recipeID: String) -> Bool {
-        activeCourseRecipeIDs?.contains(recipeID) == true
+        activeCourseRecipeIDs.contains(recipeID)
+    }
+    func courseSourceLabel(for recipeID: String) -> String {
+        let normalized = recipeID.hasPrefix("private:") ? String(recipeID.dropFirst("private:".count)) : recipeID
+        let matches = courses.filter { $0.recipeIDs.contains(normalized) || $0.recipeIDs.contains(recipeID) }
+        if matches.isEmpty { return L10n.text("Без курса") }
+        return L10n.format("Курс: %@", matches.map(\.title).joined(separator: ", "))
     }
     func courseDraftIssue(_ recipe: Recipe, for requestedSlot: MealSlot) -> String? {
         guard let slot = state.slots.first(where: { $0.id == requestedSlot.id }) else {
@@ -432,6 +525,24 @@ struct AvoidedRecipe: Equatable {
         var next = state.activeCourseIDs ?? []
         if !next.insert(id).inserted { next.remove(id) }
         state.activeCourseIDs = next
+    }
+    var outsideFutureSlotCount: Int {
+        state.slots.filter { slot in
+            slot.day >= currentDay && slot.recipeID != Recipe.unplanned.id &&
+            !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) &&
+            !activeCourseRecipeIDs.contains(slot.recipeID)
+        }.count
+    }
+    func clearFutureDishesOutsideCourses() {
+        var next = state
+        for index in next.slots.indices {
+            let slot = next.slots[index]
+            guard slot.day >= currentDay, slot.recipeID != Recipe.unplanned.id,
+                  !next.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }),
+                  !activeCourseRecipeIDs.contains(slot.recipeID) else { continue }
+            next.slots[index].recipeID = Recipe.unplanned.id
+        }
+        if next.slots.map(\.recipeID) != state.slots.map(\.recipeID) { state = next }
     }
     func setCourseCatalogURL(_ url: String) async {
         do {
@@ -485,7 +596,8 @@ struct AvoidedRecipe: Equatable {
                                         schedule: mealSchedule).slots[slot.id]
     }
     func availabilityTitle(for slot: MealSlot) -> String {
-        availabilityTitle(requirements(for: slot), inventoryEmpty: planRequirements.inventoryEmpty)
+        if slot.recipeID == Recipe.unplanned.id { return L10n.text("Нет блюда · выберите курс и пересчитайте меню") }
+        return availabilityTitle(requirements(for: slot), inventoryEmpty: planRequirements.inventoryEmpty)
     }
     func availabilityTitle(for recipe: Recipe, replacing slot: MealSlot) -> String {
         availabilityTitle(requirements(for: recipe, replacing: slot), inventoryEmpty: pantry.isEmpty)
@@ -637,10 +749,13 @@ struct AvoidedRecipe: Equatable {
         String(Calendar.current.component(.day, from: Calendar.current.date(byAdding: .day, value: offset, to: state.startDate)!))
     }
     func slot(_ day: Int, _ kind: Int) -> MealSlot { state.slots.first { $0.day == day && $0.kind == kind }! }
-    func recipe(_ slot: MealSlot) -> Recipe { allRecipes.first { $0.id == slot.recipeID } ?? Recipe.unavailable }
+    func recipe(_ slot: MealSlot) -> Recipe {
+        if slot.recipeID == Recipe.unplanned.id { return .unplanned }
+        return allRecipes.first { $0.id == slot.recipeID } ?? .unavailable
+    }
     func participating(_ slot: MealSlot) -> [FamilyMember] { state.members.filter { slot.memberIDs.contains($0.id) } }
     func toggleEaten(_ slot: MealSlot) {
-        guard slot.memberIDs.contains(state.selectedMemberID) else { return }
+        guard slot.memberIDs.contains(state.selectedMemberID), slot.recipeID != Recipe.unplanned.id else { return }
         let key = "\(slot.id)-\(state.selectedMemberID)"
         var next = state
         if next.eatenIDs.contains(key) { next.eatenIDs.remove(key) }
@@ -756,6 +871,12 @@ struct AvoidedRecipe: Equatable {
         proposeMenu(days: Array(currentDay..<7), title: L10n.text("Подбор недели"))
     }
     private func proposeMenu(days: [Int], title: String) {
+        guard hasSelectedCourses else {
+            replanPreview = makePreview(title: title,
+                                        explanation: L10n.text("Сначала выберите хотя бы один курс в каталоге. Пустой выбор не означает подбор из всех рецептов."),
+                                        changes: [], emptyMessage: L10n.text("Курс не выбран. Меню не изменено."))
+            return
+        }
         var proposedSlots = state.slots
         var changes: [PlannedChange] = []
         var lateCorrectionIDs: Set<String> = []
@@ -774,8 +895,14 @@ struct AvoidedRecipe: Equatable {
                 let ranked = rankedRecipes(eligibleRecipes(for: slot), slot: slot, usedToday: used,
                                            plannedSlots: proposedSlots)
                 guard let choice = ranked.first else {
-                    if hasSelectedCourses && isOutsideSelectedCourses(slot.recipeID) {
+                    if slot.recipeID != Recipe.unplanned.id {
                         unmatched.append("\(dateLabel(day)) · \(kinds[kind])")
+                        changes.append(PlannedChange(slotID: slot.id, previousID: slot.recipeID,
+                                                     nextID: Recipe.unplanned.id))
+                        if let index = proposedSlots.firstIndex(where: { $0.id == slot.id }) {
+                            proposedSlots[index].recipeID = Recipe.unplanned.id
+                        }
+                        if isPastWindow(slot) { lateCorrectionIDs.insert(slot.id) }
                     }
                     continue
                 }
@@ -792,13 +919,13 @@ struct AvoidedRecipe: Equatable {
             ? L10n.text("Подбор использует только блюда выбранных курсов с подходящим тегом приёма пищи. Изменения появятся после подтверждения.")
             : L10n.text("Сопоставили продукты на всю неделю, даты готовки и ограничения участников. Если запасы не внесены, список покупок предварительный. Меню изменится только после подтверждения.")
         if !reviewIDs.isEmpty {
-            explanation += " " + L10n.text("Часть блюд курса — черновики: количества и аллергены требуют проверки, калорийность не рассчитана. Не считайте это готовой программой снижения веса.")
+            explanation += " " + L10n.text("Часть блюд курса — черновики: количества, порции и калории оценены ИИ, а аллергены требуют проверки. Не считайте это подтверждённой программой снижения веса.")
         }
         if !lateCorrectionIDs.isEmpty {
             explanation += " " + L10n.text("Прошедшие сегодня, но не отмеченные съеденными приёмы меняются как план; факт еды не создаётся.")
         }
         if !unmatched.isEmpty {
-            explanation += " " + L10n.format("Нет подходящего блюда с нужным тегом для: %@. Прежнее блюдо остаётся с пометкой «вне курса».", unmatched.joined(separator: ", "))
+            explanation += " " + L10n.format("Нет подходящего блюда с нужным тегом для: %@. После подтверждения эти приёмы останутся без блюда.", unmatched.joined(separator: ", "))
         }
         replanPreview = makePreview(title: title,
                                     explanation: explanation, changes: changes,
@@ -811,6 +938,12 @@ struct AvoidedRecipe: Equatable {
         guard let slot = state.slots.first(where: { $0.id == requestedSlot.id }) else {
             replanPreview = makePreview(title: L10n.text("Другое блюдо"), explanation: L10n.text("Этот приём больше не найден в плане."), changes: [],
                                         emptyMessage: L10n.text("Откройте актуальный день и попробуйте снова."))
+            return
+        }
+        guard hasSelectedCourses else {
+            replanPreview = makePreview(title: L10n.text("Другое блюдо"),
+                                        explanation: L10n.text("Сначала выберите курс в каталоге — пустой выбор не включает демо-блюда."),
+                                        changes: [], emptyMessage: L10n.text("Курс не выбран. Блюдо не изменено."))
             return
         }
         guard !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) else {
@@ -840,18 +973,18 @@ struct AvoidedRecipe: Equatable {
                                             ? L10n.format("Учтём, что %@ не хочет это блюдо в выбранный день. Замена учитывает продукты дома и ограничения всех за столом; предпочтение сохранится только для этого приёма пищи.", currentMember.name)
                                             : L10n.text("Выбранный человек не участвует в этом приёме. Подберём другое блюдо для участников, не записывая ему личный отказ."))
                                         : L10n.text("Обычное время прошло, но приём не отмечен съеденным. Можно явно заменить его сегодня; это не означает, что еда была съедена. Проверим продукты и ограничения всех участников.")
-        let explanation = includeOutsideCourses && activeCourseRecipeIDs != nil
+        let explanation = includeOutsideCourses && hasSelectedCourses
             ? L10n.text("Это предложение может быть вне выбранного курса. Оно не меняет сам курс и появится в меню только после подтверждения.") + " " + normalExplanation
             : normalExplanation
         let reviewIDs: Set<String> = choice.map { $0.isPlanEligible ? [] : [$0.id] } ?? []
         replanPreview = makePreview(title: L10n.format("Другое блюдо на %@", dateLabel(slot.day)),
-                                    explanation: reviewIDs.isEmpty ? explanation : explanation + " " + L10n.text("Количества и аллергены этого блюда ещё требуют проверки; точные покупки и калории не рассчитаны."),
+                                    explanation: reviewIDs.isEmpty ? explanation : explanation + " " + L10n.text("Количества, порции и калории этого блюда оценочные; проверьте их и аллергены перед готовкой."),
                                     changes: changes, pendingAvoid: avoid, lateCorrectionSlotID: lateCorrection,
-                                    outsideCourseSlotID: choice == nil && !includeOutsideCourses && activeCourseRecipeIDs != nil ? slot.id : nil,
+                                    outsideCourseSlotID: choice == nil && !includeOutsideCourses && hasSelectedCourses ? slot.id : nil,
                                     reviewRecipeIDs: reviewIDs,
                                     emptyMessage: includeOutsideCourses
                                         ? L10n.text("Подходящего проверенного блюда не нашлось и вне курса. Меню не меняется.")
-                                        : (activeCourseRecipeIDs == nil
+                                        : (!hasSelectedCourses
                                             ? L10n.text("Пока нет другого совместимого блюда для этого приёма пищи. Меню не меняется.")
                                             : L10n.text("В выбранных курсах пока нет другого совместимого блюда с нужным тегом. Меню не меняется.")))
     }
@@ -896,11 +1029,12 @@ struct AvoidedRecipe: Equatable {
                     next.slots[index].day == currentDay &&
                     !isSkipped(next.slots[index]))),
                   !state.eatenIDs.contains(where: { $0.hasPrefix("\(change.slotID)-") }),
-                  let replacement = allRecipes.first(where: { $0.id == change.nextID }),
-                  (replacement.isPlanEligible
-                   ? incompatibility(next.slots[index], recipe: replacement) == nil
-                   : preview.reviewRecipeIDs.contains(replacement.id) &&
-                     courseDraftIssue(replacement, for: next.slots[index]) == nil) else {
+                  let replacement = change.nextID == Recipe.unplanned.id ? Recipe.unplanned : allRecipes.first(where: { $0.id == change.nextID }),
+                  (replacement.isUnplanned ||
+                   (replacement.isPlanEligible
+                    ? incompatibility(next.slots[index], recipe: replacement) == nil
+                    : preview.reviewRecipeIDs.contains(replacement.id) &&
+                      courseDraftIssue(replacement, for: next.slots[index]) == nil)) else {
                 replanPreview = makePreview(title: "План изменился", explanation: "Предложение больше не подходит текущему плану.",
                                             changes: [], emptyMessage: "Подберите меню заново; ничего не было изменено.")
                 return
@@ -955,6 +1089,7 @@ struct AvoidedRecipe: Equatable {
             return L10n.text("Приём больше не найден в плане.")
         }
         let slot = state.slots[index]
+        guard hasSelectedCourses else { return L10n.text("Сначала выберите курс в каталоге.") }
         guard (!isPastWindow(slot) || slot.day == currentDay), !isSkipped(slot),
               !state.eatenIDs.contains(where: { $0.hasPrefix("\(slot.id)-") }) else {
             return L10n.text("Нельзя заменить завершённый, пропущенный или отмеченный съеденным приём.")
