@@ -195,108 +195,108 @@ final class PlanningCoreTests: XCTestCase {
         XCTAssertFalse(CookingGuide.unmeasuredTaste(salted).contains("Соль"))
     }
 
-    func testSpokenStepsUseGlassesOfGrainAndWater() throws {
+    func testStepAmountsAreRoundedAndShownWhereTheIngredientIsFirstUsed() throws {
         let original = UserDefaults.standard.string(forKey: L10n.languageKey)
         defer { UserDefaults.standard.set(original, forKey: L10n.languageKey) }
-        let dish = try XCTUnwrap(Recipe.all.first { $0.id == "chicken-buckwheat" })
-        let names = dish.ingredients.map(\.name)
         UserDefaults.standard.set("ru", forKey: L10n.languageKey)
-        let one = CookingGuide.spokenStep(recipe: dish, index: 0, portions: 1)
-        XCTAssertTrue(one.contains("Промойте"), one)
-        XCTAssertTrue(one.contains("треть стакана"), one)
-        XCTAssertTrue(one.contains("гречк"), one)
-        XCTAssertTrue(one.contains("вод"), one)
-        XCTAssertTrue(one.contains("70"), one)
-        XCTAssertTrue(one.contains("до закипания"), one)
-        XCTAssertTrue(one.contains("ложк"), one)
-        XCTAssertTrue(one.contains("\(CookingGuide.stepMinutes(dish)[0])"), one)
-        XCTAssertEqual(dish.ingredients.map(\.name), names)
-        let family = CookingGuide.spokenStep(recipe: dish, index: 0, portions: 3)
-        XCTAssertTrue(family.contains("стакан гречки"), family)
-        XCTAssertTrue(family.contains("два стакана воды"), family)
-        XCTAssertTrue(family.contains("210"), family)
-        let larger = CookingGuide.spokenStep(recipe: dish, index: 0, portions: 4)
-        XCTAssertTrue(larger.contains("280"), larger)
-        let fry = CookingGuide.spokenStep(recipe: dish, index: 1, portions: 1)
-        XCTAssertTrue(fry.contains("Нарежьте куриное"), fry)
-        XCTAssertTrue(fry.contains("160"), fry)
-        XCTAssertTrue(fry.contains("ложк"), fry)
-        let plate = CookingGuide.spokenStep(recipe: dish, index: 2, portions: 1)
-        XCTAssertTrue(plate.contains("огурец"), plate)
-        XCTAssertTrue(plate.contains("120"), plate)
-        let pasta = try XCTUnwrap(Recipe.all.first { $0.id == "vegetable-pasta" })
-        let boiled = CookingGuide.spokenStep(recipe: pasta, index: 0, portions: 1)
-        XCTAssertTrue(boiled.contains("макарон"), boiled)
-        XCTAssertTrue(boiled.contains("кастрюлю"), boiled)
-        XCTAssertTrue(boiled.contains("вод"), boiled)
-        let salmon = try XCTUnwrap(Recipe.all.first { $0.id == "salmon" })
-        let oven = CookingGuide.spokenStep(recipe: salmon, index: 0, portions: 1)
-        XCTAssertTrue(oven.contains("200"), oven)
-        XCTAssertTrue(oven.contains("духовку"), oven)
-        XCTAssertTrue(oven.contains("180"), oven)
-        let cheese = Recipe(id: "cheese-speech", title: "Сыр", caption: "", image: "", cuisine: "", minutes: 5,
-                            kcal: nil, protein: nil, allergens: [], ingredients: [
-                                Ingredient(name: "Сыр", amount: 25, unit: "г", category: "Молочные продукты")
-                            ], steps: ["Пока внутри не останется сырого.", "Посыпьте сыром."])
-        XCTAssertFalse(CookingGuide.spokenStep(recipe: cheese, index: 0, portions: 1).contains("25"))
-        XCTAssertTrue(CookingGuide.spokenStep(recipe: cheese, index: 1, portions: 1).contains("25"))
-        UserDefaults.standard.set("en", forKey: L10n.languageKey)
-        let english = CookingGuide.spokenStep(recipe: dish, index: 0, portions: 1)
-        XCTAssertTrue(english.contains("Rinse the buckwheat"), english)
-        XCTAssertTrue(english.contains("glass"), english)
-        XCTAssertTrue(english.contains("buckwheat"), english)
-        XCTAssertTrue(english.contains("water"), english)
-        XCTAssertTrue(english.contains("before it boils"), english)
-        XCTAssertNil(english.range(of: "[А-Яа-яЁёІіЇїЄєҐґ]", options: .regularExpression), english)
-        UserDefaults.standard.set("uk", forKey: L10n.languageKey)
-        let ukrainian = CookingGuide.spokenStep(recipe: dish, index: 0, portions: 1)
-        XCTAssertTrue(ukrainian.contains("Промийте"), ukrainian)
-        XCTAssertTrue(ukrainian.contains("склян"), ukrainian)
-        XCTAssertTrue(ukrainian.contains("вод"), ukrainian)
-        XCTAssertTrue(ukrainian.contains("до закипання"), ukrainian)
-        UserDefaults.standard.set("ru", forKey: L10n.languageKey)
-        let sweet = Recipe(id: "sweet-speech", title: "Каша", caption: "", image: "", cuisine: "", minutes: 10,
+        let dish = Recipe(id: "amounts", title: "Гречка с курицей", caption: "", image: "", cuisine: "", minutes: 30,
+                          kcal: nil, protein: nil, allergens: [], ingredients: [
+                            Ingredient(name: "Гречка", amount: 70, unit: "г", category: "Бакалея"),
+                            Ingredient(name: "Куриное филе", amount: 160, unit: "г", category: "Рыба и мясо"),
+                            Ingredient(name: "Оливковое масло", amount: 10, unit: "г", category: "Бакалея"),
+                            Ingredient(name: "Огурец", amount: 120, unit: "г", category: "Овощи и зелень")
+                          ], steps: ["Промойте гречку, залейте водой, посолите и варите под крышкой 15–20 минут.",
+                                     "Нарежьте куриное филе и обжарьте на оливковом масле по 6 минут с каждой стороны.",
+                                     "Нарежьте огурец кружками и подайте рядом с гречкой."])
+        func row(_ rows: [CookingGuide.StepAmount], _ name: String) throws -> CookingGuide.StepAmount {
+            try XCTUnwrap(rows.first { $0.name == name }, "\(name) in \(rows)")
+        }
+        let family = CookingGuide.stepAmounts(recipe: dish, index: 0, portions: 3)
+        XCTAssertEqual(try row(family, "Гречка").amount, "210 г")
+        XCTAssertEqual(try row(family, "Гречка").hint, "≈ 1 стакан")
+        XCTAssertEqual(try row(family, "Вода").amount, "500 мл")
+        XCTAssertEqual(try row(family, "Вода").hint, "≈ 2 стакана")
+        XCTAssertEqual(try row(family, "Соль").amount, "½ ч. л.")
+        XCTAssertEqual(family.count, 3, "\(family)")
+        let fry = CookingGuide.stepAmounts(recipe: dish, index: 1, portions: 3)
+        XCTAssertEqual(try row(fry, "Куриное филе").amount, "480 г")
+        XCTAssertEqual(try row(fry, "Оливковое масло").hint, "≈ 2 ст. л.")
+        let plate = CookingGuide.stepAmounts(recipe: dish, index: 2, portions: 3)
+        XCTAssertEqual(plate.map(\.name), ["Огурец"], "the buckwheat was already measured in step 1")
+        let odd = CookingGuide.stepAmounts(recipe: dish, index: 0, portions: 4.125)
+        XCTAssertEqual(try row(odd, "Гречка").amount, "290 г")
+        XCTAssertEqual(try row(odd, "Гречка").hint, "≈ 1⅓ стакана")
+        for text in odd.flatMap({ [$0.amount] + [$0.hint].compactMap { $0 } }) {
+            XCTAssertNil(text.range(of: "\\d{2,},\\d", options: .regularExpression), text)
+        }
+        XCTAssertEqual(CookingGuide.metricText(206.3, liquid: false), "205 г")
+        XCTAssertEqual(CookingGuide.metricText(1240, liquid: true), "1,2 л")
+
+        let pasta = Recipe(id: "pasta-amounts", title: "Паста", caption: "", image: "", cuisine: "", minutes: 15,
+                           kcal: nil, protein: nil, allergens: [], ingredients: [
+                            Ingredient(name: "Макароны", amount: 80, unit: "г", category: "Бакалея")
+                           ], steps: ["Вскипятите воду в большой кастрюле, посолите и варите макароны 9 минут."])
+        let boiled = CookingGuide.stepAmounts(recipe: pasta, index: 0, portions: 4)
+        XCTAssertEqual(try row(boiled, "Макароны").amount, "320 г")
+        XCTAssertNil(try row(boiled, "Макароны").hint, "pasta is weighed, not measured in glasses")
+        XCTAssertEqual(try row(boiled, "Вода").amount, "≈ 3,2 л")
+        XCTAssertEqual(try row(boiled, "Соль").amount, "1 ст. л.")
+
+        let sweet = Recipe(id: "sweet-amounts", title: "Каша", caption: "", image: "", cuisine: "", minutes: 10,
                            kcal: nil, protein: nil, allergens: [], ingredients: [
                             Ingredient(name: "Гречка", amount: 70, unit: "г", category: "Бакалея"),
                             Ingredient(name: "Сахар", amount: 10, unit: "г", category: "Бакалея")
-                           ], steps: ["Промойте гречку и сварите до готовности."])
-        XCTAssertFalse(CookingGuide.spokenStep(recipe: sweet, index: 0, portions: 1).contains("до закипания"))
-        let alreadySalted = Recipe(id: "salt-speech", title: "Каша", caption: "", image: "", cuisine: "", minutes: 15,
-                                   kcal: nil, protein: nil, allergens: [], ingredients: [
-                                    Ingredient(name: "Гречка", amount: 70, unit: "г", category: "Бакалея"),
-                                    Ingredient(name: "Вода", amount: 200, unit: "мл", category: "Напитки"),
-                                    Ingredient(name: "Соль", amount: 2, unit: "г", category: "Бакалея")
-                                   ], steps: ["Промойте гречку, залейте водой и добавьте соль. Варите под крышкой 15 минут."])
-        let timed = CookingGuide.spokenStep(recipe: alreadySalted, index: 0, portions: 1)
-        XCTAssertTrue(timed.contains("до закипания"), timed)
-        XCTAssertTrue(timed.contains("Эту соль всыпьте"), timed)
-        XCTAssertTrue(timed.contains("половина чайной ложки"), timed)
-        XCTAssertFalse(timed.contains("Соль всыпьте в холодную воду до закипания:"), timed)
-        let salmonBake = CookingGuide.spokenStep(recipe: salmon, index: 0, portions: 1)
-        XCTAssertTrue(salmonBake.contains("до духовки"), salmonBake)
+                           ], steps: ["Промойте гречку и варите под крышкой 15 минут, в конце добавьте сахар."])
+        XCTAssertFalse(CookingGuide.stepAmounts(recipe: sweet, index: 0, portions: 1).contains { $0.name == "Соль" },
+                       "salt appears only when the step says to salt")
+        let salted = Recipe(id: "salted-amounts", title: "Каша", caption: "", image: "", cuisine: "", minutes: 15,
+                            kcal: nil, protein: nil, allergens: [], ingredients: [
+                                Ingredient(name: "Гречка", amount: 70, unit: "г", category: "Бакалея"),
+                                Ingredient(name: "Вода", amount: 200, unit: "мл", category: "Напитки"),
+                                Ingredient(name: "Соль", amount: 2, unit: "г", category: "Бакалея")
+                            ], steps: ["Промойте гречку, залейте водой, добавьте соль и варите под крышкой 15 минут."])
+        let listed = CookingGuide.stepAmounts(recipe: salted, index: 0, portions: 1)
+        XCTAssertEqual(listed.filter { $0.name == "Соль" }.count, 1, "listed salt is not doubled")
+        XCTAssertEqual(listed.filter { $0.name == "Вода" }.count, 1, "listed water is not doubled")
+        XCTAssertEqual(try row(listed, "Вода").amount, "200 мл")
+
+        let cheese = Recipe(id: "cheese-amounts", title: "Сыр", caption: "", image: "", cuisine: "", minutes: 5,
+                            kcal: nil, protein: nil, allergens: [], ingredients: [
+                                Ingredient(name: "Сыр", amount: 25, unit: "г", category: "Молочные продукты")
+                            ], steps: ["Жарьте, пока внутри не останется сырого.", "Посыпьте сыром."])
+        XCTAssertTrue(CookingGuide.stepAmounts(recipe: cheese, index: 0, portions: 1).isEmpty)
+        XCTAssertEqual(CookingGuide.stepAmounts(recipe: cheese, index: 1, portions: 1).map(\.amount), ["25 г"])
+
+        UserDefaults.standard.set("en", forKey: L10n.languageKey)
+        let english = CookingGuide.stepAmounts(recipe: dish, index: 0, portions: 3)
+        XCTAssertEqual(try row(english, "Buckwheat").amount, "210 g")
+        XCTAssertEqual(try row(english, "Water").hint, "≈ 2 cups")
+        XCTAssertEqual(try row(english, "Salt").amount, "½ tsp")
+        UserDefaults.standard.set("uk", forKey: L10n.languageKey)
+        let ukrainian = CookingGuide.stepAmounts(recipe: dish, index: 0, portions: 3)
+        XCTAssertEqual(try row(ukrainian, "Вода").hint, "≈ 2 склянки")
     }
 
-    func testEveryShortStepGainsAHouseholdLine() {
-        let original = UserDefaults.standard.string(forKey: L10n.languageKey)
-        defer { UserDefaults.standard.set(original, forKey: L10n.languageKey) }
-        UserDefaults.standard.set("ru", forKey: L10n.languageKey)
-        let recipes = Recipe.launchRecipes
-        XCTAssertEqual(recipes.count, 200)
-        var thin: [String] = []
-        for recipe in recipes {
-            for index in recipe.steps.indices {
-                let step = recipe.steps[index]
-                let spoken = CookingGuide.spokenStep(recipe: recipe, index: index, portions: 1)
-                let alreadyMeasured = step.contains("°")
-                if step.count < 100, !alreadyMeasured, spoken.count < step.count + 40 {
-                    thin.append("\(recipe.title) #\(index) \(spoken)")
-                }
-                if step.lowercased().contains("сковород"), spoken.contains("Духовку разогрейте") {
-                    thin.append("oven on pan: \(recipe.title) #\(index)")
+    func testEveryCourseStepIsPlainAndTimed() {
+        let vague = ["по упаковке", "отмерен", "до готовности", "при необходимости", "указанн", "в этот состав"]
+        var problems: [String] = []
+        for recipe in Recipe.launchRecipes {
+            if recipe.stepMinutes.count != recipe.steps.count || recipe.stepMinutes.reduce(0, +) != recipe.minutes {
+                problems.append("\(recipe.id): step minutes \(recipe.stepMinutes) vs total \(recipe.minutes)")
+            }
+            for step in recipe.steps {
+                let text = step.lowercased()
+                for phrase in vague where text.contains(phrase) { problems.append("\(recipe.id): «\(phrase)» in \(step)") }
+                if text.range(of: "\\d+\\s*(г|мл|кг)(?![а-яё])", options: .regularExpression) != nil || text.contains("стакан") {
+                    problems.append("\(recipe.id): a quantity in the text: \(step)")
                 }
             }
+            let joined = recipe.steps.joined(separator: " ")
+            for ingredient in recipe.ingredients where (ingredient.amount ?? 0) > 0 && !CookingGuide.mentions(ingredient.name, in: joined) {
+                problems.append("\(recipe.id): no step names \(ingredient.name)")
+            }
         }
-        XCTAssertTrue(thin.isEmpty, thin.joined(separator: "\n"))
+        XCTAssertTrue(problems.isEmpty, problems.joined(separator: "\n"))
     }
 
     func testIngredientPricesUsePackSizeAndRecipeYield() throws {

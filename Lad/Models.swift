@@ -324,6 +324,7 @@ struct Recipe: Identifiable {
     var nutritionEdibleYield: [String: Double] = [:]
     var remoteImage: Bool = false
     var stepImageIDs: [String?] = []
+    var stepMinutes: [Int] = []
     var difficulty: CookingDifficulty? = nil
     var energyEstimate: EnergyEstimate? = nil
     var baseServings: Double = 1

@@ -635,9 +635,8 @@ struct RecipeDetailView: View {
                                     Text("нет цены").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.muted)
                                 }
                                 if let amount = ingredient.amount, amount > 0 {
-                                    Text((ingredient.aiEstimated == true ? "≈" : "") + (ingredient.amountMax.map { maxAmount in
-                                        "\((amount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1))))–\((maxAmount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))"
-                                    } ?? "\((amount * portions / recipe.baseServings).formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))"))
+                                    Text((ingredient.aiEstimated == true ? "≈ " : "") + IngredientAmountText.text(ingredient, amount: amount * portions / recipe.baseServings,
+                                                                                                                    maximum: ingredient.amountMax.map { $0 * portions / recipe.baseServings }))
                                         .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.sage)
                                 } else {
                                     Text("уточнить").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.muted)
@@ -660,16 +659,22 @@ struct RecipeDetailView: View {
                     }
                 }
                 if !recipe.steps.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        SectionHeading(title: "Приготовление")
+                    VStack(alignment: .leading, spacing: 16) {
+                        SectionHeading(title: "Приготовление", trailing: L10n.format("%d мин", recipe.minutes))
                         let minutes = CookingGuide.stepMinutes(recipe)
-                        ForEach(Array(recipe.steps.enumerated()), id: \.offset) { index, step in
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(L10n.format("≈ %d мин", minutes.indices.contains(index) ? minutes[index] : 1))
-                                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
-                                Text(CookingGuide.spokenStep(recipe: recipe, index: index, portions: portions))
-                                    .font(.system(size: 15)).foregroundStyle(Palette.ink)
-                                    .fixedSize(horizontal: false, vertical: true)
+                        ForEach(Array(recipe.steps.enumerated()), id: \.offset) { index, _ in
+                            HStack(alignment: .top, spacing: 13) {
+                                Text("\(index + 1)")
+                                    .font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(Palette.sage)
+                                    .frame(width: 30, height: 30).background(Palette.paleSage, in: Circle())
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(CookingGuide.stepText(recipe: recipe, index: index))
+                                        .font(.system(size: 16)).foregroundStyle(Palette.ink).lineSpacing(3)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                    StepAmountsList(rows: CookingGuide.stepAmounts(recipe: recipe, index: index, portions: portions), compact: true)
+                                    Label(L10n.format("≈ %d мин", minutes.indices.contains(index) ? minutes[index] : 1), systemImage: "clock")
+                                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                                }
                             }
                         }
                     }
@@ -702,6 +707,7 @@ struct RecipeDetailView: View {
             .onAppear {
                 #if DEBUG
                 if ProcessInfo.processInfo.arguments.contains("--screenshot-all-nutrients") { showAllNutrients = true }
+                if ProcessInfo.processInfo.arguments.contains("--screenshot-cooking") { showCooking = true }
                 if ProcessInfo.processInfo.arguments.contains("--screenshot-nutrients") {
                     DispatchQueue.main.async { scroll.scrollTo("recipe-nutrients", anchor: .top) }
                 }
@@ -806,48 +812,135 @@ struct CookingView: View {
     var completed: () -> Void = {}
     @State private var step = 0
     var body: some View {
+        let minutes = CookingGuide.stepMinutes(recipe)
+        let rows = CookingGuide.stepAmounts(recipe: recipe, index: step, portions: portions)
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                HStack {
-                    Text(L10n.text(recipe.title)).font(.system(size: 22, weight: .semibold, design: .serif)).lineLimit(2).minimumScaleFactor(0.8)
+                HStack(alignment: .top) {
+                    Text(L10n.text(recipe.title)).font(.system(size: 21, weight: .semibold, design: .serif))
+                        .foregroundStyle(Palette.ink).lineLimit(2).minimumScaleFactor(0.8)
                     Spacer()
-                    Button { dismiss() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 27)).foregroundStyle(Palette.muted) }
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.sage)
+                            .frame(width: 34, height: 34).background(Palette.paleSage, in: Circle())
+                    }.accessibilityLabel(L10n.text("Закрыть"))
                 }
-                ProgressView(value: Double(step + 1), total: Double(recipe.steps.count)).tint(Palette.sage)
-                Text(L10n.format("ШАГ %d ИЗ %d", step + 1, recipe.steps.count))
-                    .font(.system(size: 12, weight: .bold)).tracking(1.7).foregroundStyle(Palette.terracotta)
+                HStack(spacing: 5) {
+                    ForEach(recipe.steps.indices, id: \.self) { index in
+                        Capsule().fill(index <= step ? Palette.sage : Palette.line).frame(height: 5)
+                    }
+                }
+                HStack(spacing: 10) {
+                    Text(L10n.format("ШАГ %d ИЗ %d", step + 1, recipe.steps.count))
+                        .font(.system(size: 12, weight: .bold)).tracking(1.6).foregroundStyle(Palette.terracotta)
+                    if minutes.indices.contains(step) {
+                        Label(L10n.format("≈ %d мин", minutes[step]), systemImage: "clock")
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                            .padding(.horizontal, 9).padding(.vertical, 4)
+                            .background(Palette.paleSage, in: Capsule())
+                    }
+                }
                 if recipe.stepImageIDs.indices.contains(step), let imageID = recipe.stepImageIDs[step] {
                     RecipeStepPicture(imageID: imageID, privateAccess: recipe.isPrivate)
-                        .frame(height: 235)
-                        .clipShape(RoundedRectangle(cornerRadius: 17))
+                        .frame(height: 220)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
                         .accessibilityLabel(L10n.format("Изображение шага %d", step + 1))
                 }
-                Text(CookingGuide.spokenStep(recipe: recipe, index: step, portions: portions))
-                    .font(.system(size: 22, weight: .medium, design: .serif))
+                Text(CookingGuide.stepText(recipe: recipe, index: step))
+                    .font(.system(size: 21, weight: .regular, design: .serif))
                     .foregroundStyle(Palette.ink)
-                    .lineSpacing(4)
+                    .lineSpacing(6)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(L10n.format("≈ %d мин", CookingGuide.stepMinutes(recipe)[step]))
-                    .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.sage)
-                HStack(spacing: 12) {
-                    if step > 0 {
-                        Button("Назад") { step -= 1 }
-                            .font(.system(size: 16, weight: .semibold))
-                            .padding(18)
-                            .foregroundStyle(Palette.sage)
+                if !rows.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(L10n.text("Понадобится").uppercased())
+                            .font(.system(size: 11, weight: .bold)).tracking(1.4).foregroundStyle(Palette.muted)
+                        StepAmountsList(rows: rows, compact: false)
                     }
-                    Button {
-                        if step + 1 < recipe.steps.count { step += 1 } else { completed(); dismiss() }
-                    } label: {
+                    .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 18))
+                }
+            }
+            .padding(.horizontal, 24).padding(.top, 26).padding(.bottom, 24)
+            .id(step)
+        }
+        .safeAreaInset(edge: .bottom) {
+            HStack(spacing: 10) {
+                if step > 0 {
+                    Button { withAnimation(.easeInOut(duration: 0.2)) { step -= 1 } } label: {
+                        Image(systemName: "chevron.left").font(.system(size: 17, weight: .semibold))
+                            .frame(width: 56, height: 56).foregroundStyle(Palette.sage)
+                            .background(Palette.paleSage, in: RoundedRectangle(cornerRadius: 17))
+                    }.accessibilityLabel(L10n.text("Назад"))
+                }
+                Button {
+                    if step + 1 < recipe.steps.count { withAnimation(.easeInOut(duration: 0.2)) { step += 1 } } else { completed(); dismiss() }
+                } label: {
+                    HStack {
                         Text(L10n.text(step + 1 < recipe.steps.count ? "Следующий шаг" : "Готово"))
-                            .font(.system(size: 16, weight: .semibold)).frame(maxWidth: .infinity).padding(18)
-                            .background(Palette.sage, in: RoundedRectangle(cornerRadius: 17)).foregroundStyle(.white)
+                        Image(systemName: step + 1 < recipe.steps.count ? "arrow.right" : "checkmark")
+                    }
+                    .font(.system(size: 16, weight: .semibold)).frame(maxWidth: .infinity).frame(height: 56)
+                    .background(Palette.sage, in: RoundedRectangle(cornerRadius: 17)).foregroundStyle(.white)
+                }
+            }
+            .padding(.horizontal, 24).padding(.top, 10).padding(.bottom, 8)
+            .background(Palette.canvas)
+        }
+        .background(Palette.canvas.ignoresSafeArea())
+        .presentationDragIndicator(.visible)
+    }
+}
+
+/// Ingredient amounts as a kitchen scale shows them: no "206,3 г" for a
+/// scaled family portion, kilos and liters once a kilo is reached.
+enum IngredientAmountText {
+    static func text(_ ingredient: Ingredient, amount: Double, maximum: Double? = nil) -> String {
+        let unit = ProductNames.normalized(ingredient.unit)
+        let metric = ["г", "мл"].contains(unit)
+        func one(_ value: Double) -> String {
+            metric ? CookingGuide.metricText(value, liquid: unit == "мл")
+                   : "\(value.formatted(.number.precision(.fractionLength(0...1)))) \(L10n.text(ingredient.unit))"
+        }
+        guard let maximum, maximum > amount else { return one(amount) }
+        return "\(one(amount))–\(one(maximum))"
+    }
+}
+
+/// Amounts for one cooking step: product on the left, amount for the whole
+/// table on the right, a glass or spoon measure underneath when it helps.
+struct StepAmountsList: View {
+    let rows: [CookingGuide.StepAmount]
+    var compact: Bool
+
+    var body: some View {
+        if !rows.isEmpty {
+            VStack(alignment: .leading, spacing: compact ? 5 : 0) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                    if compact {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(row.name).foregroundStyle(Palette.ink)
+                            Spacer(minLength: 8)
+                            Text(row.hint.map { "\(row.amount) · \($0)" } ?? row.amount)
+                                .foregroundStyle(Palette.sage).multilineTextAlignment(.trailing)
+                        }.font(.system(size: 13, weight: .medium))
+                    } else {
+                        if index > 0 { Rectangle().fill(Palette.line).frame(height: 1) }
+                        HStack(alignment: .center, spacing: 10) {
+                            Text(row.name).font(.system(size: 16, weight: .medium)).foregroundStyle(Palette.ink)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 8)
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(row.amount).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.sage)
+                                if let hint = row.hint {
+                                    Text(hint).font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                }
+                            }
+                        }.padding(.vertical, 9)
                     }
                 }
             }
-            .padding(25).padding(.top, 14)
-        }.background(Palette.canvas.ignoresSafeArea())
-            .presentationDragIndicator(.visible)
+        }
     }
 }
 

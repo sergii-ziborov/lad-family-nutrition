@@ -96,7 +96,10 @@ def build(data):
                     new_strings[lang][source] = target
         report.append((dish["id"], dish["kind"], round(energy), round(protein)))
         if dish["id"] in existing:
-            assert existing[dish["id"]] == recipe, f"{dish['id']} differs from the stored recipe"
+            # Steps and their minutes were later rewritten by rewrite_steps.py.
+            later = {"steps", "stepMinutes", "minutes"}
+            stored = {k: v for k, v in existing[dish["id"]].items() if k not in later}
+            assert stored == {k: v for k, v in recipe.items() if k not in later}, f"{dish['id']} differs from the stored recipe"
         else:
             data["recipes"].append(recipe)
     for recipe_id in SIDES:

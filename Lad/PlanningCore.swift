@@ -621,9 +621,12 @@ enum CookingGuide {
         return lines
     }
 
+    /// Minutes for each step: the recipe's own when it has them, otherwise the
+    /// total spread by how much heat and knife work each step names.
     static func stepMinutes(_ recipe: Recipe) -> [Int] {
         let steps = recipe.steps
         guard !steps.isEmpty else { return [] }
+        if recipe.stepMinutes.count == steps.count, recipe.stepMinutes.allSatisfy({ $0 >= 1 }) { return recipe.stepMinutes }
         let weights = steps.map(stepWeight)
         let weightSum = max(1, weights.reduce(0, +))
         let total = max(steps.count, recipe.minutes)
@@ -669,223 +672,169 @@ enum CookingGuide {
         return weight
     }
 
-    /// Household reading of one authored step. The recipe JSON stays the source of
-    /// the grams; glasses and spoons are only the words on the cooking sheet.
-    /// A glass is 250 ml. Cooking water and a spoon of frying oil are named here
-    /// and are not added to the shopping list.
-    static func spokenStep(recipe: Recipe, index: Int, portions: Double) -> String {
+    /// One row of the list under a cooking step: the product, the amount for
+    /// everyone at the table, and an optional kitchen measure as a hint.
+    struct StepAmount: Hashable {
+        let name: String
+        let amount: String
+        let hint: String?
+    }
+
+    /// The authored step in the reader's language. Amounts are shown apart from
+    /// the sentence, so it stays readable whatever the family size is.
+    static func stepText(recipe: Recipe, index: Int) -> String {
         guard recipe.steps.indices.contains(index) else { return "" }
-        let step = recipe.steps[index]
-        let original = L10n.text(step)
+        return L10n.text(recipe.steps[index])
+    }
+
+    /// Scaled amounts for the ingredients a step names first. Ingredients that no
+    /// step names are listed with the first step, so every amount is visible while
+    /// cooking. A grain boiled in this step gets its water when the recipe lists no
+    /// liquid, and its salt when the step says to salt and salt is not listed.
+    /// That water and salt are kitchen hints and stay off the shopping list.
+    static func stepAmounts(recipe: Recipe, index: Int, portions: Double) -> [StepAmount] {
+        guard recipe.steps.indices.contains(index) else { return [] }
         let scale = (portions > 0 ? portions : 1) / (recipe.baseServings > 0 ? recipe.baseServings : 1)
-        let boil = isBoil(step) || (stepMentionsLiquid(step) && !step.lowercased().contains("немного"))
-        var shown = recipe.ingredients.filter { ($0.amount ?? 0) > 0 && mentions($0.name, in: step) }
-        let grains = shown.filter { boilProfile(for: $0.name) != nil }
+        let steps = recipe.steps
+        let step = steps[index]
+        let measured = recipe.ingredients.filter { ($0.amount ?? 0) > 0 }
+        var rows: [StepAmount] = []
+        let names = measured.map(\.name)
+        for item in measured {
+            let first = steps.firstIndex { mentions(item.name, in: $0, among: names) }
+            guard first == index || (first == nil && index == 0) else { continue }
+            if let row = amountRow(item, scale: scale) { rows.append(row) }
+        }
+        guard isBoil(step),
+              let grain = measured.first(where: { boilProfile(for: $0.name) != nil && mentions($0.name, in: step) }),
+              let profile = boilProfile(for: grain.name),
+              !steps[..<index].contains(where: { isBoil($0) && mentions(grain.name, in: $0) }),
+              let grams = scaledAmount(grain, scale: scale) else { return rows }
         let liquids = recipe.ingredients.filter { isCookingLiquid($0.name) && ($0.amount ?? 0) > 0 }
-        let grain = grains.first
-        let profile = grain.flatMap { boilProfile(for: $0.name) }
-        let wantsLiquid = grain != nil && boil && profile?.pasta != true
-        if wantsLiquid {
-            for liquid in liquids where !shown.contains(where: { $0.id == liquid.id }) {
-                shown.append(liquid)
+        var waterML: Double?
+        if profile.pasta {
+            waterML = max(1000, grams * 10)
+            if liquids.isEmpty, let ml = waterML {
+                rows.append(StepAmount(name: L10n.text("Вода"), amount: "≈ " + metricText(ml, liquid: true), hint: nil))
             }
-        }
-        var measures: [String] = []
-        var pastaLine: String?
-        for ingredient in shown {
-            guard let line = measurePhrase(ingredient, scale: scale) else { continue }
-            if profile?.pasta == true && boilProfile(for: ingredient.name)?.pasta == true {
-                pastaLine = line
-            } else {
-                measures.append(line)
-            }
-        }
-        var cookingWater: Double?
-        if wantsLiquid && liquids.isEmpty, let grain, let profile, !profile.pasta,
-           let perGlass = gramsPerGlass(grain.name), perGlass > 0, let grams = scaledAmount(grain, scale: scale) {
+        } else if liquids.isEmpty, let perGlass = gramsPerGlass(grain.name), perGlass > 0 {
             let ml = grams / perGlass * profile.water * glassML
+            waterML = ml
             if ml >= 40 {
-                cookingWater = ml
-                if let water = glassPhrase(glasses: ml / glassML, food: "Вода", note: about(metric(roundedML(ml), mlUnit()))) {
-                    measures.append(water)
-                }
+                rows.append(StepAmount(name: L10n.text("Вода"), amount: metricText(roundedML(ml), liquid: true), hint: glassHint(ml / glassML)))
             }
-        } else if profile?.pasta == true, let grain, let grams = scaledAmount(grain, scale: scale), grams > 0 {
-            cookingWater = max(500, grams / 100 * 1000)
         } else {
-            let listed = liquids.reduce(0.0) { sum, item in
-                guard let amount = scaledAmount(item, scale: scale) else { return sum }
-                return sum + amount
-            }
-            if listed >= 40 { cookingWater = listed }
+            waterML = liquids.compactMap { scaledAmount($0, scale: scale) }.reduce(0, +)
         }
-        let detailed = alreadyDetailed(step)
-        let sweet = isSweetWithoutMeat(recipe) || recipe.isBeverage
-        let action = kitchenKind(step: step, profile: profile, boiling: boil)
-        let minutes = stepMinutes(recipe).indices.contains(index) ? stepMinutes(recipe)[index] : max(1, recipe.minutes)
-        var sentences: [String] = []
-        if !measures.isEmpty {
-            sentences.append(L10n.format("На эту готовку: %@.", join(measures)))
+        let saltListed = recipe.ingredients.contains { ProductNames.canonical($0.name) == ProductNames.canonical("Соль") }
+        if saysSalt(step), !saltListed {
+            let drained = profile.pasta || recipe.nutrientPreparationByIngredient[grain.name] == "boiledDrained"
+            let glasses = grams / (gramsPerGlass(grain.name) ?? 200)
+            let teaspoons = drained ? (waterML ?? 1000) / 1000 : glasses * 0.5
+            rows.append(StepAmount(name: L10n.text("Соль"), amount: spoonText(teaspoons: max(0.25, teaspoons)), hint: nil))
         }
-        if !sweet, let salt = saltCue(step: step, recipe: recipe, kind: action, waterML: cookingWater) {
-            sentences.append(salt)
-        }
-        if !detailed, let method = methodSentence(recipe: recipe, step: step, kind: action, minutes: minutes, pastaLine: pastaLine, grain: grain, scale: scale) {
-            sentences.append(method)
-        }
-        if detailed && !sweet && !hasDoneness(step) && [.boil, .pasta, .couscous, .fry, .stew, .bake, .pan, .steam, .simmer].contains(action) {
-            sentences.append(L10n.text("Готово, когда середина мягкая и без сырого вкуса, а жидкость впиталась или почти выкипела."))
-        }
-        guard !sentences.isEmpty else { return original }
-        return original + "\n\n" + sentences.joined(separator: " ")
+        return rows
     }
 
-    private enum KitchenKind: Equatable {
-        case pasta, couscous, boil, fry, stew, bake, pan, steam, simmer
-        case chop, mix, serve, chill, cool, toast, mash, warm, shape, pound, wash, season, assemble, finish, plain
-    }
-
-    private static func kitchenKind(step: String, profile: (water: Double, pasta: Bool, couscous: Bool)?, boiling: Bool) -> KitchenKind {
-        if profile?.pasta == true && boiling { return .pasta }
-        if profile?.couscous == true && boiling { return .couscous }
-        if profile != nil && boiling && profile?.pasta != true && !isContinuation(step) { return .boil }
-        if isSteam(step) { return .steam }
-        if isFry(step) { return .fry }
-        if isStew(step) { return .stew }
-        if isPan(step) { return .pan }
-        if isBake(step) { return .bake }
-        if isSimmer(step) || isContinuation(step) { return .simmer }
-        if isBoil(step) || boiling { return .boil }
-        if isChill(step) { return .chill }
-        if isCool(step) { return .cool }
-        if isToast(step) { return .toast }
-        if isMash(step) { return .mash }
-        if isWarm(step) { return .warm }
-        if isShape(step) { return .shape }
-        if isPound(step) { return .pound }
-        if isChop(step) { return .chop }
-        if isWash(step) { return .wash }
-        if isSeason(step) { return .season }
-        if isAssemble(step) { return .assemble }
-        if isFinish(step) { return .finish }
-        if isServe(step) { return .serve }
-        if isMix(step) { return .mix }
-        return .plain
-    }
-
-    /// Salt is named in the step only. It is not given a shopping weight.
-    private static func saltCue(step: String, recipe: Recipe, kind: KitchenKind, waterML: Double?) -> String? {
-        let named = saysSalt(step) || recipe.ingredients.contains { ProductNames.canonical($0.name) == ProductNames.canonical("Соль") }
-        let timed = saysSaltTiming(step)
-        switch kind {
-        case .pasta, .couscous, .boil:
-            if named && timed { return nil }
-            if named { return L10n.text("Эту соль всыпьте в холодную воду до закипания, потом включайте огонь.") }
-            return L10n.format("Соль всыпьте в холодную воду до закипания: %@. Размешайте и только потом включайте сильный огонь.", saltSpoon(waterML))
-        case .fry, .pan:
-            if named { return nil }
-            return L10n.text("Посолите и поперчите со всех сторон до сковороды: щепотка соли и щепотка перца. На тарелке соль уже не пройдёт внутрь.")
-        case .simmer:
-            if named && timed { return nil }
-            if named { return L10n.text("Эту соль вмешайте сейчас и попробуйте. Крышку снова закройте, огонь оставьте слабым.") }
-            return L10n.text("Попробуйте сейчас. Если соли мало, досолите и размешайте. Крышку держите закрытой, огонь слабый.")
-        case .stew:
-            if named && timed { return nil }
-            if named { return L10n.text("Эту соль кладите, когда закипит, и попробуйте за пять минут до конца.") }
-            return L10n.format("Соль кладите, когда закипит, не в холодную воду: %@. За пять минут до конца попробуйте, при тушении соль чувствуется сильнее.", saltSpoon(waterML))
-        case .bake:
-            if named { return nil }
-            return L10n.text("Посолите до духовки, не после: щепотка соли на куски. Противень поставьте на средний уровень уже горячей духовки.")
-        case .serve where !isSweetWithoutMeat(recipe) && !isFruitPlate(recipe):
-            if named { return nil }
-            return L10n.text("Если соли мало, досолите в общей посуде и перемешайте. В тарелке соль останется сверху.")
-        default:
-            return nil
+    /// Amount as a cook reads it: metric rounded to what a kitchen scale shows,
+    /// counts kept as counts, and a glass or spoon measure as a hint.
+    private static func amountRow(_ ingredient: Ingredient, scale: Double) -> StepAmount? {
+        guard let value = scaledAmount(ingredient, scale: scale) else { return nil }
+        let unit = ProductNames.normalized(ingredient.unit)
+        let name = L10n.text(ingredient.name)
+        guard ["г", "гр", "кг", "мл", "л"].contains(unit) else {
+            let grams = IngredientMeasures.normalized(ingredient).amount.map { $0 * scale }
+            let count = fraction(value, marks: quarters)
+            return StepAmount(name: name, amount: "\(count) \(L10n.text(ingredient.unit))",
+                              hint: grams.flatMap { $0 >= 5 ? "≈ " + metricText($0, liquid: false) : nil })
         }
+        let liquid = unit == "мл" || unit == "л"
+        let key = ProductNames.canonical(ingredient.name)
+        if isSpice(ingredient.name) && !liquid && value < 1.5 {
+            return StepAmount(name: name, amount: pinchWord(), hint: nil)
+        }
+        var hint: String?
+        if let perGlass = gramsPerGlass(ingredient.name), !liquid, boilProfile(for: ingredient.name)?.pasta != true, value / perGlass >= 0.2 {
+            hint = glassHint(value / perGlass)
+        } else if liquid || isCookingLiquid(ingredient.name) || isPourableDairy(ingredient.name) || isOil(ingredient.name) {
+            let ml = isOil(ingredient.name) && !liquid ? value / 0.91 : value
+            hint = ml >= 40 ? glassHint(ml / glassML) : spoonHint(teaspoons: ml / 5)
+        } else if isSpice(ingredient.name), value <= 20 {
+            hint = spoonHint(teaspoons: key == ProductNames.canonical("Соль") ? value / 6 : value / 2.5)
+        } else if let piece = pieceGrams(ingredient.name) {
+            let count = value / piece
+            if count >= 0.4 && count <= 8 { hint = "≈ \(fraction(count, marks: halves)) \(pieceWord(count))" }
+        }
+        return StepAmount(name: name, amount: metricText(liquid ? roundedML(value) : value, liquid: liquid), hint: hint)
     }
 
-    private static func methodSentence(recipe: Recipe, step: String, kind: KitchenKind, minutes: Int, pastaLine: String?, grain: Ingredient?, scale: Double) -> String? {
-        switch kind {
-        case .pasta:
-            guard let pastaLine else { return nil }
-            let grams = grain.flatMap { scaledAmount($0, scale: scale) } ?? 0
-            return L10n.format("На %@ возьмите большую кастрюлю воды, %@, чтобы она свободно двигалась. Когда вода бурно кипит, опустите пасту, сразу перемешайте и варите без крышки до мягкости, около %d минут. Откиньте, не промывайте.", pastaLine, potPhrase(max(0.5, grams / 100)), minutes)
-        case .couscous:
-            return L10n.format("Залейте крупу таким же объёмом кипятка, накройте и подождите около %d минут. Не мешайте, пока вода не впитается, затем разрыхлите вилкой.", minutes)
-        case .boil where isContinuation(step):
-            return L10n.format("Крышку держите закрытой, огонь слабый. Жидкость должна едва кипеть. Загляните один раз и снова накройте. Около %d минут, пока середина не станет мягкой.", minutes)
-        case .boil where grain != nil:
-            return L10n.format("Переберите крупу и промойте, пока вода не станет прозрачной. Залейте, на сильном огне доведите до кипения, снимите пену, накройте и варите на слабом огне около %d минут, пока вода не впитается, а крупа не станет мягкой. Снимите с огня и подержите под крышкой ещё 5 минут, затем разрыхлите вилкой.", minutes)
-        case .boil:
-            return L10n.format("Залейте холодной водой так, чтобы она покрывала продукты на два пальца. На сильном огне доведите до кипения, снимите пену, убавьте и варите около %d минут, пока середина не станет мягкой.", minutes)
-        case .fry:
-            let key = recipe.ingredients.contains(where: { isOil($0.name) })
-                ? "Обсушите куски. Разогрейте сковороду, выложите в один слой и не двигайте, пока снизу не появится корочка, затем переверните. Внутри не должно остаться сырого. Около %d минут. Дайте минуту отдохнуть."
-                : "Обсушите куски. Разогрейте сковороду со столовой ложкой масла, пока оно не станет жидким и подвижным. Выложите в один слой и не двигайте, пока снизу не появится корочка, затем переверните. Внутри не должно остаться сырого. Около %d минут. Дайте минуту отдохнуть."
-            return L10n.format(key, minutes)
-        case .pan:
-            let key = panKey(recipe: recipe, step: step)
-            return L10n.format(key, minutes)
-        case .steam:
-            return L10n.format("Налейте воду так, чтобы она не касалась продуктов. Накройте и держите пар. Готово, когда середина плотная, около %d минут.", minutes)
-        case .simmer:
-            return L10n.format("Держите слабый огонь и закрытую крышку. Жидкость должна едва кипеть, не булькать во весь рост. Загляните один раз и снова накройте. Около %d минут.", minutes)
-        case .stew:
-            let onion = recipe.ingredients.contains { ProductNames.canonical($0.name).contains("лук") && !ProductNames.canonical($0.name).contains("зелен") }
-            let key = onion
-                ? "Нарежьте куски одного размера. Сначала доведите лук до прозрачности на ложке масла, затем добавьте остальное. Накройте и тушите на слабом огне около %d минут, иногда помешивая, пока нож не входит легко. Если жидкость выкипела раньше, подлейте пару ложек горячей воды."
-                : "Нарежьте куски одного размера. Накройте и тушите на слабом огне около %d минут, иногда помешивая, пока нож не входит легко. Если жидкость выкипела раньше, подлейте пару ложек горячей воды."
-            return L10n.format(key, minutes)
-        case .bake:
-            return L10n.format("Духовку разогрейте заранее. Противень поставьте на средний уровень и готовьте около %d минут, пока край не зарумянится, а середина не схватится. В первую половину времени дверцу не открывайте.", minutes)
-        case .chop where !specifiesCut(step):
-            return L10n.text("Режьте куски одного размера, около 2 см: так они дойдут одновременно. Крупное останется сырым, когда мелкое уже размякнет.")
-        case .chop:
-            return L10n.text("Держите куски одного размера, как написано выше. Крупное останется сырым, когда мелкое уже размякнет. Кости, если они есть, выньте пальцами до нарезки.")
-        case .mix:
-            return L10n.text("Мешайте до ровного вида, проходясь по дну и стенкам, пока не останется сухих комков.")
-        case .serve where isSweetWithoutMeat(recipe) || isFruitPlate(recipe):
-            return L10n.text("Разложите сразу и перемешайте только перед едой, иначе фрукты дадут сок.")
-        case .serve:
-            return L10n.text("Нарежьте и положите в последнюю очередь, к уже готовому. Не держите это на огне.")
-        case .chill:
-            return L10n.text("Накройте и уберите в холодильник. На столе готовую еду не держите дольше двух часов. Достаньте незадолго до подачи.")
-        case .cool:
-            return L10n.text("Снимите с огня и дайте постоять, пока пар ослабнет. Йогурт, сметану и сырые фрукты кладите в тёплую, не кипящую еду.")
-        case .toast:
-            return L10n.text("Подсушите на сухой сковороде или в тостере, пока хлеб не станет сухим и слегка румяным. Не отходите: он сгорает меньше чем за минуту.")
-        case .mash:
-            return L10n.text("Разомните вилкой до ровной массы, без крупных кусков. Лимон и соль из этого шага вмешайте сейчас, пока масса ещё рыхлая.")
-        case .warm:
-            return L10n.format("Держите средний огонь и мешайте. Масло должно стать подвижным, а куски прогреться в середине, без чёрной корочки. Около %d минут.", minutes)
-        case .shape:
-            return L10n.text("Сформуйте куски одного размера и толщины мокрыми руками, чтобы они дошли одновременно.")
-        case .pound:
-            return L10n.text("Отбейте через плёнку до одной толщины. Посолите с обеих сторон до нагрева и сразу сверните, пока начинка не вытекла.")
-        case .wash:
-            return L10n.text("Промойте холодной водой и хорошо обсушите. Мокрые ягоды, зелень и рыба испортят вкус и не подрумянятся. Косточки и сердцевину удалите до готовки.")
-        case .season:
-            return L10n.text("Соль и перец из списка вмешайте в общую посуду. Сыр и зелень разложите по тарелкам в конце, иначе зелень потемнеет.")
-        case .assemble:
-            return L10n.text("Форму смажьте ложкой масла или застелите пергаментом. Разложите ровным слоем: соус и сыр сверху, чтобы край не высох раньше середины.")
-        case .finish:
-            if step.lowercased().contains("лим") || step.lowercased().contains("полей") {
-                return L10n.text("Полейте в самом конце, уже без огня. В кипящей еде сок горчит.")
-            }
-            return L10n.text("Снимите с огня. Сыр и соус вмешайте в конце и оставьте на минуту под крышкой, пока сыр не начнёт тянуться.")
-        case .plain:
-            return nil
+    /// Kitchen-scale rounding: halves under 10, whole numbers under 100, fives
+    /// under a kilo, then kilos or liters with one decimal.
+    static func metricText(_ value: Double, liquid: Bool) -> String {
+        let english = L10n.languageCode == "en"
+        if value >= 1000 {
+            let unit = liquid ? (english ? "L" : "л") : (english ? "kg" : "кг")
+            return "\(decimal(value / 1000)) \(unit)"
+        }
+        let shown: Double
+        if value < 10 { shown = max(0.5, (value * 2).rounded() / 2) }
+        else if value < 100 { shown = value.rounded() }
+        else { shown = (value / 5).rounded() * 5 }
+        return "\(decimal(shown)) \(liquid ? mlUnit() : gramUnit())"
+    }
+
+    private static let quarters: [(Double, String)] = [(0, ""), (0.25, "¼"), (1.0 / 3, "⅓"), (0.5, "½"), (2.0 / 3, "⅔"), (0.75, "¾"), (1, "")]
+    private static let halves: [(Double, String)] = [(0, ""), (0.5, "½"), (1, "")]
+
+    private static func fraction(_ value: Double, marks: [(Double, String)]) -> String {
+        let whole = value.rounded(.down)
+        let rest = value - whole
+        guard let best = marks.min(by: { abs($0.0 - rest) < abs($1.0 - rest) }) else { return decimal(value) }
+        let count = Int(whole) + (best.0 == 1 ? 1 : 0)
+        if best.1.isEmpty { return count == 0 ? decimal(value) : String(count) }
+        return count == 0 ? best.1 : "\(count)\(best.1)"
+    }
+
+    private static func glassHint(_ glasses: Double) -> String? {
+        guard glasses >= 0.2, glasses <= 16 else { return nil }
+        let text = fraction(glasses, marks: quarters)
+        let whole = Int(text) ?? 0
+        let partial = whole == 0
+        let word: String
+        switch L10n.languageCode {
+        case "en": word = (whole == 1 || (partial && glasses < 1)) ? "cup" : "cups"
+        case "uk": word = partial ? "склянки" : ruForm(whole, "склянка", "склянки", "склянок")
+        default: word = partial ? "стакана" : ruForm(whole, "стакан", "стакана", "стаканов")
+        }
+        return "≈ \(text) \(word)"
+    }
+
+    private static func spoonText(teaspoons: Double) -> String {
+        let english = L10n.languageCode == "en"
+        if teaspoons >= 2.5 {
+            return "\(fraction(teaspoons / 3, marks: halves)) \(english ? "tbsp" : "ст. л.")"
+        }
+        return "\(fraction(teaspoons, marks: quarters)) \(english ? "tsp" : "ч. л.")"
+    }
+
+    private static func spoonHint(teaspoons: Double) -> String? {
+        guard teaspoons >= 0.2, teaspoons <= 24 else { return nil }
+        return "≈ " + spoonText(teaspoons: teaspoons)
+    }
+
+    private static func pinchWord() -> String {
+        switch L10n.languageCode {
+        case "en": return "a pinch"
+        case "uk": return "дрібка"
+        default: return "щепотка"
         }
     }
 
-    private static func panKey(recipe: Recipe, step: String) -> String {
-        if isDryPan(step) {
-            return "Сковороду прогрейте до горячей, без масла. Выложите в один слой и не двигайте, пока низ не схватится, затем переверните. Около %d минут. Дайте минуту отдохнуть."
+    private static func pieceWord(_ count: Double) -> String {
+        switch L10n.languageCode {
+        case "en": return count <= 1 ? "piece" : "pieces"
+        default: return "шт."
         }
-        if recipe.ingredients.contains(where: { isOil($0.name) }) || step.lowercased().contains("масл") {
-            return "Разогрейте сковороду с уже взятым маслом. Выложите в один слой и не двигайте, пока снизу не появится корочка, затем переверните. Около %d минут. Дайте минуту отдохнуть."
-        }
-        return "Разогрейте сковороду со столовой ложкой масла, пока оно не станет жидким. Выложите в один слой и не двигайте, пока снизу не появится корочка, затем переверните. Около %d минут. Дайте минуту отдохнуть."
     }
 
     private static func saysSalt(_ step: String) -> Bool {
@@ -894,163 +843,15 @@ enum CookingGuide {
         }
     }
 
-    private static func saysSaltTiming(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("до закипания") || text.contains("в холодн") || text.contains("в конце") || text.contains("в начале") || text.contains("до духов") || text.contains("до сковород")
+    private static func isPourableDairy(_ name: String) -> Bool {
+        let key = ProductNames.canonical(name)
+        return key.contains("йогурт") || key.contains("кефир") || key.contains("молок") || key.contains("сливк") || key.contains("ряжен")
     }
 
-    private static func hasDoneness(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("мягк") || text.contains("корочк") || text.contains("впита") || text.contains("°") || text.contains("прозрач") || text.contains("сырого") || text.contains("схват") || text.contains("румян")
-    }
-
-    private static func specifiesCut(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("мелко") || text.contains("крупно") || text.contains("кубик") || text.contains("дольк") || text.contains("кружк") || text.contains("солом") || text.contains("см") || text.contains("тонк")
-    }
-
-    private static func isBake(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("запек") || text.contains("духов") || text.contains("выпек") || text.contains("пекит")
-    }
-
-    private static func isChop(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("нареж") || text.contains("нарез") || text.contains("пореж") || text.contains("нашинк") || text.contains("измельч") || text.contains("поруб") || text.contains("натри") || text.contains("разреж") || text.contains("раскрош")
-    }
-
-    private static func isMix(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("смеша") || text.contains("разотр") || text.contains("вмеша") || text.contains("взбей") || text.contains("перемеш") || text.contains("вымеша") || text.contains("соедини") || text.contains("размеша")
-    }
-
-    private static func isServe(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("подав") || text.contains("подай") || text.contains("разлож") || text.contains("перед едой")
-    }
-
-    private static func isContinuation(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("ещё") || text.contains("еще") || text.contains("продолж")
-    }
-
-    private static func isSteam(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("на пару") || text.contains("на пару")
-    }
-
-    private static func isPan(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("сковород") || text.contains("антипригар") || text.contains("с каждой стороны") || text.contains("с обеих сторон") || text.contains("без масла") || text.contains("наливайте")
-    }
-
-    private static func isDryPan(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("без масла") || text.contains("без добавления масла") || text.contains("сухой")
-    }
-
-    private static func isSimmer(_ step: String) -> Bool {
-        let text = step.lowercased()
-        if isContinuation(step) { return true }
-        if text.contains("убавьте") || text.contains("умеренн") || text.contains("размягч") { return true }
-        let lid = text.contains("крышкой") || text.contains("под крышкой")
-        let starting = text.contains("промой") || text.contains("залей") || text.contains("в холод")
-        return lid && !starting
-    }
-
-    private static func isChill(_ step: String) -> Bool {
-        step.lowercased().contains("холодиль")
-    }
-
-    private static func isCool(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("остыт") || text.contains("остуд") || text.contains("постоять")
-    }
-
-    private static func isToast(_ step: String) -> Bool {
-        step.lowercased().contains("подсуш")
-    }
-
-    private static func isMash(_ step: String) -> Bool {
-        step.lowercased().contains("разомн")
-    }
-
-    private static func isWarm(_ step: String) -> Bool {
-        step.lowercased().contains("прогре")
-    }
-
-    private static func isShape(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("сформу") || text.contains("сформир") || text.contains("сверн")
-    }
-
-    private static func isPound(_ step: String) -> Bool {
-        step.lowercased().contains("отбей")
-    }
-
-    private static func isWash(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("промой") || text.contains("вымой") || text.contains("обсуш") || text.contains("размороз") || text.contains("сердцевин") || text.contains("кост")
-    }
-
-    private static func isSeason(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("посол") || text.contains("поперч")
-    }
-
-    private static func isAssemble(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("вылож") || text.contains("перелож") || text.contains("улож") || text.contains("пергамент") || text.contains("в форму")
-    }
-
-    private static func isFinish(_ step: String) -> Bool {
-        let text = step.lowercased()
-        return text.contains("лавров") || text.contains("перед подачей") || text.contains("полей") || text.contains("посыпь")
-    }
-
-    private static func isFruitPlate(_ recipe: Recipe) -> Bool {
-        if recipe.ingredients.contains(where: { $0.category == "Рыба и мясо" }) { return false }
-        let names = recipe.ingredients.map { ProductNames.canonical($0.name) }.joined(separator: " ")
-        let fruit = ["яблок", "слив", "ягод", "банан", "груш", "клубник", "малин", "черник"]
-        let savory = ["лук", "чеснок", "греч", "рис", "мяс", "рыб", "кури", "нут", "чечевиц"]
-        return fruit.contains { names.contains($0) } && !savory.contains { names.contains($0) }
-    }
-
-    private static func saltSpoon(_ ml: Double?) -> String {
-        let language = L10n.languageCode
-        guard let ml, ml > 0 else {
-            switch language {
-            case "en": return "a teaspoon of salt per liter of water"
-            case "uk": return "чайна ложка солі на літр води"
-            default: return "чайная ложка соли на литр воды"
-            }
-        }
-        if ml < 350 {
-            switch language {
-            case "en": return "half a teaspoon of salt"
-            case "uk": return "половина чайної ложки солі"
-            default: return "половина чайной ложки соли"
-            }
-        }
-        if ml < 800 {
-            switch language {
-            case "en": return "a teaspoon of salt"
-            case "uk": return "чайна ложка солі"
-            default: return "чайная ложка соли"
-            }
-        }
-        if ml < 1500 {
-            switch language {
-            case "en": return "a tablespoon of salt"
-            case "uk": return "столова ложка солі"
-            default: return "столовая ложка соли"
-            }
-        }
-        switch language {
-        case "en": return "a tablespoon of salt per liter of water"
-        case "uk": return "столова ложка солі на кожен літр води"
-        default: return "столовая ложка соли на каждый литр воды"
-        }
+    private static func isSpice(_ name: String) -> Bool {
+        let key = ProductNames.canonical(name)
+        let marks = ["корица", "орегано", "паприка", "куркума", "имбирь", "гвоздика", "майоран", "любисток", "перец", "соль", "тимьян", "розмарин", "зира", "тмин", "мускат"]
+        return marks.contains { key.contains($0) } && !key.contains("сладк")
     }
 
     private static let glassML = 250.0
@@ -1074,11 +875,25 @@ enum CookingGuide {
         return stems.filter { $0.count >= 3 }
     }
 
-    private static func mentions(_ name: String, in step: String) -> Bool {
-        let words = tokens(step)
-        guard !words.isEmpty else { return false }
+    static func mentions(_ name: String, in step: String) -> Bool {
+        let stems = nameStems(name)
+        return tokens(step).contains { strength(stems, word: $0) > 0 }
+    }
+
+    /// Like `mentions`, but a word counts only for the product it resembles most
+    /// among the recipe's own: «гречку» names buckwheat, not Greek yogurt, and
+    /// «лимонным» names lemon juice rather than a lemon.
+    static func mentions(_ name: String, in step: String, among names: [String]) -> Bool {
+        let own = nameStems(name)
+        let others = names.filter { $0 != name }.map(nameStems)
+        return tokens(step).contains { word in
+            let mine = strength(own, word: word)
+            return mine > 0 && others.allSatisfy { strength($0, word: word) <= mine }
+        }
+    }
+
+    private static func nameStems(_ name: String) -> [String] {
         var stems = tokens(name).flatMap(wordStems) + tokens(ProductNames.canonical(name)).flatMap(wordStems)
-        let key = ProductNames.canonical(name)
         let aliases = [
             "макароны": ["паст", "спагет", "лапш"],
             "картофель": ["картош"],
@@ -1086,23 +901,19 @@ enum CookingGuide {
             "яйцо": ["яйц", "яиц"],
             "гречка": ["греч"]
         ]
-        if let extra = aliases[key] { stems.append(contentsOf: extra.map(ProductNames.normalized)) }
-        for stem in stems {
-            let allowance = stem.count <= 3 ? 4 : 5
-            for word in words {
-                if rawNotFood.contains(word) && stem.hasPrefix("сыр") { continue }
-                if word == stem || (word.hasPrefix(stem) && word.count - stem.count <= allowance) { return true }
-            }
-        }
-        return false
+        if let extra = aliases[ProductNames.canonical(name)] { stems.append(contentsOf: extra.map(ProductNames.normalized)) }
+        return stems
     }
 
-    private static func alreadyDetailed(_ step: String) -> Bool {
-        let text = step.lowercased()
-        if text.contains("°") || text.contains("минут") || text.contains("мин.") { return true }
-        if text.contains("стакан") || text.contains("мл") { return true }
-        if text.contains("под крышкой") { return true }
-        return text.count >= 100
+    /// Length of the longest stem that the word starts with; 0 when none fits.
+    private static func strength(_ stems: [String], word: String) -> Int {
+        var best = 0
+        for stem in stems {
+            if rawNotFood.contains(word) && stem.hasPrefix("сыр") { continue }
+            let allowance = stem.count <= 3 ? 4 : 5
+            if word == stem || (word.hasPrefix(stem) && word.count - stem.count <= allowance) { best = max(best, stem.count) }
+        }
+        return best
     }
 
     private static func isBoil(_ step: String) -> Bool {
@@ -1115,29 +926,15 @@ enum CookingGuide {
         return text.contains("жар") || text.contains("обжар")
     }
 
-    private static func isStew(_ step: String) -> Bool {
-        step.lowercased().contains("туш")
-    }
-
-    private static func stepMentionsLiquid(_ step: String) -> Bool {
-        tokens(step).contains { word in
-            ["вод", "молок", "кефир", "бульон", "ряжен"].contains { word.hasPrefix($0) }
-        }
-    }
-
     private static func isCookingLiquid(_ name: String) -> Bool {
         let key = ProductNames.canonical(name)
-        if key.contains("бульон") || key.contains("сок") { return true }
+        // Lemon juice is a seasoning, not the liquid a grain cooks in.
+        if key.contains("бульон") || (key.contains("сок") && !key.contains("лимон")) { return true }
         return ["вода", "молоко", "кефир", "ряженка"].contains(key)
     }
 
     private static func isOil(_ name: String) -> Bool {
         ProductNames.canonical(name).contains("масл")
-    }
-
-    private static func isPepper(_ name: String) -> Bool {
-        let key = ProductNames.canonical(name)
-        return key.contains("перец") && !key.contains("сладк")
     }
 
     /// Volume of water for one volume of dry grain. Pasta uses a pot, not this ratio.
@@ -1211,322 +1008,6 @@ enum CookingGuide {
         }
     }
 
-    private static func measurePhrase(_ ingredient: Ingredient, scale: Double) -> String? {
-        guard let amount = scaledAmount(ingredient, scale: scale) else { return nil }
-        let unit = ProductNames.normalized(ingredient.unit)
-        let name = ingredient.name
-        if unit == "шт." || unit == "шт" || unit == "филе" || unit == "зуб." {
-            return countPhrase(amount, name: name, piece: pieceGrams(name))
-        }
-        let grams = unit == "л" || unit == "мл" ? amount : amount
-        let asMilliliters = unit == "мл" || unit == "л" || isCookingLiquid(name) || isPourableDairy(name)
-        if let one = pieceGrams(name), !asMilliliters, unit != "мл" {
-            let count = grams / one
-            let nearest = count.rounded()
-            if nearest >= 1, nearest <= 4, abs(count - nearest) <= 0.28,
-               let line = onePiece(Int(nearest), name: name, grams: grams, small: count < 0.95) {
-                return line
-            }
-        }
-        if let perGlass = gramsPerGlass(name), perGlass > 0, !asMilliliters {
-            let glasses = grams / perGlass
-            if glasses >= 0.2, let line = glassPhrase(glasses: glasses, food: name, note: metric(grams, gramUnit())) {
-                return line
-            }
-        }
-        if asMilliliters {
-            let ml = isOil(name) ? grams / 0.91 : grams
-            if ml >= 40, let line = glassPhrase(glasses: ml / glassML, food: name, note: metric(roundedML(ml), mlUnit())) {
-                return line
-            }
-            if let spoon = spoonPhrase(ml: ml, name: name, gramsNote: metric(grams, unit == "мл" || unit == "л" ? mlUnit() : gramUnit())) {
-                return spoon
-            }
-        } else if isOil(name) || isSpice(name) || grams <= 40 {
-            let ml = isOil(name) ? grams / 0.91 : grams
-            if grams < 1.5 && isSpice(name) {
-                return pinchPhrase(name: name, note: metric(grams, gramUnit()))
-            }
-            if let spoon = spoonPhrase(ml: ml, name: name, gramsNote: metric(grams, gramUnit())) {
-                return spoon
-            }
-        }
-        let unitWord = (unit == "мл" || unit == "л") ? mlUnit() : gramUnit()
-        let shown = (unit == "мл" || unit == "л") ? roundedML(grams) : grams
-        return plainAmount(shown, unit: unitWord, name: name)
-    }
-
-    private static func isPourableDairy(_ name: String) -> Bool {
-        let key = ProductNames.canonical(name)
-        return key.contains("йогурт") || key.contains("кефир") || key.contains("молок") || key.contains("сливк") || key.contains("ряжен")
-    }
-
-    private static func isSpice(_ name: String) -> Bool {
-        let key = ProductNames.canonical(name)
-        let marks = ["корица", "орегано", "паприка", "куркума", "имбирь", "гвоздика", "майоран", "любисток", "перец", "соль", "тимьян", "розмарин", "зира", "тмин", "мускат"]
-        return marks.contains { key.contains($0) } && !key.contains("сладк")
-    }
-
-    private static func glassPhrase(glasses: Double, food: String, note: String) -> String? {
-        guard glasses >= 0.2, glasses <= 12 else { return nil }
-        let words = glassWords(snapGlass(glasses))
-        let language = L10n.languageCode
-        if language == "en" {
-            return "\(words) of \(L10n.text(food).lowercased()) (\(note))"
-        }
-        if let genitive = genitive(food, language: language) {
-            return "\(words) \(genitive) (\(note))"
-        }
-        return "\(L10n.text(food)) — \(words) (\(note))"
-    }
-
-    private static func snapGlass(_ raw: Double) -> Double {
-        let marks = [0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.33, 1.5, 1.67, 2, 2.5, 2.67, 3, 3.5, 4, 5, 6, 8, 10, 12]
-        var best = raw
-        var bestScore = 1.0
-        var pool = marks
-        if raw >= 1 { pool.append(raw.rounded()) }
-        for mark in pool where mark > 0 {
-            let score = abs(raw - mark) / mark
-            if score < bestScore {
-                bestScore = score
-                best = mark
-            }
-        }
-        if bestScore <= 0.12 { return best }
-        return (raw * 10).rounded() / 10
-    }
-
-    private static func glassWords(_ count: Double) -> String {
-        switch L10n.languageCode {
-        case "en": return englishGlass(count)
-        case "uk": return ukrainianGlass(count)
-        default: return russianGlass(count)
-        }
-    }
-
-    private static func russianGlass(_ count: Double) -> String {
-        if near(count, 0.25) { return "четверть стакана" }
-        if near(count, 0.33) { return "треть стакана" }
-        if near(count, 0.5) { return "полстакана" }
-        if near(count, 0.67) { return "две трети стакана" }
-        if near(count, 0.75) { return "три четверти стакана" }
-        if near(count, 1) { return "стакан" }
-        if near(count, 1.25) { return "стакан с четвертью" }
-        if near(count, 1.33) { return "один и треть стакана" }
-        if near(count, 1.5) { return "полтора стакана" }
-        if near(count, 1.67) { return "один и две трети стакана" }
-        if near(count, 2) { return "два стакана" }
-        if near(count, 2.5) { return "два с половиной стакана" }
-        if near(count, 2.67) { return "два и две трети стакана" }
-        if near(count, 3) { return "три стакана" }
-        if near(count, 3.5) { return "три с половиной стакана" }
-        if near(count, 4) { return "четыре стакана" }
-        if near(count, count.rounded()) {
-            let number = Int(count.rounded())
-            return "\(number) \(ruForm(number, "стакан", "стакана", "стаканов"))"
-        }
-        return "\(decimal(count)) стакана"
-    }
-
-    private static func englishGlass(_ count: Double) -> String {
-        if near(count, 0.25) { return "a quarter of a glass" }
-        if near(count, 0.33) { return "a third of a glass" }
-        if near(count, 0.5) { return "half a glass" }
-        if near(count, 0.67) { return "two thirds of a glass" }
-        if near(count, 0.75) { return "three quarters of a glass" }
-        if near(count, 1) { return "a glass" }
-        if near(count, 1.5) { return "one and a half glasses" }
-        if near(count, 2) { return "two glasses" }
-        if near(count, 3) { return "three glasses" }
-        if near(count, 4) { return "four glasses" }
-        if near(count, count.rounded()) {
-            let number = Int(count.rounded())
-            return "\(number) \(number == 1 ? "glass" : "glasses")"
-        }
-        return "\(decimal(count)) glasses"
-    }
-
-    private static func ukrainianGlass(_ count: Double) -> String {
-        if near(count, 0.25) { return "чверть склянки" }
-        if near(count, 0.33) { return "третина склянки" }
-        if near(count, 0.5) { return "півсклянки" }
-        if near(count, 0.67) { return "дві третини склянки" }
-        if near(count, 0.75) { return "три чверті склянки" }
-        if near(count, 1) { return "склянка" }
-        if near(count, 1.5) { return "півтори склянки" }
-        if near(count, 2) { return "дві склянки" }
-        if near(count, 2.5) { return "дві з половиною склянки" }
-        if near(count, 2.67) { return "дві і дві третини склянки" }
-        if near(count, 3) { return "три склянки" }
-        if near(count, 4) { return "чотири склянки" }
-        if near(count, count.rounded()) {
-            let number = Int(count.rounded())
-            return "\(number) \(ruForm(number, "склянка", "склянки", "склянок"))"
-        }
-        return "\(decimal(count)) склянки"
-    }
-
-    private static func onePiece(_ count: Int, name: String, grams: Double, small: Bool) -> String? {
-        let note = metric(grams, gramUnit())
-        let key = ProductNames.canonical(name)
-        let language = L10n.languageCode
-        if count == 1 {
-            let line: String
-            switch (language, key) {
-            case ("en", let key) where key == ProductNames.canonical("Куриное филе"):
-                line = small ? "one small chicken breast" : "one chicken breast"
-            case ("uk", let key) where key == ProductNames.canonical("Куриное филе"):
-                line = small ? "одне невелике куряче філе" : "одне куряче філе"
-            case (_, let key) where key == ProductNames.canonical("Куриное филе"):
-                line = small ? "одна небольшая грудка" : "одна грудка"
-            case ("en", let key) where key == ProductNames.canonical("Огурец"):
-                line = small ? "one small cucumber" : "one cucumber"
-            case ("uk", let key) where key == ProductNames.canonical("Огурец"):
-                line = small ? "один невеликий огірок" : "один огірок"
-            case (_, let key) where key == ProductNames.canonical("Огурец"):
-                line = small ? "один небольшой огурец" : "один огурец"
-            case ("en", let key) where key == ProductNames.canonical("Картофель"):
-                line = "one potato"
-            case ("uk", let key) where key == ProductNames.canonical("Картофель"):
-                line = "одна картоплина"
-            case (_, let key) where key == ProductNames.canonical("Картофель"):
-                line = "одна картофелина"
-            case ("en", let key) where key == ProductNames.canonical("Лук"):
-                line = small ? "one small onion" : "one onion"
-            case ("uk", let key) where key == ProductNames.canonical("Лук"):
-                line = small ? "одна невелика цибулина" : "одна цибулина"
-            case (_, let key) where key == ProductNames.canonical("Лук"):
-                line = small ? "одна небольшая луковица" : "одна луковица"
-            case ("en", let key) where key == ProductNames.canonical("Яйцо"):
-                line = "one egg"
-            case ("uk", let key) where key == ProductNames.canonical("Яйцо"):
-                line = "одне яйце"
-            case (_, let key) where key == ProductNames.canonical("Яйцо"):
-                line = "одно яйцо"
-            case ("en", _):
-                line = "one \(L10n.text(name).lowercased())"
-            default:
-                let word = L10n.text(name).lowercased()
-                line = language == "uk" ? "один \(word)" : "один \(word)"
-            }
-            return "\(line) (\(note))"
-        }
-        let food = language == "en" ? L10n.text(name).lowercased() : (genitive(name, language: language) ?? L10n.text(name).lowercased())
-        return "\(count) \(food) (\(note))"
-    }
-
-    private static func countPhrase(_ count: Double, name: String, piece: Double?) -> String? {
-        let language = L10n.languageCode
-        let food = language == "en" ? L10n.text(name).lowercased() : (genitive(name, language: language) ?? L10n.text(name).lowercased())
-        let words: String
-        if near(count, 0.25) { words = language == "en" ? "a quarter of a" : (language == "uk" ? "чверть" : "четверть") }
-        else if near(count, 0.5) { words = language == "en" ? "half a" : (language == "uk" ? "половина" : "половина") }
-        else if near(count, 1) { words = language == "en" ? "one" : (language == "uk" ? "один" : "один") }
-        else { words = decimal(count) }
-        let note = piece.map { metric(count * $0, gramUnit()) }
-        let body = language == "en" ? "\(words) \(food)" : "\(words) \(food)"
-        if let note { return "\(body) (\(note))" }
-        return body
-    }
-
-    private static func spoonPhrase(ml: Double, name: String, gramsNote: String) -> String? {
-        guard ml >= 2, ml <= 70 else { return nil }
-        let marks: [(Double, String, String, String)] = [
-            (2.5, "половина чайной ложки", "half a teaspoon", "половина чайної ложки"),
-            (5, "чайная ложка", "a teaspoon", "чайна ложка"),
-            (7.5, "половина столовой ложки", "half a tablespoon", "половина столової ложки"),
-            (15, "столовая ложка", "a tablespoon", "столова ложка"),
-            (30, "две столовые ложки", "two tablespoons", "дві столові ложки"),
-            (45, "три столовые ложки", "three tablespoons", "три столові ложки"),
-            (60, "четыре столовые ложки", "four tablespoons", "чотири столові ложки")
-        ]
-        guard let best = marks.min(by: { abs($0.0 - ml) < abs($1.0 - ml) }), abs(best.0 - ml) / best.0 <= 0.2 else { return nil }
-        let words = L10n.languageCode == "en" ? best.2 : (L10n.languageCode == "uk" ? best.3 : best.1)
-        let language = L10n.languageCode
-        if language == "en" { return "\(words) of \(L10n.text(name).lowercased()) (\(gramsNote))" }
-        if let genitive = genitive(name, language: language) { return "\(words) \(genitive) (\(gramsNote))" }
-        return "\(L10n.text(name)) — \(words) (\(gramsNote))"
-    }
-
-    private static func pinchPhrase(name: String, note: String) -> String {
-        let language = L10n.languageCode
-        let pinch = language == "en" ? "a pinch" : (language == "uk" ? "дрібка" : "щепотка")
-        if language == "en" { return "\(pinch) of \(L10n.text(name).lowercased()) (\(note))" }
-        if let genitive = genitive(name, language: language) { return "\(pinch) \(genitive) (\(note))" }
-        return "\(L10n.text(name)) — \(pinch) (\(note))"
-    }
-
-    private static func plainAmount(_ amount: Double, unit: String, name: String) -> String {
-        let note = metric(amount, unit)
-        let language = L10n.languageCode
-        if language == "en" { return "\(note) \(L10n.text(name).lowercased())" }
-        if let genitive = genitive(name, language: language) { return "\(note) \(genitive)" }
-        return "\(L10n.text(name)) — \(note)"
-    }
-
-    private static func genitive(_ name: String, language: String) -> String? {
-        let key = ProductNames.canonical(name)
-        let russian = [
-            "гречка": "гречки", "рис": "риса", "бурый рис": "бурого риса", "булгур": "булгура",
-            "пшено": "пшена", "овсяные хлопья": "овсяных хлопьев", "перловка": "перловки",
-            "чечевица": "чечевицы", "чечевица красная": "красной чечевицы", "вода": "воды",
-            "молоко": "молока", "кефир": "кефира", "макароны": "макарон", "куриное филе": "куриного филе",
-            "огурец": "огурца", "томаты": "томатов", "кабачок": "кабачка", "сыр": "сыра",
-            "лук": "лука", "морковь": "моркови", "филе индейки": "филе индейки", "яблоко": "яблока",
-            "яйцо": "яйца", "картофель": "картофеля", "перец сладкий": "сладкого перца",
-            "йогурт греческий": "греческого йогурта", "йогурт натуральный": "натурального йогурта",
-            "оливковое масло": "оливкового масла", "растительное масло": "растительного масла",
-            "хлеб": "хлеба", "банан": "банана", "лимон": "лимона", "нут": "нута", "фета": "феты",
-            "творог": "творога", "грецкие орехи": "грецких орехов", "корица": "корицы",
-            "чеснок": "чеснока", "укроп": "укропа", "капуста": "капусты", "говядина": "говядины",
-            "лосось": "лосося", "тыква": "тыквы", "шпинат": "шпината", "сметана": "сметаны",
-            "мука": "муки", "ржаная мука": "ржаной муки", "сахар": "сахара", "кускус": "кускуса"
-        ]
-        let ukrainian = [
-            "гречка": "гречки", "рис": "рису", "бурый рис": "бурого рису", "булгур": "булгуру",
-            "пшено": "пшона", "овсяные хлопья": "вівсяних пластівців", "вода": "води",
-            "молоко": "молока", "кефир": "кефіру", "макароны": "макаронів",
-            "куриное филе": "курячого філе", "огурец": "огірка", "томаты": "помідорів",
-            "кабачок": "кабачка", "сыр": "сиру", "лук": "цибулі", "морковь": "моркви",
-            "филе индейки": "філе індички", "яблоко": "яблука", "яйцо": "яйця",
-            "картофель": "картоплі", "перец сладкий": "солодкого перцю",
-            "йогурт греческий": "грецького йогурту", "йогурт натуральный": "натурального йогурту",
-            "оливковое масло": "оливкової олії", "растительное масло": "олії",
-            "хлеб": "хліба", "банан": "банана", "лимон": "лимона", "нут": "нуту",
-            "творог": "кисломолочного сиру", "грецкие орехи": "волоських горіхів",
-            "корица": "кориці", "чеснок": "часнику", "укроп": "кропу", "тыква": "гарбуза",
-            "шпинат": "шпинату", "лосось": "лосося", "мука": "борошна", "сахар": "цукру"
-        ]
-        let source = language == "uk" ? ukrainian : russian
-        let keyed = Dictionary(uniqueKeysWithValues: source.map { (ProductNames.canonical($0.key), $0.value) })
-        return keyed[key]
-    }
-
-    private static func potPhrase(_ liters: Double) -> String {
-        let rounded = max(0.5, (liters * 2).rounded() / 2)
-        if abs(rounded - 1) < 0.01 {
-            switch L10n.languageCode {
-            case "en": return "about 1 liter"
-            case "uk": return "близько літра"
-            default: return "около литра"
-            }
-        }
-        let number = decimal(rounded)
-        switch L10n.languageCode {
-        case "en": return "about \(number) liters"
-        case "uk": return "близько \(number) л"
-        default: return "около \(number) л"
-        }
-    }
-
-    private static func join(_ parts: [String]) -> String {
-        guard let last = parts.last else { return "" }
-        if parts.count == 1 { return last }
-        let conjunction = L10n.languageCode == "en" ? "and" : (L10n.languageCode == "uk" ? "і" : "и")
-        return parts.dropLast().joined(separator: ", ") + " " + conjunction + " " + last
-    }
-
     private static func ruForm(_ number: Int, _ one: String, _ few: String, _ many: String) -> String {
         let value = abs(number) % 100
         if value >= 11 && value <= 14 { return many }
@@ -1535,10 +1016,6 @@ enum CookingGuide {
         case 2, 3, 4: return few
         default: return many
         }
-    }
-
-    private static func near(_ value: Double, _ target: Double) -> Bool {
-        abs(value - target) < 0.02
     }
 
     private static func decimal(_ value: Double) -> String {
@@ -1550,21 +1027,9 @@ enum CookingGuide {
         return "\(whole)\(separator)\(fraction)"
     }
 
-    private static func metric(_ value: Double, _ unit: String) -> String {
-        let number = abs(value - value.rounded()) < 0.05 ? String(Int(value.rounded())) : decimal(value)
-        return "\(number) \(unit)"
-    }
-
     private static func gramUnit() -> String { L10n.languageCode == "en" ? "g" : "г" }
-    private static func mlUnit() -> String { L10n.languageCode == "en" ? "ml" : "мл" }
 
-    private static func about(_ text: String) -> String {
-        switch L10n.languageCode {
-        case "en": return "about \(text)"
-        case "uk": return "близько \(text)"
-        default: return "около \(text)"
-        }
-    }
+    private static func mlUnit() -> String { L10n.languageCode == "en" ? "ml" : "мл" }
 
     private static func roundedML(_ value: Double) -> Double {
         (value / 10).rounded() * 10

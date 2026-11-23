@@ -33,6 +33,8 @@ struct PrivateRecipePayload: Codable {
     let stepImageIDs: [String?]?
     let difficulty: CookingDifficulty?
     let estimatedServings: Double?
+    /// Minutes for each step, in step order. Optional; older catalogs omit it.
+    var stepMinutes: [Int]? = nil
 
     func recipe(privateAccess: Bool = true, remoteImage: Bool? = nil) -> Recipe? {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil,
@@ -73,6 +75,9 @@ struct PrivateRecipePayload: Codable {
                             stepImageIDs: stepImageIDs ?? [], difficulty: difficulty)
         recipe.energyEstimate = estimate
         recipe.baseServings = estimatedServings ?? 1
+        if let stepMinutes, stepMinutes.count == steps.count, stepMinutes.allSatisfy({ (1...600).contains($0) }) {
+            recipe.stepMinutes = stepMinutes
+        }
         recipe.isCourseSide = courseRole == "side"
         recipe.nutrientPreparationByIngredient = nutrientPreparations ?? [:]
         recipe.nutritionEdibleYield = nutritionEdibleYield ?? [:]

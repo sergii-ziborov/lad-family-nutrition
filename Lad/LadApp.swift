@@ -380,63 +380,90 @@ struct MealRow: View {
         let dishes = store.recipes(slot)
         let foodDishes = dishes.filter { !$0.isBeverage }
         let mealKcal = dishes.reduce(0.0) { $0 + Double($1.kcal ?? 0) * store.portion(for: store.currentMember, recipe: $1, slot: slot) }
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 13) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
                 NavigationLink { RecipeDetailView(recipe: recipe, slot: slot) } label: {
-                    RecipePicture(recipe: recipe, thumbnail: true).frame(width: 58, height: 58).clipped().clipShape(RoundedRectangle(cornerRadius: 12))
-                }.buttonStyle(.plain)
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(store.kinds[slot.kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3).foregroundStyle(Palette.terracotta)
-                    Text(L10n.text(recipe.title)).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if recipe.isUnplanned {
-                        Text("Выберите курс и составьте меню").font(.system(size: 11)).foregroundStyle(Palette.muted)
-                    } else if recipe.isUnavailable {
-                        Text("Подключите закрытый каталог").font(.system(size: 11)).foregroundStyle(Palette.muted)
-                    } else if dishes.allSatisfy({ $0.kcal != nil }) {
-                        Text(foodDishes.count > 1
-                             ? L10n.format("Блюд: %d · ~%d ккал", foodDishes.count, Int(mealKcal.rounded()))
-                             : L10n.format("~%d ккал", Int(mealKcal.rounded())))
-                            .font(.system(size: 11)).foregroundStyle(Palette.muted)
-                    }
-                    if foodDishes.count > 1 {
-                        Text(foodDishes.dropFirst().map { L10n.text($0.title) }.joined(separator: ", "))
-                            .font(.system(size: 11)).foregroundStyle(Palette.sage)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    if store.hasSelectedCourses, !recipe.isUnplanned {
-                        MealBeveragesView(slot: slot)
-                        .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.sage)
-                    }
-                    if !recipe.isUnplanned && store.isOutsideSelectedCourses(slot.recipeID, for: slot) {
-                        Text("Вне выбранных курсов")
-                            .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.terracotta)
-                    }
-                    if let notice = store.mealCardNotice(for: slot) {
-                        Text(notice)
-                            .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                Spacer(minLength: 0)
+                    HStack(alignment: .top, spacing: 12) {
+                        RecipePicture(recipe: recipe, thumbnail: true).frame(width: 66, height: 66).clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(store.kinds[slot.kind].uppercased()).font(.system(size: 10, weight: .bold)).tracking(1.3)
+                                .foregroundStyle(Palette.terracotta)
+                            let chevron = Text(Image(systemName: "chevron.right"))
+                                .font(.system(size: 12, weight: .bold)).foregroundStyle(Palette.sage.opacity(0.75))
+                            (recipe.isUnavailable ? Text(L10n.text(recipe.title)) : Text("\(L10n.text(recipe.title)) \(chevron)"))
+                                .font(.system(size: 17, weight: .semibold, design: .serif))
+                                .foregroundStyle(Palette.ink).multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if recipe.isUnplanned {
+                                Text("Выберите курс и составьте меню").font(.system(size: 12)).foregroundStyle(Palette.muted)
+                            } else if recipe.isUnavailable {
+                                Text("Подключите закрытый каталог").font(.system(size: 12)).foregroundStyle(Palette.muted)
+                            } else {
+                                Text(mealSummary(dishes: dishes, foodDishes: foodDishes, kcal: mealKcal, minutes: recipe.minutes))
+                                    .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                            }
+                            if foodDishes.count > 1 {
+                                Text("+ " + foodDishes.dropFirst().map { L10n.text($0.title) }.joined(separator: ", "))
+                                    .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.sage)
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        Spacer(minLength: 0)
+                    }.contentShape(Rectangle())
+                }.buttonStyle(.plain).disabled(recipe.isUnavailable)
+                    .accessibilityLabel(L10n.format("Открыть рецепт: %@", L10n.text(recipe.title)))
                 Button { diaryDraft = store.diaryDraft(for: slot) } label: {
                     Image(systemName: store.isEaten(slot) ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 26, weight: .light)).foregroundStyle(store.isEaten(slot) ? Palette.sage : Palette.line)
+                        .font(.system(size: 28, weight: .light)).foregroundStyle(store.isEaten(slot) ? Palette.sage : Palette.line)
+                        .frame(width: 40, height: 40)
                 }.accessibilityLabel(store.isEaten(slot) ? "Изменить запись о съеденном" : "Отметить как съеденное")
                     .disabled(recipe.isUnplanned)
                     .disabled(slot.day > store.currentDay)
                     .disabled(!slot.memberIDs.contains(store.currentMember.id))
             }
-            if let entry = store.diaryEntry(for: slot) {
-                Text(L10n.format("Съел: %@", entry.foods.map(\.displayTitle).joined(separator: ", ")))
-                    .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.sage)
-                    .fixedSize(horizontal: false, vertical: true)
+            let outside = !recipe.isUnplanned && store.isOutsideSelectedCourses(slot.recipeID, for: slot)
+            let notice = store.mealCardNotice(for: slot)
+            let entry = store.diaryEntry(for: slot)
+            if (store.hasSelectedCourses && !recipe.isUnplanned) || outside || notice != nil || entry != nil {
+                VStack(alignment: .leading, spacing: 6) {
+                    if store.hasSelectedCourses, !recipe.isUnplanned {
+                        MealBeveragesView(slot: slot)
+                            .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.sage)
+                    }
+                    if outside {
+                        Label("Вне выбранных курсов", systemImage: "exclamationmark.circle")
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
+                    }
+                    if let notice {
+                        Label(notice, systemImage: "cart")
+                            .font(.system(size: 12)).foregroundStyle(Palette.terracotta)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let entry {
+                        Label(L10n.format("Съел: %@", entry.foods.map(\.displayTitle).joined(separator: ", ")), systemImage: "checkmark")
+                            .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.sage)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }.padding(.leading, 78)
             }
             MealActions(slot: slot, onEdit: onEdit) {
                 diaryDraft = store.diaryDraft(for: slot)
             }
-        }.padding(8).background(.white, in: RoundedRectangle(cornerRadius: 16))
+        }.padding(14).background(.white, in: RoundedRectangle(cornerRadius: 20))
             .sheet(item: $diaryDraft) { DiaryEntryEditor(entry: $0) }
+    }
+
+    private func mealSummary(dishes: [Recipe], foodDishes: [Recipe], kcal: Double, minutes: Int) -> String {
+        var parts: [String] = []
+        if dishes.allSatisfy({ $0.kcal != nil }) {
+            parts.append(foodDishes.count > 1
+                         ? L10n.format("Блюд: %d · ~%d ккал", foodDishes.count, Int(kcal.rounded()))
+                         : L10n.format("~%d ккал", Int(kcal.rounded())))
+        }
+        if minutes > 0 { parts.append(L10n.format("%d мин", minutes)) }
+        return parts.joined(separator: " · ")
     }
 }
 
@@ -515,18 +542,36 @@ struct MenuActionButton: View {
 
     var body: some View {
         Button(action: action) {
-            Label(L10n.text(title), systemImage: icon)
-                .font(.system(size: 12, weight: .semibold))
-                .lineLimit(1).minimumScaleFactor(0.7)
-                .frame(maxWidth: .infinity, minHeight: 34)
-                .padding(.horizontal, 8)
-                .foregroundStyle(prominence == .primary ? .white : prominence == .caution ? Palette.terracotta : Palette.sage)
-                .background(prominence == .primary ? Palette.sage : prominence == .caution ? Palette.peach.opacity(0.45) : Palette.paleSage.opacity(0.65),
-                            in: RoundedRectangle(cornerRadius: 14))
+            ActionPillLabel(title: title, icon: icon, prominence: prominence)
         }.buttonStyle(.plain)
     }
 }
 
+/// The rounded pill used by meal actions, shared by buttons and menus.
+struct ActionPillLabel: View {
+    let title: String
+    let icon: String
+    var prominence: MenuActionButton.Prominence = .secondary
+    var trailingIcon: String? = nil
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+            Text(L10n.text(title)).lineLimit(1).minimumScaleFactor(0.7)
+            if let trailingIcon { Image(systemName: trailingIcon).font(.system(size: 9, weight: .bold)) }
+        }
+        .font(.system(size: 13, weight: .semibold))
+        .frame(maxWidth: .infinity, minHeight: 38)
+        .padding(.horizontal, 10)
+        .foregroundStyle(prominence == .primary ? .white : prominence == .caution ? Palette.terracotta : Palette.sage)
+        .background(prominence == .primary ? Palette.sage : prominence == .caution ? Palette.peach.opacity(0.45) : Palette.paleSage.opacity(0.65),
+                    in: RoundedRectangle(cornerRadius: 14))
+        .contentShape(RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+/// Two calm actions per meal: log the portion, or change the plan. Choosing a
+/// dish, a new suggestion and skipping the meal sit together in one menu.
 struct MealActions: View {
     @EnvironmentObject var store: LadStore
     let slot: MealSlot
@@ -538,26 +583,30 @@ struct MealActions: View {
     private var portionDisabled: Bool { slot.day > store.currentDay || !slot.memberIDs.contains(store.currentMember.id) }
 
     var body: some View {
-        VStack(spacing: 6) {
-            if canChange && !store.isSkipped(slot) {
-                HStack(spacing: 6) {
-                    MenuActionButton(title: "Изменить блюдо", icon: "square.and.pencil") { onEdit(slot) }
-                    if !store.recipe(slot).isUnplanned {
-                        MenuActionButton(title: "Предложить другое", icon: "arrow.triangle.2.circlepath") {
-                            store.proposeNotToday(slot)
+        HStack(spacing: 8) {
+            MenuActionButton(title: "Порция / съел другое", icon: "fork.knife") { onPortion() }
+                .disabled(portionDisabled)
+                .opacity(portionDisabled ? 0.5 : 1)
+            if canChange {
+                if store.isSkipped(slot) {
+                    MenuActionButton(title: "Вернуть в план", icon: "arrow.uturn.backward") { store.toggleSkipped(slot) }
+                } else {
+                    Menu {
+                        Button { onEdit(slot) } label: { Label(L10n.text("Изменить блюдо"), systemImage: "square.and.pencil") }
+                        if !store.recipe(slot).isUnplanned {
+                            Button { store.proposeNotToday(slot) } label: {
+                                Label(L10n.text("Предложить другое"), systemImage: "arrow.triangle.2.circlepath")
+                            }
                         }
-                    }
-                }
-            }
-            HStack(spacing: 6) {
-                MenuActionButton(title: "Порция / съел другое", icon: "fork.knife") { onPortion() }
-                    .disabled(portionDisabled)
-                if canChange && !slot.memberIDs.isEmpty {
-                    MenuActionButton(title: store.isSkipped(slot) ? "Вернуть в план" : "Пропустить приём",
-                                     icon: store.isSkipped(slot) ? "arrow.uturn.backward" : "forward.end",
-                                     prominence: store.isSkipped(slot) ? .secondary : .caution) {
-                        store.toggleSkipped(slot)
-                    }
+                        if !slot.memberIDs.isEmpty {
+                            Divider()
+                            Button(role: .destructive) { store.toggleSkipped(slot) } label: {
+                                Label(L10n.text("Пропустить приём"), systemImage: "forward.end")
+                            }
+                        }
+                    } label: {
+                        ActionPillLabel(title: "Заменить", icon: "arrow.left.arrow.right", trailingIcon: "chevron.down")
+                    }.buttonStyle(.plain)
                 }
             }
         }
