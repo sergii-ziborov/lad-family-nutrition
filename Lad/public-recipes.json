@@ -3761,7 +3761,8 @@
         null,
         "Course-photo2_boiled_eggs"
       ],
-      "visibility": "public"
+      "visibility": "public",
+      "courseRole": "side"
     },
     {
       "id": "photo3_fish_millet_soup",
@@ -5183,7 +5184,8 @@
         null,
         "photo3_cauliflower_puree"
       ],
-      "visibility": "private"
+      "visibility": "private",
+      "courseRole": "side"
     },
     {
       "id": "photo3_olivier_yogurt",
@@ -5800,7 +5802,8 @@
         null,
         "photo4_split_peas_onion"
       ],
-      "visibility": "private"
+      "visibility": "private",
+      "courseRole": "side"
     },
     {
       "id": "photo4_brown_rice_fruit",
@@ -7386,7 +7389,8 @@
         null,
         "photo6_plain_buckwheat"
       ],
-      "visibility": "private"
+      "visibility": "private",
+      "courseRole": "side"
     },
     {
       "id": "photo6_cottage_apple_puree",
@@ -7493,7 +7497,8 @@
         null,
         "photo6_dry_pan_eggs"
       ],
-      "visibility": "private"
+      "visibility": "private",
+      "courseRole": "side"
     },
     {
       "id": "photo6_plain_lentils",
@@ -7547,7 +7552,8 @@
         null,
         "photo6_plain_lentils"
       ],
-      "visibility": "private"
+      "visibility": "private",
+      "courseRole": "side"
     },
     {
       "id": "photo7_avocado_boat_salad",
@@ -14150,6 +14156,3215 @@
         "Med-med-bulgur-roasted-vegetables"
       ],
       "nutrients": {}
+    },
+    {
+      "id": "bf-spinach-feta-omelette",
+      "title": "Омлет со шпинатом, фетой и томатами",
+      "caption": "Яйцо · Молоко · Шпинат",
+      "cuisine": "Средиземноморская",
+      "minutes": 15,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко",
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        0
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-bf-spinach-feta-omelette",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Яйцо",
+          "amount": 120,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Молоко",
+          "amount": 40,
+          "unit": "мл",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Шпинат",
+          "amount": 50,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Фета",
+          "amount": 30,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Томаты",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        }
+      ],
+      "steps": [
+        "Взбейте яйца с молоком вилкой до однородности. Шпинат промойте, крупные листья порвите руками.",
+        "Разогрейте масло в сковороде, прогрейте шпинат 1 минуту, влейте яйца и готовьте под крышкой до полного схватывания, около 75 °C.",
+        "Посыпьте половину омлета раскрошенной фетой, сложите пополам и подайте с нарезанными свежими томатами."
+      ],
+      "nutrientPreparations": {
+        "Яйцо": "sauteed",
+        "Молоко": "sauteed",
+        "Шпинат": "sauteed",
+        "Фета": "heated",
+        "Томаты": "raw",
+        "Оливковое масло": "raw"
+      },
+      "nutrients": {},
+      "protein": 23,
+      "editorialTitles": {
+        "en": "Spinach and feta omelette with tomatoes",
+        "uk": "Омлет зі шпинатом, фетою та томатами"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "bf-poached-egg-spinach-toast",
+      "title": "Тосты с яйцом пашот и шпинатом",
+      "caption": "Хлеб · Яйцо · Шпинат",
+      "cuisine": "Средиземноморская",
+      "minutes": 15,
+      "difficulty": "moderate",
+      "allergens": [
+        "Пшеница",
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        0
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-bf-poached-egg-spinach-toast",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Хлеб",
+          "amount": 70,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Яйцо",
+          "amount": 100,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Шпинат",
+          "amount": 60,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томаты черри",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 4,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Доведите воду в небольшой кастрюле до лёгкого кипения. Аккуратно опустите яйца и варите 4–5 минут, пока белок и желток не станут плотными.",
+        "Пока варятся яйца, подсушите хлеб в тостере, а шпинат прогрейте на сковороде с маслом и щепоткой соли до мягкости.",
+        "Разложите шпинат по тостам, сверху положите яйца шумовкой. Подайте с вымытыми помидорами черри."
+      ],
+      "nutrientPreparations": {
+        "Хлеб": "toasted",
+        "Яйцо": "simmered",
+        "Шпинат": "sauteed",
+        "Томаты черри": "raw",
+        "Оливковое масло": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 21,
+      "editorialTitles": {
+        "en": "Poached egg and spinach toasts",
+        "uk": "Тости з яйцем пашот і шпинатом"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "bf-chicken-avocado-toast",
+      "title": "Тосты с курицей, авокадо и огурцом",
+      "caption": "Хлеб · Куриное филе · Авокадо",
+      "cuisine": "Средиземноморская",
+      "minutes": 30,
+      "difficulty": "easy",
+      "allergens": [
+        "Пшеница"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        0
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-bf-chicken-avocado-toast",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Хлеб",
+          "amount": 60,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Куриное филе",
+          "amount": 80,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Авокадо",
+          "amount": 50,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Огурец",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 5,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Запеките куриное филе при 190 °C около 20 минут до 74 °C в центре. Можно взять филе, запечённое накануне.",
+        "Подсушите хлеб. Разомните авокадо вилкой с лимонным соком и щепоткой соли до пасты.",
+        "Намажьте тосты авокадо, сверху разложите тонко нарезанную курицу. Огурец нарежьте кружками и подайте рядом."
+      ],
+      "nutrientPreparations": {
+        "Хлеб": "toasted",
+        "Куриное филе": "baked",
+        "Авокадо": "raw",
+        "Огурец": "raw",
+        "Лимонный сок": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 25,
+      "editorialTitles": {
+        "en": "Chicken, avocado and cucumber toasts",
+        "uk": "Тости з куркою, авокадо та огірком"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "bf-caprese-toast",
+      "title": "Тосты капрезе с моцареллой и томатами",
+      "caption": "Хлеб · Моцарелла · Томаты",
+      "cuisine": "Средиземноморская",
+      "minutes": 10,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко",
+        "Пшеница"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        0
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-bf-caprese-toast",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Хлеб",
+          "amount": 70,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Моцарелла",
+          "amount": 60,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Томаты",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Базилик",
+          "amount": 2,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 4,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Чёрный перец",
+          "amount": 0.3,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Нарежьте моцареллу и томаты ломтиками толщиной около полсантиметра, базилик промойте и обсушите.",
+        "Разложите моцареллу на хлеб и запекайте в духовке при 200 °C 4–5 минут, пока сыр не расплавится.",
+        "Сверху положите томаты и листья базилика, сбрызните оливковым маслом и поперчите. Подавайте тёплыми."
+      ],
+      "nutrientPreparations": {
+        "Хлеб": "toasted",
+        "Моцарелла": "baked",
+        "Томаты": "raw",
+        "Базилик": "raw",
+        "Оливковое масло": "raw",
+        "Чёрный перец": "raw"
+      },
+      "nutrients": {},
+      "protein": 21,
+      "editorialTitles": {
+        "en": "Caprese toasts with mozzarella and tomato",
+        "uk": "Тости капрезе з моцарелою та томатами"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "bf-mushroom-scramble",
+      "title": "Скрэмбл с шампиньонами и сыром",
+      "caption": "Яйцо · Шампиньоны · Сыр",
+      "cuisine": "Домашняя",
+      "minutes": 15,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко",
+        "Пшеница",
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        0
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-bf-mushroom-scramble",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Яйцо",
+          "amount": 120,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Шампиньоны",
+          "amount": 100,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Сыр",
+          "amount": 20,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Зелёный лук",
+          "amount": 5,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Хлеб",
+          "amount": 30,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Шампиньоны нарежьте пластинками и обжарьте на масле 6–7 минут, пока не уйдёт жидкость и они не подрумянятся.",
+        "Влейте взбитые с солью яйца и помешивайте лопаткой на среднем огне, пока они не станут плотными, около 75 °C.",
+        "Посыпьте тёртым сыром и рубленым зелёным луком, дайте сыру растаять. Подайте с подсушенным ломтиком хлеба."
+      ],
+      "nutrientPreparations": {
+        "Яйцо": "sauteed",
+        "Шампиньоны": "sauteed",
+        "Сыр": "heated",
+        "Зелёный лук": "raw",
+        "Оливковое масло": "raw",
+        "Хлеб": "toasted",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 25,
+      "editorialTitles": {
+        "en": "Mushroom and cheese scrambled eggs",
+        "uk": "Скрембл із печерицями та сиром"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "bf-plum-walnut-oats",
+      "title": "Овсянка со сливами, йогуртом и грецкими орехами",
+      "caption": "Овсяные хлопья · Молоко · Сливы",
+      "cuisine": "Средиземноморская",
+      "minutes": 12,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко",
+        "Овёс",
+        "Орехи"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        0
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-bf-plum-walnut-oats",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Овсяные хлопья",
+          "amount": 45,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Молоко",
+          "amount": 150,
+          "unit": "мл",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Сливы",
+          "amount": 100,
+          "unit": "г",
+          "category": "Фрукты"
+        },
+        {
+          "name": "Йогурт греческий",
+          "amount": 100,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Грецкие орехи",
+          "amount": 10,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Корица",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Залейте овсяные хлопья молоком и варите на слабом огне 5–6 минут, помешивая, пока каша не загустеет.",
+        "Сливы вымойте, удалите косточки и нарежьте дольками. Грецкие орехи крупно порубите ножом.",
+        "Переложите кашу в миску, сверху выложите йогурт, сливы и орехи, посыпьте корицей. Сахар и мёд не добавляются."
+      ],
+      "nutrientPreparations": {
+        "Овсяные хлопья": "simmered",
+        "Молоко": "simmered",
+        "Сливы": "raw",
+        "Йогурт греческий": "raw",
+        "Грецкие орехи": "raw",
+        "Корица": "raw"
+      },
+      "nutrients": {},
+      "protein": 25,
+      "editorialTitles": {
+        "en": "Oatmeal with plums, yogurt and walnuts",
+        "uk": "Вівсянка зі сливами, йогуртом і волоськими горіхами"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "bf-rice-crepes-curd-berries",
+      "title": "Рисовые блинчики с творогом и ягодами",
+      "caption": "Рисовая мука · Яйцо · Молоко",
+      "cuisine": "Домашняя",
+      "minutes": 25,
+      "difficulty": "moderate",
+      "allergens": [
+        "Молоко",
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        0
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-bf-rice-crepes-curd-berries",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Рисовая мука",
+          "amount": 40,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Яйцо",
+          "amount": 50,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Молоко",
+          "amount": 100,
+          "unit": "мл",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Растительное масло",
+          "amount": 3,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Творог",
+          "amount": 100,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Ягоды",
+          "amount": 70,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        }
+      ],
+      "steps": [
+        "Взбейте яйцо с молоком, постепенно вмешайте рисовую муку до жидкого теста без комков и оставьте на 5 минут.",
+        "Смажьте тонкие блинчики на сковороде, смазанной маслом, по 1–2 минуты с каждой стороны до золотистого цвета.",
+        "Разложите творог по блинчикам, сверните их и подайте с промытыми ягодами. Сахар в начинку не добавляется."
+      ],
+      "nutrientPreparations": {
+        "Рисовая мука": "sauteed",
+        "Яйцо": "sauteed",
+        "Молоко": "sauteed",
+        "Растительное масло": "sauteed",
+        "Творог": "raw",
+        "Ягоды": "raw"
+      },
+      "nutrients": {},
+      "protein": 23,
+      "editorialTitles": {
+        "en": "Rice-flour crepes with cottage cheese and berries",
+        "uk": "Рисові млинці з сиром і ягодами"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "bf-carrot-syrniki",
+      "title": "Морковные сырники с йогуртом",
+      "caption": "Творог · Яйцо · Морковь",
+      "cuisine": "Домашняя",
+      "minutes": 30,
+      "difficulty": "moderate",
+      "allergens": [
+        "Молоко",
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        0
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-bf-carrot-syrniki",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Творог",
+          "amount": 170,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Яйцо",
+          "amount": 25,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Морковь",
+          "amount": 60,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Рисовая мука",
+          "amount": 20,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Йогурт натуральный",
+          "amount": 60,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Корица",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Натрите морковь на мелкой тёрке и отожмите. Смешайте с творогом, яйцом, рисовой мукой и корицей.",
+        "Мокрыми руками сформуйте небольшие сырники и выложите на противень с бумагой для выпечки.",
+        "Запекайте при 190 °C 18–20 минут, переверните один раз. Подайте тёплыми с натуральным йогуртом."
+      ],
+      "nutrientPreparations": {
+        "Творог": "baked",
+        "Яйцо": "baked",
+        "Морковь": "baked",
+        "Рисовая мука": "baked",
+        "Йогурт натуральный": "raw",
+        "Корица": "baked"
+      },
+      "nutrients": {},
+      "protein": 25,
+      "editorialTitles": {
+        "en": "Carrot cottage-cheese pancakes with yogurt",
+        "uk": "Морквяні сирники з йогуртом"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "bf-potato-pepper-tortilla",
+      "title": "Тортилья с картофелем и сладким перцем",
+      "caption": "Яйцо · Картофель · Сладкий перец",
+      "cuisine": "Средиземноморская",
+      "minutes": 35,
+      "difficulty": "moderate",
+      "allergens": [
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        0
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-bf-potato-pepper-tortilla",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Яйцо",
+          "amount": 120,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Картофель",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Сладкий перец",
+          "amount": 60,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 6,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Огурец",
+          "amount": 60,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Картофель нарежьте тонкими ломтиками, перец и лук — мелко. Перемешайте с маслом и запекайте при 200 °C 15 минут до мягкости.",
+        "Взбейте яйца с солью, залейте овощи в небольшой форме и запекайте ещё 12–15 минут, пока центр не станет плотным.",
+        "Дайте тортилье постоять 3 минуты, чтобы яйцо осело и её было удобно резать. Нарежьте клином и подайте с ломтиками свежего огурца."
+      ],
+      "nutrientPreparations": {
+        "Яйцо": "baked",
+        "Картофель": "baked",
+        "Сладкий перец": "baked",
+        "Лук": "baked",
+        "Оливковое масло": "raw",
+        "Огурец": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 19,
+      "editorialTitles": {
+        "en": "Potato and sweet pepper tortilla",
+        "uk": "Тортилья з картоплею та солодким перцем"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-chicken-chickpea-spinach",
+      "title": "Курица с нутом и шпинатом в томатах",
+      "caption": "Куриное филе · Нут · Томаты",
+      "cuisine": "Средиземноморская",
+      "minutes": 35,
+      "difficulty": "easy",
+      "allergens": [],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-chicken-chickpea-spinach",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Куриное филе",
+          "amount": 140,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Нут",
+          "amount": 60,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Томаты",
+          "amount": 150,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Шпинат",
+          "amount": 40,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 40,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Чеснок",
+          "amount": 4,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 6,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Паприка",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Нут замочите на ночь и отварите до мягкости, воду слейте. Подойдёт и готовый нут без рассола.",
+        "Курицу нарежьте кусочками, лук и чеснок мелко. Тушите их с нарезанными томатами и паприкой под крышкой 15 минут.",
+        "Добавьте нут и шпинат, прогрейте 5 минут до 74 °C в курице. Посолите, полейте оливковым маслом и подавайте."
+      ],
+      "nutrientPreparations": {
+        "Куриное филе": "simmered",
+        "Нут": "boiledDrained",
+        "Томаты": "simmered",
+        "Шпинат": "simmered",
+        "Лук": "simmered",
+        "Чеснок": "simmered",
+        "Оливковое масло": "raw",
+        "Паприка": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 48,
+      "editorialTitles": {
+        "en": "Chicken with chickpeas and spinach in tomato",
+        "uk": "Курка з нутом і шпинатом у томатах"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-turkey-meatballs-tomato",
+      "title": "Тефтели из индейки в томатном соусе",
+      "caption": "Филе индейки · Лук · Яйцо",
+      "cuisine": "Домашняя",
+      "minutes": 40,
+      "difficulty": "moderate",
+      "allergens": [
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-turkey-meatballs-tomato",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Филе индейки",
+          "amount": 150,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Лук",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Яйцо",
+          "amount": 20,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Томаты",
+          "amount": 150,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томатная паста",
+          "amount": 15,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Морковь",
+          "amount": 50,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Зелень",
+          "amount": 5,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Индейку и половину лука пропустите через мясорубку, добавьте яйцо и соль, вымесите и скатайте небольшие тефтели.",
+        "Остальной лук и тёртую морковь потушите 5 минут, добавьте нарезанные томаты и томатную пасту, доведите до кипения.",
+        "Опустите тефтели в соус и тушите под крышкой 20 минут до 74 °C в центре. Подайте с маслом и рубленой зеленью."
+      ],
+      "nutrientPreparations": {
+        "Филе индейки": "simmered",
+        "Лук": "simmered",
+        "Яйцо": "simmered",
+        "Томаты": "simmered",
+        "Томатная паста": "simmered",
+        "Морковь": "simmered",
+        "Зелень": "raw",
+        "Оливковое масло": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 41,
+      "editorialTitles": {
+        "en": "Turkey meatballs in tomato sauce",
+        "uk": "Тефтелі з індички в томатному соусі"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-steamed-chicken-patties-veg",
+      "title": "Куриные котлеты на пару с овощами",
+      "caption": "Куриный фарш · Лук · Яйцо",
+      "cuisine": "Домашняя",
+      "minutes": 35,
+      "difficulty": "easy",
+      "allergens": [
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-steamed-chicken-patties-veg",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Куриный фарш",
+          "amount": 150,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Лук",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Яйцо",
+          "amount": 20,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Брокколи",
+          "amount": 100,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Цветная капуста",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Морковь",
+          "amount": 70,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Чёрный перец",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Смешайте куриный фарш с мелко натёртым луком, яйцом, солью и перцем. Мокрыми руками сформуйте 3 котлеты.",
+        "Брокколи и цветную капусту разберите на соцветия, морковь нарежьте брусочками и выложите в пароварку вместе с котлетами.",
+        "Готовьте на пару 20–25 минут, пока котлеты не прогреются до 74 °C, а овощи не станут мягкими. Подавайте горячими."
+      ],
+      "nutrientPreparations": {
+        "Куриный фарш": "simmered",
+        "Лук": "simmered",
+        "Яйцо": "simmered",
+        "Брокколи": "simmered",
+        "Цветная капуста": "simmered",
+        "Морковь": "simmered",
+        "Соль": "raw",
+        "Чёрный перец": "raw"
+      },
+      "nutrients": {},
+      "protein": 34,
+      "editorialTitles": {
+        "en": "Steamed chicken patties with vegetables",
+        "uk": "Курячі котлети на парі з овочами"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-chicken-carrot-braise",
+      "title": "Курица, тушённая с морковью и луком",
+      "caption": "Куриное филе · Морковь · Лук",
+      "cuisine": "Домашняя",
+      "minutes": 40,
+      "difficulty": "easy",
+      "allergens": [],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-chicken-carrot-braise",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Куриное филе",
+          "amount": 150,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Морковь",
+          "amount": 100,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 60,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томатная паста",
+          "amount": 10,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Растительное масло",
+          "amount": 6,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Лавровый лист",
+          "amount": 0.2,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Вода",
+          "amount": 150,
+          "unit": "мл",
+          "category": "Напитки"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Чёрный перец",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Курицу нарежьте крупными кусочками, лук полукольцами, морковь кружками. Слегка обжарьте лук и морковь на масле 5 минут.",
+        "Добавьте курицу, томатную пасту, разведённую в воде, лавровый лист, соль и перец. Доведите до кипения.",
+        "Тушите под крышкой на слабом огне 20 минут до 74 °C в курице. Лавровый лист перед подачей уберите."
+      ],
+      "nutrientPreparations": {
+        "Куриное филе": "simmered",
+        "Морковь": "simmered",
+        "Лук": "simmered",
+        "Томатная паста": "simmered",
+        "Растительное масло": "sauteed",
+        "Лавровый лист": "simmered",
+        "Вода": "raw",
+        "Соль": "raw",
+        "Чёрный перец": "raw"
+      },
+      "nutrients": {},
+      "protein": 37,
+      "editorialTitles": {
+        "en": "Chicken braised with carrot and onion",
+        "uk": "Курка, тушкована з морквою та цибулею"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-warm-chicken-egg-salad",
+      "title": "Тёплый салат с курицей, яйцом и овощами",
+      "caption": "Куриное филе · Яйцо · Листья салата",
+      "cuisine": "Средиземноморская",
+      "minutes": 30,
+      "difficulty": "easy",
+      "allergens": [
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-warm-chicken-egg-salad",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Куриное филе",
+          "amount": 130,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Яйцо",
+          "amount": 50,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Листья салата",
+          "amount": 40,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Огурец",
+          "amount": 100,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томаты",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 8,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 8,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Запеките куриное филе при 190 °C около 20 минут до 74 °C в центре. Яйцо сварите вкрутую за 10 минут и остудите.",
+        "Листья салата порвите руками, огурец и томаты нарежьте. Смешайте масло, лимонный сок и соль для заправки.",
+        "Выложите овощи на тарелку, сверху тёплую нарезанную курицу и половинки яйца, полейте заправкой и подавайте сразу."
+      ],
+      "nutrientPreparations": {
+        "Куриное филе": "baked",
+        "Яйцо": "boiledDrained",
+        "Листья салата": "raw",
+        "Огурец": "raw",
+        "Томаты": "raw",
+        "Оливковое масло": "raw",
+        "Лимонный сок": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 39,
+      "editorialTitles": {
+        "en": "Warm chicken, egg and vegetable salad",
+        "uk": "Теплий салат із куркою, яйцем та овочами"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-pollock-vegetables-brown-rice",
+      "title": "Минтай с овощами и бурым рисом",
+      "caption": "Минтай · Бурый рис · Морковь",
+      "cuisine": "Домашняя",
+      "minutes": 45,
+      "difficulty": "easy",
+      "allergens": [
+        "Рыба"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-pollock-vegetables-brown-rice",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Минтай",
+          "amount": 170,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Бурый рис",
+          "amount": 50,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Морковь",
+          "amount": 60,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 40,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томаты",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Сладкий перец",
+          "amount": 60,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 6,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Укроп",
+          "amount": 3,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Промойте бурый рис и варите его в подсоленной воде 30–35 минут до мягкости, лишнюю воду слейте.",
+        "Лук, морковь и перец нарежьте, тушите с нарезанными томатами под крышкой 10 минут. Сверху выложите куски минтая.",
+        "Тушите ещё 10–12 минут, пока рыба не станет непрозрачной и не начнёт расслаиваться. Подайте с рисом, маслом и укропом."
+      ],
+      "nutrientPreparations": {
+        "Минтай": "simmered",
+        "Бурый рис": "simmered",
+        "Морковь": "simmered",
+        "Лук": "simmered",
+        "Томаты": "simmered",
+        "Сладкий перец": "simmered",
+        "Оливковое масло": "raw",
+        "Укроп": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 36,
+      "editorialTitles": {
+        "en": "Pollock with vegetables and brown rice",
+        "uk": "Минтай з овочами та бурим рисом"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-salmon-bulgur-broccoli",
+      "title": "Лосось с булгуром и брокколи",
+      "caption": "Лосось · Булгур · Брокколи",
+      "cuisine": "Средиземноморская",
+      "minutes": 30,
+      "difficulty": "easy",
+      "allergens": [
+        "Пшеница",
+        "Рыба"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-salmon-bulgur-broccoli",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Лосось",
+          "amount": 120,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Булгур",
+          "amount": 50,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Брокколи",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 5,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 4,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Укроп",
+          "amount": 3,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Залейте булгур двойным объёмом подсоленной воды, варите 12 минут на слабом огне и оставьте под крышкой.",
+        "Лосось запекайте при 200 °C 12–15 минут, пока мякоть не станет непрозрачной и не начнёт легко разделяться.",
+        "Брокколи отварите или приготовьте на пару 5 минут. Подайте с булгуром, полейте маслом и лимонным соком, посыпьте укропом."
+      ],
+      "nutrientPreparations": {
+        "Лосось": "baked",
+        "Булгур": "simmered",
+        "Брокколи": "simmered",
+        "Лимонный сок": "raw",
+        "Оливковое масло": "raw",
+        "Укроп": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 34,
+      "editorialTitles": {
+        "en": "Salmon with bulgur and broccoli",
+        "uk": "Лосось із булгуром і броколі"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-beef-red-lentil-soup",
+      "title": "Суп из красной чечевицы с говядиной",
+      "caption": "Говядина · Чечевица красная · Морковь",
+      "cuisine": "Средиземноморская",
+      "minutes": 70,
+      "difficulty": "easy",
+      "allergens": [
+        "Сельдерей"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-beef-red-lentil-soup",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Говядина",
+          "amount": 100,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Чечевица красная",
+          "amount": 50,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Морковь",
+          "amount": 50,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 40,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томаты",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Сельдерей",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Кориандр",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Вода",
+          "amount": 450,
+          "unit": "мл",
+          "category": "Напитки"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Говядину нарежьте мелкими кусочками, залейте водой и варите 40 минут на слабом огне, снимая пену.",
+        "Добавьте промытую чечевицу, нарезанные морковь, лук, сельдерей и томаты. Варите ещё 20 минут, пока чечевица не разварится.",
+        "Посолите, добавьте молотый кориандр и проварите 2 минуты. Подавайте горячим, мясо должно быть мягким."
+      ],
+      "nutrientPreparations": {
+        "Говядина": "simmered",
+        "Чечевица красная": "simmered",
+        "Морковь": "simmered",
+        "Лук": "simmered",
+        "Томаты": "simmered",
+        "Сельдерей": "simmered",
+        "Кориандр": "simmered",
+        "Вода": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 36,
+      "editorialTitles": {
+        "en": "Red lentil soup with beef",
+        "uk": "Суп із червоної сочевиці з яловичиною"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-turkey-pumpkin-millet",
+      "title": "Индейка с тыквой и пшеном",
+      "caption": "Филе индейки · Пшено · Тыква",
+      "cuisine": "Домашняя",
+      "minutes": 40,
+      "difficulty": "easy",
+      "allergens": [],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-turkey-pumpkin-millet",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Филе индейки",
+          "amount": 140,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Пшено",
+          "amount": 45,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Тыква",
+          "amount": 150,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Чёрный перец",
+          "amount": 0.3,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Пшено промойте горячей водой и варите в подсоленной воде 20 минут до рассыпчатости.",
+        "Тыкву нарежьте кубиками, лук дольками, индейку кусочками. Перемешайте с маслом, солью и перцем, выложите на противень.",
+        "Запекайте при 200 °C 20–25 минут до мягкости тыквы и 74 °C в индейке. Подайте вместе с пшеном."
+      ],
+      "nutrientPreparations": {
+        "Филе индейки": "baked",
+        "Пшено": "simmered",
+        "Тыква": "baked",
+        "Лук": "baked",
+        "Оливковое масло": "raw",
+        "Соль": "raw",
+        "Чёрный перец": "raw"
+      },
+      "nutrients": {},
+      "protein": 40,
+      "editorialTitles": {
+        "en": "Turkey with pumpkin and millet",
+        "uk": "Індичка з гарбузом і пшоном"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-chicken-cabbage-soup",
+      "title": "Щи из свежей капусты с курицей",
+      "caption": "Куриное филе · Капуста · Морковь",
+      "cuisine": "Восточноевропейская",
+      "minutes": 45,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-chicken-cabbage-soup",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Куриное филе",
+          "amount": 140,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Капуста",
+          "amount": 160,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Морковь",
+          "amount": 50,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 40,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томаты",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лавровый лист",
+          "amount": 0.2,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Вода",
+          "amount": 450,
+          "unit": "мл",
+          "category": "Напитки"
+        },
+        {
+          "name": "Укроп",
+          "amount": 5,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Йогурт натуральный",
+          "amount": 40,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Курицу нарежьте кусочками, залейте водой, доведите до кипения и варите 15 минут, снимая пену.",
+        "Добавьте нашинкованную капусту, тёртую морковь, лук, нарезанные томаты и лавровый лист. Варите 20 минут до мягкости капусты.",
+        "Посолите, уберите лавровый лист. Подавайте с ложкой натурального йогурта и рубленым укропом."
+      ],
+      "nutrientPreparations": {
+        "Куриное филе": "simmered",
+        "Капуста": "simmered",
+        "Морковь": "simmered",
+        "Лук": "simmered",
+        "Томаты": "simmered",
+        "Лавровый лист": "simmered",
+        "Вода": "raw",
+        "Укроп": "raw",
+        "Йогурт натуральный": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 38,
+      "editorialTitles": {
+        "en": "Fresh cabbage soup with chicken",
+        "uk": "Капусняк зі свіжої капусти з куркою"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-chicken-brown-rice-pilaf",
+      "title": "Плов с курицей и бурым рисом",
+      "caption": "Куриное филе · Бурый рис · Морковь",
+      "cuisine": "Среднеазиатская (вариация)",
+      "minutes": 60,
+      "difficulty": "moderate",
+      "allergens": [],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-chicken-brown-rice-pilaf",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Куриное филе",
+          "amount": 140,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Бурый рис",
+          "amount": 60,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Морковь",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 40,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Чеснок",
+          "amount": 6,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Растительное масло",
+          "amount": 7,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Специи для плова",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Вода",
+          "amount": 160,
+          "unit": "мл",
+          "category": "Напитки"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Лук нарежьте полукольцами, морковь соломкой, курицу кусочками. Обжарьте лук на масле 3 минуты, добавьте курицу и морковь.",
+        "Через 5 минут всыпьте промытый бурый рис ровным слоем, добавьте специи, соль и воду, воткните целые зубчики чеснока.",
+        "Томите под крышкой на слабом огне 40 минут, не перемешивая, пока рис не впитает воду. Перемешайте перед подачей."
+      ],
+      "nutrientPreparations": {
+        "Куриное филе": "simmered",
+        "Бурый рис": "simmered",
+        "Морковь": "simmered",
+        "Лук": "sauteed",
+        "Чеснок": "simmered",
+        "Растительное масло": "sauteed",
+        "Специи для плова": "simmered",
+        "Вода": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 39,
+      "editorialTitles": {
+        "en": "Chicken pilaf with brown rice",
+        "uk": "Плов із куркою та бурим рисом"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-hake-chickpeas-tomatoes",
+      "title": "Хек с нутом и томатами",
+      "caption": "Хек · Нут · Томаты",
+      "cuisine": "Средиземноморская",
+      "minutes": 35,
+      "difficulty": "easy",
+      "allergens": [
+        "Рыба"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-hake-chickpeas-tomatoes",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Хек",
+          "amount": 160,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Нут",
+          "amount": 50,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Томаты",
+          "amount": 150,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Чеснок",
+          "amount": 4,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 6,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Петрушка",
+          "amount": 5,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 5,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Нут замочите на ночь и отварите до мягкости, воду слейте. Томаты нарежьте кубиками, чеснок мелко.",
+        "Смешайте нут, томаты, чеснок и соль в форме для запекания, сверху положите хек и сбрызните его лимонным соком.",
+        "Запекайте при 200 °C 15–18 минут, пока рыба не станет непрозрачной. Полейте оливковым маслом и посыпьте петрушкой."
+      ],
+      "nutrientPreparations": {
+        "Хек": "baked",
+        "Нут": "boiledDrained",
+        "Томаты": "baked",
+        "Чеснок": "baked",
+        "Оливковое масло": "raw",
+        "Петрушка": "raw",
+        "Лимонный сок": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 41,
+      "editorialTitles": {
+        "en": "Hake with chickpeas and tomatoes",
+        "uk": "Хек із нутом і томатами"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-chicken-skewers-bulgur",
+      "title": "Куриные шашлычки с овощами и булгуром",
+      "caption": "Куриное филе · Сладкий перец · Цукини",
+      "cuisine": "Средиземноморская",
+      "minutes": 45,
+      "difficulty": "moderate",
+      "allergens": [
+        "Молоко",
+        "Пшеница"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-chicken-skewers-bulgur",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Куриное филе",
+          "amount": 140,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Сладкий перец",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Цукини",
+          "amount": 100,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Йогурт натуральный",
+          "amount": 40,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 5,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Паприка",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Булгур",
+          "amount": 45,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Курицу нарежьте кубиками, перемешайте с половиной йогурта, паприкой, солью и лимонным соком, оставьте на 15 минут.",
+        "Нанижите курицу на шпажки вместе с кусочками перца, цукини и лука, сбрызните маслом и запекайте при 220 °C 15–18 минут до 74 °C.",
+        "Булгур залейте двойным объёмом воды и варите 12 минут. Подайте шашлычки на булгуре с остальным йогуртом как соусом."
+      ],
+      "nutrientPreparations": {
+        "Куриное филе": "baked",
+        "Сладкий перец": "baked",
+        "Цукини": "baked",
+        "Лук": "baked",
+        "Йогурт натуральный": "raw",
+        "Лимонный сок": "raw",
+        "Паприка": "raw",
+        "Булгур": "simmered",
+        "Оливковое масло": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 42,
+      "editorialTitles": {
+        "en": "Chicken and vegetable skewers with bulgur",
+        "uk": "Курячі шашлички з овочами та булгуром"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "lunch-beef-meatballs-stewed-cabbage",
+      "title": "Говяжьи тефтели с тушёной капустой",
+      "caption": "Мясной фарш · Лук · Яйцо",
+      "cuisine": "Восточноевропейская",
+      "minutes": 50,
+      "difficulty": "moderate",
+      "allergens": [
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        1
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-lunch-beef-meatballs-stewed-cabbage",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Мясной фарш",
+          "amount": 130,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Лук",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Яйцо",
+          "amount": 20,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Капуста",
+          "amount": 200,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Морковь",
+          "amount": 50,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томатная паста",
+          "amount": 10,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Растительное масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Чёрный перец",
+          "amount": 0.3,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Смешайте фарш с половиной мелко натёртого лука, яйцом, солью и перцем. Скатайте небольшие тефтели.",
+        "Остальной лук и тёртую морковь слегка обжарьте на масле, добавьте нашинкованную капусту и томатную пасту с половиной стакана воды.",
+        "Выложите тефтели на капусту и тушите под крышкой 25–30 минут до мягкости капусты и 71 °C в тефтелях."
+      ],
+      "nutrientPreparations": {
+        "Мясной фарш": "simmered",
+        "Лук": "simmered",
+        "Яйцо": "simmered",
+        "Капуста": "simmered",
+        "Морковь": "simmered",
+        "Томатная паста": "simmered",
+        "Растительное масло": "sauteed",
+        "Соль": "raw",
+        "Чёрный перец": "raw"
+      },
+      "nutrients": {},
+      "protein": 29,
+      "editorialTitles": {
+        "en": "Beef meatballs with braised cabbage",
+        "uk": "Яловичі тефтелі з тушкованою капустою"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-pollock-herbs-lemon",
+      "title": "Минтай, запечённый с травами и лимоном",
+      "caption": "Минтай",
+      "cuisine": "Средиземноморская",
+      "minutes": 25,
+      "difficulty": "easy",
+      "allergens": [
+        "Рыба"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-pollock-herbs-lemon",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Минтай",
+          "amount": 180,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 8,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Укроп",
+          "amount": 4,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Петрушка",
+          "amount": 4,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Чеснок",
+          "amount": 3,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Чёрный перец",
+          "amount": 0.3,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Мелко порубите укроп, петрушку и чеснок, смешайте с оливковым маслом, лимонным соком, солью и перцем.",
+        "Выложите филе минтая в форму и равномерно покройте травяной смесью со всех сторон.",
+        "Запекайте при 200 °C 15–18 минут, пока рыба не станет непрозрачной и не начнёт расслаиваться. Подавайте горячей."
+      ],
+      "nutrientPreparations": {
+        "Минтай": "baked",
+        "Лимонный сок": "raw",
+        "Укроп": "raw",
+        "Петрушка": "raw",
+        "Оливковое масло": "raw",
+        "Чеснок": "baked",
+        "Соль": "raw",
+        "Чёрный перец": "raw"
+      },
+      "nutrients": {},
+      "protein": 31,
+      "editorialTitles": {
+        "en": "Pollock baked with herbs and lemon",
+        "uk": "Минтай, запечений із травами та лимоном"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-green-bean-egg-salad",
+      "title": "Тёплый салат со стручковой фасолью и яйцом",
+      "caption": "Стручковая фасоль · Яйцо · Томаты черри",
+      "cuisine": "Средиземноморская",
+      "minutes": 20,
+      "difficulty": "easy",
+      "allergens": [
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-green-bean-egg-salad",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Стручковая фасоль",
+          "amount": 150,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Яйцо",
+          "amount": 100,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Томаты черри",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 20,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 6,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 5,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Зелень",
+          "amount": 4,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Сварите яйца вкрутую за 10 минут и остудите в холодной воде. Стручковую фасоль отварите 6–7 минут и слейте воду.",
+        "Лук нарежьте тонкими полукольцами, помидоры черри разрежьте пополам, зелень порубите.",
+        "Смешайте тёплую фасоль с луком, томатами, маслом, лимонным соком и солью. Сверху выложите четвертинки яиц и зелень."
+      ],
+      "nutrientPreparations": {
+        "Стручковая фасоль": "boiledDrained",
+        "Яйцо": "boiledDrained",
+        "Томаты черри": "raw",
+        "Лук": "raw",
+        "Оливковое масло": "raw",
+        "Лимонный сок": "raw",
+        "Зелень": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 16,
+      "editorialTitles": {
+        "en": "Warm green bean and egg salad",
+        "uk": "Теплий салат зі стручковою квасолею та яйцем"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-salmon-zucchini-cherry",
+      "title": "Лосось, запечённый с цукини и томатами черри",
+      "caption": "Лосось · Цукини · Томаты черри",
+      "cuisine": "Средиземноморская",
+      "minutes": 30,
+      "difficulty": "easy",
+      "allergens": [
+        "Рыба"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-salmon-zucchini-cherry",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Лосось",
+          "amount": 110,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Цукини",
+          "amount": 150,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томаты черри",
+          "amount": 100,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 4,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 5,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Орегано",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Цукини нарежьте кружками, перемешайте с половиной масла и солью и выложите в форму одним слоем вместе с помидорами черри.",
+        "Сверху положите лосось, сбрызните оставшимся маслом и лимонным соком, посыпьте орегано.",
+        "Запекайте при 200 °C 15–18 минут, пока рыба не станет непрозрачной, а помидоры не лопнут. Подавайте сразу."
+      ],
+      "nutrientPreparations": {
+        "Лосось": "baked",
+        "Цукини": "baked",
+        "Томаты черри": "baked",
+        "Оливковое масло": "raw",
+        "Лимонный сок": "raw",
+        "Орегано": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 25,
+      "editorialTitles": {
+        "en": "Salmon baked with zucchini and cherry tomatoes",
+        "uk": "Лосось, запечений із цукіні та томатами чері"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-pumpkin-curd-bake",
+      "title": "Творожная запеканка с тыквой",
+      "caption": "Творог · Тыква · Яйцо",
+      "cuisine": "Домашняя",
+      "minutes": 50,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко",
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-pumpkin-curd-bake",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Творог",
+          "amount": 180,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Тыква",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Яйцо",
+          "amount": 50,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Рисовая мука",
+          "amount": 15,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Корица",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Йогурт натуральный",
+          "amount": 50,
+          "unit": "г",
+          "category": "Молочные продукты"
+        }
+      ],
+      "steps": [
+        "Тыкву нарежьте мелким кубиком. Творог разотрите с яйцом, рисовой мукой и корицей до однородной массы.",
+        "Вмешайте тыкву, выложите массу в небольшую форму и разровняйте поверхность ложкой.",
+        "Запекайте при 180 °C 35–40 минут до золотистой корочки и плотного центра. Подайте тёплой с йогуртом."
+      ],
+      "nutrientPreparations": {
+        "Творог": "baked",
+        "Тыква": "baked",
+        "Яйцо": "baked",
+        "Рисовая мука": "baked",
+        "Корица": "baked",
+        "Йогурт натуральный": "raw"
+      },
+      "nutrients": {},
+      "protein": 29,
+      "editorialTitles": {
+        "en": "Cottage cheese and pumpkin bake",
+        "uk": "Сирна запіканка з гарбузом"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-shrimp-zucchini-salad",
+      "title": "Тёплый салат с креветками и цукини",
+      "caption": "Креветки · Цукини · Листья салата",
+      "cuisine": "Средиземноморская",
+      "minutes": 20,
+      "difficulty": "easy",
+      "allergens": [
+        "Ракообразные"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-shrimp-zucchini-salad",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Креветки",
+          "amount": 130,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Цукини",
+          "amount": 150,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Листья салата",
+          "amount": 40,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томаты черри",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 6,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 6,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Чеснок",
+          "amount": 3,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Цукини нарежьте тонкими лентами овощечисткой. Креветки очистите, чеснок нарежьте пластинками.",
+        "Обжарьте чеснок и креветки на половине масла 3–4 минуты, пока креветки не станут розовыми и непрозрачными. Добавьте цукини на 1 минуту.",
+        "Выложите на листья салата с половинками помидоров черри, полейте оставшимся маслом с лимонным соком и солью."
+      ],
+      "nutrientPreparations": {
+        "Креветки": "sauteed",
+        "Цукини": "sauteed",
+        "Листья салата": "raw",
+        "Томаты черри": "raw",
+        "Оливковое масло": "raw",
+        "Лимонный сок": "raw",
+        "Чеснок": "sauteed",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 29,
+      "editorialTitles": {
+        "en": "Warm shrimp and zucchini salad",
+        "uk": "Теплий салат із креветками та цукіні"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-chicken-broccoli-bake",
+      "title": "Курица с брокколи под сыром",
+      "caption": "Куриное филе · Брокколи · Сыр",
+      "cuisine": "Домашняя",
+      "minutes": 35,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-chicken-broccoli-bake",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Куриное филе",
+          "amount": 130,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Брокколи",
+          "amount": 180,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Сыр",
+          "amount": 25,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Йогурт натуральный",
+          "amount": 60,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Чеснок",
+          "amount": 3,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Чёрный перец",
+          "amount": 0.3,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Курицу нарежьте кусочками, брокколи разберите на соцветия. Смешайте йогурт с давленым чесноком, солью и перцем.",
+        "Выложите курицу и брокколи в форму, полейте йогуртовым соусом и посыпьте тёртым сыром.",
+        "Запекайте при 200 °C 20–25 минут до румяной корочки и 74 °C в курице. Подавайте горячей."
+      ],
+      "nutrientPreparations": {
+        "Куриное филе": "baked",
+        "Брокколи": "baked",
+        "Сыр": "baked",
+        "Йогурт натуральный": "baked",
+        "Чеснок": "baked",
+        "Соль": "raw",
+        "Чёрный перец": "raw"
+      },
+      "nutrients": {},
+      "protein": 43,
+      "editorialTitles": {
+        "en": "Chicken and broccoli bake with cheese",
+        "uk": "Курка з броколі під сиром"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-eggs-baked-spinach-tomato",
+      "title": "Яйца, запечённые со шпинатом и томатами",
+      "caption": "Яйцо · Шпинат · Томаты",
+      "cuisine": "Средиземноморская",
+      "minutes": 25,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко",
+        "Яйцо"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-eggs-baked-spinach-tomato",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Яйцо",
+          "amount": 100,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Шпинат",
+          "amount": 100,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томаты",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Фета",
+          "amount": 25,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Лук",
+          "amount": 20,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Соль",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Лук мелко нарежьте, томаты нарежьте кубиками, шпинат промойте. Смешайте их с маслом и солью в небольшой форме.",
+        "Прогрейте овощи в духовке при 200 °C 8 минут, пока шпинат не осядет. Сделайте ложкой два углубления и вбейте яйца.",
+        "Посыпьте раскрошенной фетой и запекайте ещё 10–12 минут, пока белок и желток не станут плотными."
+      ],
+      "nutrientPreparations": {
+        "Яйцо": "baked",
+        "Шпинат": "baked",
+        "Томаты": "baked",
+        "Фета": "baked",
+        "Лук": "baked",
+        "Оливковое масло": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 20,
+      "editorialTitles": {
+        "en": "Eggs baked with spinach and tomatoes",
+        "uk": "Яйця, запечені зі шпинатом і томатами"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-chinese-cabbage-chicken-salad",
+      "title": "Салат с пекинской капустой, курицей и огурцом",
+      "caption": "Пекинская капуста · Куриное филе · Огурец",
+      "cuisine": "Домашняя",
+      "minutes": 30,
+      "difficulty": "easy",
+      "allergens": [
+        "Горчица",
+        "Молоко"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-chinese-cabbage-chicken-salad",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Пекинская капуста",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Куриное филе",
+          "amount": 110,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Огурец",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Зелёный лук",
+          "amount": 8,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Йогурт натуральный",
+          "amount": 50,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Горчица",
+          "amount": 4,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Отварите куриное филе в подсоленной воде 20 минут до 74 °C в центре, остудите и разберите на волокна.",
+        "Пекинскую капусту тонко нашинкуйте, огурец нарежьте соломкой, зелёный лук порубите.",
+        "Смешайте йогурт с горчицей и солью, заправьте овощи и курицу. Подавайте сразу, пока капуста хрустит."
+      ],
+      "nutrientPreparations": {
+        "Пекинская капуста": "raw",
+        "Куриное филе": "simmered",
+        "Огурец": "raw",
+        "Зелёный лук": "raw",
+        "Йогурт натуральный": "raw",
+        "Горчица": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 30,
+      "editorialTitles": {
+        "en": "Chinese cabbage salad with chicken and cucumber",
+        "uk": "Салат із пекінською капустою, куркою та огірком"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-chickpea-ratatouille",
+      "title": "Рагу из цукини, баклажана и нута",
+      "caption": "Нут · Цукини · Баклажан",
+      "cuisine": "Средиземноморская",
+      "minutes": 45,
+      "difficulty": "easy",
+      "allergens": [],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-chickpea-ratatouille",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Нут",
+          "amount": 50,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Цукини",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Баклажан",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Томаты",
+          "amount": 150,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лук",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Чеснок",
+          "amount": 4,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 7,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Базилик",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Нут замочите на ночь и отварите до мягкости, воду слейте. Цукини, баклажан и томаты нарежьте кубиками.",
+        "Лук и чеснок потушите в сотейнике 3 минуты, добавьте баклажан и цукини, затем томаты и соль. Тушите под крышкой 20 минут.",
+        "Вмешайте нут и прогрейте 5 минут. Перед подачей полейте оливковым маслом и посыпьте порванными листьями базилика."
+      ],
+      "nutrientPreparations": {
+        "Нут": "boiledDrained",
+        "Цукини": "simmered",
+        "Баклажан": "simmered",
+        "Томаты": "simmered",
+        "Лук": "simmered",
+        "Чеснок": "simmered",
+        "Оливковое масло": "raw",
+        "Базилик": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 15,
+      "editorialTitles": {
+        "en": "Zucchini, eggplant and chickpea stew",
+        "uk": "Рагу з цукіні, баклажана та нуту"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-turkey-cauliflower-bake",
+      "title": "Индейка с цветной капустой в духовке",
+      "caption": "Филе индейки · Цветная капуста · Йогурт натуральный",
+      "cuisine": "Домашняя",
+      "minutes": 40,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-turkey-cauliflower-bake",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Филе индейки",
+          "amount": 130,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Цветная капуста",
+          "amount": 180,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Йогурт натуральный",
+          "amount": 50,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Сыр",
+          "amount": 15,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Паприка",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Индейку нарежьте кусочками, цветную капусту разберите на соцветия и отварите 4 минуты, воду слейте.",
+        "Выложите индейку и капусту в форму, посолите, полейте йогуртом и посыпьте тёртым сыром и паприкой.",
+        "Запекайте при 200 °C 20–25 минут до 74 °C в индейке и золотистой корочки. Подавайте горячей."
+      ],
+      "nutrientPreparations": {
+        "Филе индейки": "baked",
+        "Цветная капуста": "baked",
+        "Йогурт натуральный": "baked",
+        "Сыр": "baked",
+        "Паприка": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 39,
+      "editorialTitles": {
+        "en": "Baked turkey with cauliflower",
+        "uk": "Індичка з цвітною капустою в духовці"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-steamed-hake-carrot-zucchini",
+      "title": "Хек на пару с морковью и цукини",
+      "caption": "Хек · Морковь · Цукини",
+      "cuisine": "Домашняя",
+      "minutes": 25,
+      "difficulty": "easy",
+      "allergens": [
+        "Рыба"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-steamed-hake-carrot-zucchini",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Хек",
+          "amount": 170,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Морковь",
+          "amount": 80,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Цукини",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 5,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Укроп",
+          "amount": 3,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Морковь и цукини нарежьте тонкими лентами овощечисткой. Хек посолите и сбрызните лимонным соком.",
+        "Выложите овощи в пароварку, сверху положите рыбу. Готовьте на пару 12–15 минут, пока хек не станет непрозрачным.",
+        "Переложите на тарелку, полейте оливковым маслом и посыпьте рубленым укропом. Подавайте сразу."
+      ],
+      "nutrientPreparations": {
+        "Хек": "simmered",
+        "Морковь": "simmered",
+        "Цукини": "simmered",
+        "Лимонный сок": "raw",
+        "Укроп": "raw",
+        "Оливковое масло": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 33,
+      "editorialTitles": {
+        "en": "Steamed hake with carrot and zucchini",
+        "uk": "Хек на парі з морквою та цукіні"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-beet-feta-walnut-salad",
+      "title": "Салат из печёной свёклы с фетой и грецкими орехами",
+      "caption": "Свёкла · Фета · Грецкие орехи",
+      "cuisine": "Средиземноморская",
+      "minutes": 60,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко",
+        "Орехи"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-beet-feta-walnut-salad",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Свёкла",
+          "amount": 160,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Фета",
+          "amount": 45,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Грецкие орехи",
+          "amount": 12,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Листья салата",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 5,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Лимонный сок",
+          "amount": 5,
+          "unit": "мл",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 0.5,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Заверните вымытую свёклу в фольгу и запекайте при 200 °C 45–50 минут до мягкости. Остудите и очистите.",
+        "Нарежьте свёклу кубиками, фету раскрошите, грецкие орехи слегка порубите. Листья салата порвите руками.",
+        "Выложите свёклу на листья салата, сверху фету и орехи. Полейте маслом с лимонным соком и щепоткой соли."
+      ],
+      "nutrientPreparations": {
+        "Свёкла": "baked",
+        "Фета": "raw",
+        "Грецкие орехи": "raw",
+        "Листья салата": "raw",
+        "Оливковое масло": "raw",
+        "Лимонный сок": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 11,
+      "editorialTitles": {
+        "en": "Roasted beet salad with feta and walnuts",
+        "uk": "Салат із печеного буряка з фетою та волоськими горіхами"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-cauliflower-chicken-soup",
+      "title": "Суп-пюре из цветной капусты с курицей",
+      "caption": "Цветная капуста · Куриное филе · Лук",
+      "cuisine": "Домашняя",
+      "minutes": 40,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-cauliflower-chicken-soup",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Цветная капуста",
+          "amount": 220,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Куриное филе",
+          "amount": 100,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Лук",
+          "amount": 30,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Молоко",
+          "amount": 100,
+          "unit": "мл",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Вода",
+          "amount": 250,
+          "unit": "мл",
+          "category": "Напитки"
+        },
+        {
+          "name": "Укроп",
+          "amount": 3,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Куриное филе нарежьте мелкими кусочками, залейте водой и варите 10 минут, снимая пену.",
+        "Добавьте соцветия цветной капусты и нарезанный лук, варите 15 минут до мягкости. Курицу выньте шумовкой.",
+        "Влейте молоко, пробейте овощи блендером до гладкости и посолите. Верните курицу, прогрейте до 74 °C и посыпьте укропом."
+      ],
+      "nutrientPreparations": {
+        "Цветная капуста": "simmered",
+        "Куриное филе": "simmered",
+        "Лук": "simmered",
+        "Молоко": "simmered",
+        "Вода": "raw",
+        "Укроп": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 31,
+      "editorialTitles": {
+        "en": "Cauliflower soup with chicken",
+        "uk": "Суп-пюре з цвітної капусти з куркою"
+      },
+      "visibility": "public"
+    },
+    {
+      "id": "dinner-chicken-tomato-mozzarella",
+      "title": "Куриное филе с томатами и моцареллой",
+      "caption": "Куриное филе · Томаты · Моцарелла",
+      "cuisine": "Средиземноморская",
+      "minutes": 30,
+      "difficulty": "easy",
+      "allergens": [
+        "Молоко"
+      ],
+      "allergensVerified": true,
+      "mealKinds": [
+        2
+      ],
+      "estimatedServings": 1,
+      "imageId": "Menu200-dinner-chicken-tomato-mozzarella",
+      "imageSource": "bundled",
+      "ingredients": [
+        {
+          "name": "Куриное филе",
+          "amount": 130,
+          "unit": "г",
+          "category": "Рыба и мясо"
+        },
+        {
+          "name": "Томаты",
+          "amount": 120,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Моцарелла",
+          "amount": 35,
+          "unit": "г",
+          "category": "Молочные продукты"
+        },
+        {
+          "name": "Базилик",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        },
+        {
+          "name": "Оливковое масло",
+          "amount": 3,
+          "unit": "г",
+          "category": "Бакалея"
+        },
+        {
+          "name": "Листья салата",
+          "amount": 40,
+          "unit": "г",
+          "category": "Овощи и зелень"
+        },
+        {
+          "name": "Соль",
+          "amount": 1,
+          "unit": "г",
+          "category": "Специи и приправы"
+        }
+      ],
+      "steps": [
+        "Разрежьте куриное филе вдоль на два тонких пласта, посолите и выложите в форму, смазанную маслом.",
+        "Сверху разложите ломтики томатов и моцареллы. Запекайте при 200 °C 18–20 минут до 74 °C в курице.",
+        "Посыпьте листьями базилика и подайте с листьями салата. Расплавленный сыр не даёт курице пересохнуть."
+      ],
+      "nutrientPreparations": {
+        "Куриное филе": "baked",
+        "Томаты": "baked",
+        "Моцарелла": "baked",
+        "Базилик": "raw",
+        "Оливковое масло": "raw",
+        "Листья салата": "raw",
+        "Соль": "raw"
+      },
+      "nutrients": {},
+      "protein": 40,
+      "editorialTitles": {
+        "en": "Chicken breast with tomato and mozzarella",
+        "uk": "Куряче філе з томатами та моцарелою"
+      },
+      "visibility": "public"
     }
   ],
   "programs": [
@@ -14192,10 +17407,14 @@
         },
         {
           "number": 4,
-          "lunchRecipeID": "photo4_split_peas_onion",
+          "lunchRecipeID": "lunch-chicken-carrot-braise",
           "dinnerRecipeID": "photo5_beef_liver_chops",
-          "lunchExtraRecipeIDs": [],
-          "dinnerExtraRecipeIDs": []
+          "lunchExtraRecipeIDs": [
+            "photo4_split_peas_onion"
+          ],
+          "dinnerExtraRecipeIDs": [
+            "photo3_cauliflower_puree"
+          ]
         },
         {
           "number": 5,
@@ -14210,7 +17429,9 @@
           "number": 6,
           "lunchRecipeID": "photo_beef_paprika_goulash",
           "dinnerRecipeID": "photo_cheese_cookies",
-          "lunchExtraRecipeIDs": [],
+          "lunchExtraRecipeIDs": [
+            "photo6_plain_buckwheat"
+          ],
           "dinnerExtraRecipeIDs": []
         },
         {
@@ -14239,9 +17460,11 @@
         {
           "number": 10,
           "lunchRecipeID": "photo3_country_potatoes",
-          "dinnerRecipeID": "photo3_cauliflower_puree",
+          "dinnerRecipeID": "dinner-pollock-herbs-lemon",
           "lunchExtraRecipeIDs": [],
-          "dinnerExtraRecipeIDs": []
+          "dinnerExtraRecipeIDs": [
+            "photo3_cauliflower_puree"
+          ]
         },
         {
           "number": 11,
@@ -14267,7 +17490,7 @@
         {
           "number": 14,
           "lunchRecipeID": "photo2_meat_cauliflower_patties",
-          "dinnerRecipeID": "photo2_boiled_eggs",
+          "dinnerRecipeID": "dinner-green-bean-egg-salad",
           "lunchExtraRecipeIDs": [],
           "dinnerExtraRecipeIDs": []
         },
@@ -14337,7 +17560,9 @@
           "lunchExtraRecipeIDs": [
             "photo7_avocado_tomato_salad"
           ],
-          "dinnerExtraRecipeIDs": []
+          "dinnerExtraRecipeIDs": [
+            "photo2_boiled_eggs"
+          ]
         },
         {
           "number": 23,
@@ -14410,16 +17635,20 @@
         },
         {
           "number": 32,
-          "lunchRecipeID": "photo6_plain_buckwheat",
+          "lunchRecipeID": "lunch-steamed-chicken-patties-veg",
           "dinnerRecipeID": "photo8_dill_egg_pancakes",
-          "lunchExtraRecipeIDs": [],
+          "lunchExtraRecipeIDs": [
+            "photo6_plain_buckwheat"
+          ],
           "dinnerExtraRecipeIDs": []
         },
         {
           "number": 33,
-          "lunchRecipeID": "photo6_plain_lentils",
+          "lunchRecipeID": "lunch-turkey-meatballs-tomato",
           "dinnerRecipeID": "photo8_tomato_grain_curd_salad",
-          "lunchExtraRecipeIDs": [],
+          "lunchExtraRecipeIDs": [
+            "photo6_plain_lentils"
+          ],
           "dinnerExtraRecipeIDs": []
         },
         {
@@ -14554,7 +17783,9 @@
           "number": 50,
           "lunchRecipeID": "photo2_simple_goulash",
           "dinnerRecipeID": "photo2_kefir_baked_chicken",
-          "lunchExtraRecipeIDs": [],
+          "lunchExtraRecipeIDs": [
+            "photo4_split_peas_onion"
+          ],
           "dinnerExtraRecipeIDs": []
         },
         {
@@ -14598,8 +17829,110 @@
         },
         {
           "number": 56,
-          "lunchRecipeID": "photo6_dry_pan_eggs",
+          "lunchRecipeID": "lunch-warm-chicken-egg-salad",
           "dinnerRecipeID": "photo9_rye_khachapuri",
+          "lunchExtraRecipeIDs": [],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 57,
+          "lunchRecipeID": "lunch-chicken-chickpea-spinach",
+          "dinnerRecipeID": "dinner-salmon-zucchini-cherry",
+          "lunchExtraRecipeIDs": [
+            "photo7_cabbage_cucumber_salad"
+          ],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 58,
+          "lunchRecipeID": "lunch-pollock-vegetables-brown-rice",
+          "dinnerRecipeID": "dinner-pumpkin-curd-bake",
+          "lunchExtraRecipeIDs": [
+            "photo7_radish_cucumber_salad"
+          ],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 59,
+          "lunchRecipeID": "lunch-salmon-bulgur-broccoli",
+          "dinnerRecipeID": "dinner-eggs-baked-spinach-tomato",
+          "lunchExtraRecipeIDs": [
+            "photo7_tomato_beet_salad"
+          ],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 60,
+          "lunchRecipeID": "lunch-beef-red-lentil-soup",
+          "dinnerRecipeID": "dinner-chinese-cabbage-chicken-salad",
+          "lunchExtraRecipeIDs": [
+            "photo7_traffic_light_salad"
+          ],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 61,
+          "lunchRecipeID": "lunch-turkey-pumpkin-millet",
+          "dinnerRecipeID": "dinner-shrimp-zucchini-salad",
+          "lunchExtraRecipeIDs": [
+            "photo7_mustard_garden_salad"
+          ],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 62,
+          "lunchRecipeID": "lunch-chicken-cabbage-soup",
+          "dinnerRecipeID": "dinner-chickpea-ratatouille",
+          "lunchExtraRecipeIDs": [],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 63,
+          "lunchRecipeID": "lunch-chicken-brown-rice-pilaf",
+          "dinnerRecipeID": "dinner-steamed-hake-carrot-zucchini",
+          "lunchExtraRecipeIDs": [
+            "photo7_tomato_feta_salad"
+          ],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 64,
+          "lunchRecipeID": "lunch-hake-chickpeas-tomatoes",
+          "dinnerRecipeID": "dinner-turkey-cauliflower-bake",
+          "lunchExtraRecipeIDs": [
+            "photo7_cabbage_cucumber_salad"
+          ],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 65,
+          "lunchRecipeID": "lunch-chicken-skewers-bulgur",
+          "dinnerRecipeID": "dinner-beet-feta-walnut-salad",
+          "lunchExtraRecipeIDs": [
+            "photo7_avocado_tomato_salad"
+          ],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 66,
+          "lunchRecipeID": "lunch-beef-meatballs-stewed-cabbage",
+          "dinnerRecipeID": "dinner-chicken-tomato-mozzarella",
+          "lunchExtraRecipeIDs": [
+            "photo7_radish_cucumber_salad"
+          ],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 67,
+          "lunchRecipeID": "lunch-lentil-pumpkin-soup",
+          "dinnerRecipeID": "dinner-chicken-broccoli-bake",
+          "lunchExtraRecipeIDs": [],
+          "dinnerExtraRecipeIDs": []
+        },
+        {
+          "number": 68,
+          "lunchRecipeID": "lunch-beef-zucchini-stew",
+          "dinnerRecipeID": "dinner-cauliflower-chicken-soup",
           "lunchExtraRecipeIDs": [],
           "dinnerExtraRecipeIDs": []
         }
@@ -14908,7 +18241,44 @@
         "med-chickpea-greek-salad",
         "med-eggplant-lentil-bake",
         "med-shrimp-spinach-pasta",
-        "med-bulgur-roasted-vegetables"
+        "med-bulgur-roasted-vegetables",
+        "bf-spinach-feta-omelette",
+        "bf-poached-egg-spinach-toast",
+        "bf-chicken-avocado-toast",
+        "bf-caprese-toast",
+        "bf-mushroom-scramble",
+        "bf-plum-walnut-oats",
+        "bf-rice-crepes-curd-berries",
+        "bf-carrot-syrniki",
+        "bf-potato-pepper-tortilla",
+        "lunch-chicken-chickpea-spinach",
+        "lunch-turkey-meatballs-tomato",
+        "lunch-steamed-chicken-patties-veg",
+        "lunch-chicken-carrot-braise",
+        "lunch-warm-chicken-egg-salad",
+        "lunch-pollock-vegetables-brown-rice",
+        "lunch-salmon-bulgur-broccoli",
+        "lunch-beef-red-lentil-soup",
+        "lunch-turkey-pumpkin-millet",
+        "lunch-chicken-cabbage-soup",
+        "lunch-chicken-brown-rice-pilaf",
+        "lunch-hake-chickpeas-tomatoes",
+        "lunch-chicken-skewers-bulgur",
+        "lunch-beef-meatballs-stewed-cabbage",
+        "dinner-pollock-herbs-lemon",
+        "dinner-green-bean-egg-salad",
+        "dinner-salmon-zucchini-cherry",
+        "dinner-pumpkin-curd-bake",
+        "dinner-shrimp-zucchini-salad",
+        "dinner-chicken-broccoli-bake",
+        "dinner-eggs-baked-spinach-tomato",
+        "dinner-chinese-cabbage-chicken-salad",
+        "dinner-chickpea-ratatouille",
+        "dinner-turkey-cauliflower-bake",
+        "dinner-steamed-hake-carrot-zucchini",
+        "dinner-beet-feta-walnut-salad",
+        "dinner-cauliflower-chicken-soup",
+        "dinner-chicken-tomato-mozzarella"
       ],
       "planningStyle": "mediterranean-breakfast-weight-menu",
       "breakfastRecipeIDs": [
@@ -14938,9 +18308,18 @@
         "med-vegetable-frittata",
         "bf-red-lentil-pancakes",
         "bf-lentil-carrot-egg-patties",
-        "eggs"
+        "eggs",
+        "bf-spinach-feta-omelette",
+        "bf-poached-egg-spinach-toast",
+        "bf-chicken-avocado-toast",
+        "bf-caprese-toast",
+        "bf-mushroom-scramble",
+        "bf-plum-walnut-oats",
+        "bf-rice-crepes-curd-berries",
+        "bf-carrot-syrniki",
+        "bf-potato-pepper-tortilla"
       ],
-      "totalRecipeCount": 163,
+      "totalRecipeCount": 200,
       "titleUk": "Меню на щодень"
     }
   ]

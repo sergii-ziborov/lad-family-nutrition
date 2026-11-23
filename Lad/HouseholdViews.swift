@@ -287,9 +287,13 @@ struct LanguageSettingsSheet: View {
                     }
                 }
                 Section {
-                    Button(L10n.text("Восстановить покупки")) { Task { await purchases.restore() } }
-                        .disabled(purchases.isBusy)
-                    CompleteCourseOffer()
+                    // The whole course ships in the app and ads are off, so the
+                    // purchase stays hidden until the store actually sells it.
+                    if purchases.commerceReady || purchases.hasFullCourse {
+                        Button(L10n.text("Восстановить покупки")) { Task { await purchases.restore() } }
+                            .disabled(purchases.isBusy)
+                        CompleteCourseOffer()
+                    }
                     if advertising.privacyOptionsRequired {
                         Button("Настройки рекламной конфиденциальности") { Task { await advertising.privacyOptions() } }
                     }

@@ -281,7 +281,7 @@ final class PlanningCoreTests: XCTestCase {
         defer { UserDefaults.standard.set(original, forKey: L10n.languageKey) }
         UserDefaults.standard.set("ru", forKey: L10n.languageKey)
         let recipes = Recipe.launchRecipes
-        XCTAssertEqual(recipes.count, 163)
+        XCTAssertEqual(recipes.count, 200)
         var thin: [String] = []
         for recipe in recipes {
             for index in recipe.steps.indices {
@@ -374,12 +374,12 @@ final class PlanningCoreTests: XCTestCase {
         let course = try XCTUnwrap(CourseCatalogAccess.bundledCourses.first { $0.id == CourseAliases.mediterranean })
         XCTAssertEqual(CourseCatalogAccess.bundledCourses.count, 1)
         XCTAssertFalse(CourseCatalogAccess.bundledCourses.contains { $0.id == "lad-starter" })
-        XCTAssertEqual(course.recipeIDs.count, 163)
-        XCTAssertEqual(Set(course.recipeIDs).count, 163)
-        XCTAssertEqual(course.totalRecipeCount, 163)
+        XCTAssertEqual(course.recipeIDs.count, 200)
+        XCTAssertEqual(Set(course.recipeIDs).count, 200)
+        XCTAssertEqual(course.totalRecipeCount, 200)
         XCTAssertTrue(course.isCombinedDefaultMenu)
-        XCTAssertEqual(course.breakfastRecipeIDs?.count, 27)
-        XCTAssertEqual(Recipe.launchRecipes.count, 163)
+        XCTAssertEqual(course.breakfastRecipeIDs?.count, 36)
+        XCTAssertEqual(Recipe.launchRecipes.count, 200)
         XCTAssertEqual(course.generalTimingRules.map(\.mealKind), [0, 1, 2])
         XCTAssertNil(course.days)
         for recipe in Recipe.launchRecipes {
@@ -739,6 +739,71 @@ final class PlanningCoreTests: XCTestCase {
         for slot in store.state.slots where slot.recipeID != dinner && slot.id != "0-2" {
             let old = before.first { $0.hasPrefix("\(slot.id):") }
             if old?.hasSuffix(":\(dinner)") == false { XCTAssertEqual(old, "\(slot.id):\(slot.recipeID)") }
+        }
+    }
+
+    @MainActor func testPlainStaplesAreOnlyServedBesideAComposedMain() throws {
+        let course = try XCTUnwrap(CourseCatalogAccess.bundledCourses.first)
+        let byID = Dictionary(uniqueKeysWithValues: Recipe.launchRecipes.map { ($0.id, $0) })
+        for id in ["photo6_plain_buckwheat", "photo6_plain_lentils", "photo4_split_peas_onion",
+                   "photo3_cauliflower_puree", "photo6_dry_pan_eggs", "photo2_boiled_eggs"] {
+            XCTAssertEqual(byID[id]?.isCourseSide, true, id)
+        }
+        for pair in course.suggestedPairs ?? [] {
+            XCTAssertEqual(byID[pair.lunchRecipeID]?.isCourseSide, false, "pair \(pair.number)")
+            XCTAssertEqual(pair.dinnerRecipeID.flatMap { byID[$0] }?.isCourseSide, false, "pair \(pair.number)")
+        }
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        store.maintainsDayMenu = true
+        store.fillTodayMenu()
+        let planned = store.state.slots.filter { $0.recipeID != Recipe.unplanned.id }
+        XCTAssertEqual(planned.count, 21)
+        for slot in planned {
+            XCTAssertFalse(store.recipe(slot).isCourseSide, "\(slot.id): \(slot.recipeID)")
+        }
+    }
+
+    func testNewCourseDishesAreCompleteAndTranslated() throws {
+        let original = UserDefaults.standard.string(forKey: L10n.languageKey)
+        defer { UserDefaults.standard.set(original, forKey: L10n.languageKey) }
+        let course = try XCTUnwrap(CourseCatalogAccess.bundledCourses.first)
+        let added = Recipe.launchRecipes.filter { $0.image.hasPrefix("Menu200-") }
+        XCTAssertEqual(added.count, 37)
+        XCTAssertEqual(added.filter { $0.mealKinds == [0] }.count, 9)
+        XCTAssertFalse(added.contains { recipe in recipe.ingredients.contains { $0.name == "Гречка" } },
+                       "The menu already has plenty of buckwheat")
+        for recipe in added {
+            XCTAssertTrue(course.recipeIDs.contains(recipe.id), recipe.id)
+            XCTAssertTrue(recipe.isPlanEligible, recipe.id)
+            XCTAssertFalse(recipe.isCourseSide, recipe.id)
+            XCTAssertNotNil(UIImage(named: recipe.image), recipe.id)
+            XCTAssertTrue(try XCTUnwrap(recipe.energyEstimate).unresolvedNames.isEmpty, recipe.id)
+            let energy = try XCTUnwrap(recipe.kcal, recipe.id)
+            XCTAssertTrue((170...700).contains(energy), "\(recipe.id): \(energy)")
+            if recipe.mealKinds == [0] {
+                XCTAssertGreaterThanOrEqual(energy, 280, recipe.id)
+                XCTAssertGreaterThanOrEqual(try XCTUnwrap(recipe.nutrients["protein"]).amount, 15, recipe.id)
+            }
+            XCTAssertEqual(Set(recipe.nutrientPreparationByIngredient.keys), Set(recipe.ingredients.map(\.name)), recipe.id)
+            for allergen in IngredientAllergens.inferred(from: recipe.ingredients) {
+                XCTAssertTrue(recipe.allergens.contains(allergen), "\(recipe.id): \(allergen)")
+            }
+        }
+        for language in ["en", "uk"] {
+            let folder = try XCTUnwrap(Bundle.main.path(forResource: language, ofType: "lproj"))
+            let table = try XCTUnwrap(try PropertyListSerialization.propertyList(
+                from: Data(contentsOf: URL(fileURLWithPath: folder).appendingPathComponent("Localizable.strings")),
+                options: [], format: nil) as? [String: String])
+            for recipe in added {
+                for text in [recipe.title, recipe.caption] + recipe.steps {
+                    let value = try XCTUnwrap(table[text], "\(language): \(recipe.id): \(text)")
+                    if language == "en" {
+                        XCTAssertNil(value.range(of: "[А-Яа-яЁёІіЇїЄєҐґ]", options: .regularExpression), recipe.id)
+                    }
+                }
+            }
         }
     }
 
@@ -1538,7 +1603,7 @@ final class PlanningCoreTests: XCTestCase {
         XCTAssertTrue(store.allRecipes.contains { $0.id == paid.id })
         store.returnToFreeCatalog()
         XCTAssertFalse(store.allRecipes.contains { $0.id == paid.id })
-        XCTAssertEqual(store.courses.first?.recipeIDs.count, 163)
+        XCTAssertEqual(store.courses.first?.recipeIDs.count, 200)
         XCTAssertEqual(store.state.slots[4].recipeID, paid.id, "A purchase change must not erase personal records")
         XCTAssertTrue(store.recipe(store.state.slots[4]).isUnavailable)
     }
@@ -1596,7 +1661,8 @@ final class PlanningCoreTests: XCTestCase {
         store.proposeDayMenu(1)
         for change in try XCTUnwrap(store.replanPreview).changes where change.nextID != Recipe.unplanned.id {
             let slot = try XCTUnwrap(store.state.slots.first { $0.id == change.slotID })
-            XCTAssertEqual(store.allRecipes.first { $0.id == change.nextID }?.mealKinds, [slot.kind])
+            // Mediterranean dishes tagged for lunch and dinner may take either slot; a dinner-only dish may not.
+            XCTAssertEqual(store.allRecipes.first { $0.id == change.nextID }?.mealKinds.contains(slot.kind), true, change.nextID)
         }
     }
 
@@ -2098,7 +2164,7 @@ final class PlanningCoreTests: XCTestCase {
     func testSelectedCoursesSurviveWeekRollover() {
         XCTAssertEqual(URL(string: CourseCatalogAccess.defaultURL)?.scheme, "https")
         XCTAssertEqual(CourseCatalogAccess.bundledCourses.count, 1)
-        XCTAssertEqual(Recipe.launchRecipes.count, 163)
+        XCTAssertEqual(Recipe.launchRecipes.count, 200)
         XCTAssertFalse(Recipe.all.first { $0.id == "salmon" }?.remoteImage ?? true)
         XCTAssertTrue(Recipe.all.allSatisfy { UIImage(named: $0.image) != nil })
         let available = Set(Recipe.all.map(\.id))
@@ -2122,7 +2188,7 @@ final class PlanningCoreTests: XCTestCase {
     }
 
     func testEveryBundledRecipeHasIngredientBasedMicronutrients() {
-        XCTAssertEqual(Recipe.launchRecipes.count, 163)
+        XCTAssertEqual(Recipe.launchRecipes.count, 200)
         for recipe in Recipe.all {
             for key in ["protein", "fat", "carbohydrate", "fiber", "sodium"] {
                 XCTAssertNotNil(recipe.nutrients[key], "\(recipe.id) \(key)")
@@ -3064,7 +3130,7 @@ final class PlanningCoreTests: XCTestCase {
 
 extension PlanningCoreTests {
     func testExpandedBreakfastsHaveCompleteQuantifiedIngredientsAndIndependentPhotos() throws {
-        let added = Recipe.launchRecipes.filter { $0.id.hasPrefix("bf-") }
+        let added = Recipe.launchRecipes.filter { $0.image.hasPrefix("Breakfast-") }
         XCTAssertEqual(added.count, 10)
         XCTAssertEqual(Set(added.map(\.image)).count, 10)
         for recipe in added {

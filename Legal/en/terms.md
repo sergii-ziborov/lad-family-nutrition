@@ -1,6 +1,6 @@
 # Terms of Use
 
-Version: 21 October 2026. These service terms describe Ladlekin. The licence for the App Store application is Apple's Standard EULA, linked below. Mandatory consumer rights remain unaffected. The publisher is identified in the App Store listing; support and privacy contacts must be provided there before release.
+Version: 21 October 2026. These service terms describe Ladlekin. The licence for the App Store application is Apple's Standard EULA, linked below. Mandatory consumer rights remain unaffected. Publisher: Serhii Ziborov. Support and privacy contact: sergii.ziborov@gmail.com.
 
 ## What Ladlekin does
 

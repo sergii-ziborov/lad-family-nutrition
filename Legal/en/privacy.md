@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Version: 21 October 2026. Scope: the first App Store release of Ladlekin. Publisher identity and a private support/privacy contact must be added to the store listing and the public policy before publication. This policy does not authorise selling personal data.
+Version: 23 November 2026. Scope: the first App Store release of Ladlekin. Publisher: Serhii Ziborov. Privacy and support contact: sergii.ziborov@gmail.com. This policy does not authorise selling personal data.
 
 ## Information you enter
 
@@ -24,4 +24,4 @@ Local records are kept until you edit or delete them or remove the app. You can 
 
 ## Families, requests and changes
 
-Adults should manage children's profiles with appropriate permission and professional guidance. The app is not a child-directed social network and has no public profile, messaging or author access to your health records. For applicable access, correction, deletion or privacy requests, use the private contact published in the App Store support page. Do not post health records in public issue trackers. Material changes to data use require an updated policy and any required permission; this version's date identifies its scope.
+Adults should manage children's profiles with appropriate permission and professional guidance. The app is not a child-directed social network and has no public profile, messaging or author access to your health records. For applicable access, correction, deletion or privacy requests, write to sergii.ziborov@gmail.com. Do not post health records in public issue trackers. Material changes to data use require an updated policy and any required permission; this version's date identifies its scope.

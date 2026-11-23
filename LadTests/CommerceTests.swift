@@ -20,7 +20,7 @@ final class CommerceTests: XCTestCase {
     func testReleaseCatalogCannotUnlockPaidRecipesFromLegacyBundle() throws {
         guard ReleasePolicy.isStoreRelease else { throw XCTSkip("Run this packaging regression with the Release configuration") }
         XCTAssertNil(Bundle.main.url(forResource: "legacy-recipes", withExtension: "json"))
-        XCTAssertEqual(Recipe.all.count, 163)
+        XCTAssertEqual(Recipe.all.count, 200)
         XCTAssertEqual(Set(Recipe.all.map(\.id)), Set(Recipe.launchRecipes.map(\.id)))
         let store = LadStore()
         store.returnToFreeCatalog()

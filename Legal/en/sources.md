@@ -4,7 +4,7 @@ The current recipe-card text was prepared for Ladlekin from ingredient and cooki
 
 Cooking temperatures were checked against [FoodSafety.gov](https://www.foodsafety.gov/food-safety-charts/safe-minimum-internal-temperatures) and [USDA FSIS](https://ask.fsis.usda.gov/article/To-what-temperature-should-I-cook-beef). Timing varies with food size and equipment; checking doneness takes priority over a timer.
 
-Version: 26 October 2026. Ladlekin is a meal-planning and personal-record tool. For support, content complaints, privacy requests and author proposals, use the publisher's private contact on the App Store Support page. Include the app version, iOS version and reproduction steps. Do not send health records, access keys, bank details or tax documents through public issue trackers.
+Version: 26 October 2026. Ladlekin is a meal-planning and personal-record tool. For support, content complaints, privacy requests and author proposals, write to the publisher, Serhii Ziborov: sergii.ziborov@gmail.com. Include the app version, iOS version and reproduction steps. Do not send health records, access keys, bank details or tax documents through public issue trackers.
 
 ## Nutrition and food safety
 
