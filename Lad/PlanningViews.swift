@@ -781,7 +781,7 @@ struct RecipeDetailView: View {
                             .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.sage)
                     }
                 }
-                Text("Порция подстроена под калорийность меню этого дня, возраст и цель каждого. Ручной размер задаётся в профиле.")
+                Text("Порция следует за возрастом и целью каждого. Под лёгкое меню она растёт не больше чем на четверть, остальное дадут перекус или фрукты. Ручной размер задаётся в профиле.")
                     .font(.system(size: 11)).foregroundStyle(Palette.muted)
                     .fixedSize(horizontal: false, vertical: true)
             }.padding(18).background(Palette.paleSage.opacity(0.65), in: RoundedRectangle(cornerRadius: 19))

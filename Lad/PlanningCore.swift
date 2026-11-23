@@ -245,7 +245,7 @@ enum PersonalPortions {
                           byID: [String: Recipe], skippedIDs: Set<String>) -> Double {
         if isExplicitManual(member) || isSpecialContext(member) { return member.portion }
         if let fitted = foodMultiplier(member: member, day: day, slots: slots, byID: byID, skippedIDs: skippedIDs) {
-            return clampShare(fitted * goalScale(member), upper: 3)
+            return min(menuCeiling(member), clampShare(fitted * goalScale(member), upper: 3))
         }
         // A partial day is not rescaled onto the adult equation. The stored
         // serving remains the fallback only after that equation was requested.
@@ -258,14 +258,27 @@ enum PersonalPortions {
         return profileShare(member)
     }
 
+    /// One authored serving is already an adult plate. The default course is
+    /// light (roughly 650–1,100 kcal a day at one serving), and stretching it
+    /// to a whole day's energy doubled every dish: eight cottage-cheese
+    /// pancakes for a breakfast, 1.5 servings for a five-year-old. A light
+    /// menu may raise the plate by at most a quarter over the profile share,
+    /// which is the plate of a 1,600 kcal reference day. The rest of the day
+    /// comes from the optional snack, fruit or bread; Statistics shows the gap.
+    static let maxMenuStretch = 1.25
+
+    static func menuCeiling(_ member: FamilyMember) -> Double {
+        profileShare(member) * maxMenuStretch
+    }
+
     /// `profileShare` is a share of a 2,000 kcal reference day. The authored
     /// servings of a course do not add up to that: the default course gives
     /// roughly 650–1,100 kcal a day at one serving. Applying the share to
     /// those servings left children (65–80%) with a few hundred kcal a day.
     /// For anyone whose share comes from age, goal or a typed calorie figure,
-    /// convert it to servings of the household's actual menu for that day.
-    /// The relation between people stays the same (85% vs 100% vs 65%); only
-    /// the absolute plate follows the menu. A day without three planned
+    /// fit it to the household's actual menu for that day, within
+    /// `maxMenuStretch`. The relation between people stays the same
+    /// (85% vs 100% vs 65%). A day without three planned
     /// meals with known calories borrows the average of the complete days.
     static func menuFittedShare(member: FamilyMember, day: Int, slots: [MealSlot],
                                 byID: [String: Recipe], skippedIDs: Set<String>) -> Double? {
@@ -282,8 +295,9 @@ enum PersonalPortions {
         guard let menu, menu > 0 else { return nil }
         let fixed = fixedEnergy(member: member, day: day, slots: slots, byID: byID, skippedIDs: skippedIDs)
         guard need > fixed else { return nil }
-        // Same UI limit as the adult opt-in path; callers show what is left.
-        return min(3, max(0.4, (need - fixed) / menu))
+        // A hearty menu shrinks the plate; a light one stretches it only up to
+        // the ceiling. Callers show what is left of the day.
+        return min(menuCeiling(member), max(0.4, (need - fixed) / menu))
     }
 
     /// Food energy of one serving of each planned breakfast, lunch and dinner

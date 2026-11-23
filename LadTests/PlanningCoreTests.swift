@@ -677,7 +677,7 @@ final class PlanningCoreTests: XCTestCase {
     }
 
 
-    func testHouseholdPortionsFollowTheDayMenuEnergyAndKeepTheirRatio() throws {
+    func testHouseholdPortionsStayRealisticOnALightMenuAndKeepTheirRatio() throws {
         func person(_ id: String, age: Int, goal: String) -> FamilyMember {
             FamilyMember(id: id, name: id, goal: goal, portion: 1, allergies: [], ageYears: age)
         }
@@ -688,24 +688,30 @@ final class PlanningCoreTests: XCTestCase {
         let people = [maria, sergey, ester, beatrice]
         let food = portionMeal(kcal: 300)
         // Breakfast, lunch and dinner at one authored serving: 900 kcal, like the
-        // default course (650–1,100 kcal) that left children at a few hundred.
+        // light default course. Fitting a whole day to it doubled every plate.
         var slots = (0..<3).map { MealSlot(id: "0-\($0)", day: 0, kind: $0, recipeID: food.id, memberIDs: people.map(\.id)) }
         let byID = PersonalPortions.recipeIndex([food])
-        func share(_ member: FamilyMember, day: Int = 0) -> Double {
-            PersonalPortions.multiplier(member: member, recipe: food, day: day, slots: slots, byID: byID, skippedIDs: [])
+        func share(_ member: FamilyMember, day: Int = 0, in day0: [MealSlot]? = nil, recipes: [String: Recipe]? = nil) -> Double {
+            PersonalPortions.multiplier(member: member, recipe: food, day: day, slots: day0 ?? slots,
+                                        byID: recipes ?? byID, skippedIDs: [])
         }
-        XCTAssertEqual(share(maria), 1700.0 / 900, accuracy: 0.0001)
-        XCTAssertEqual(share(sergey), 2000.0 / 900, accuracy: 0.0001)
-        XCTAssertEqual(share(ester), 1600.0 / 900, accuracy: 0.0001)
-        XCTAssertEqual(share(beatrice), 1300.0 / 900, accuracy: 0.0001)
+        XCTAssertEqual(share(maria), 0.85 * 1.25, accuracy: 0.0001)
+        XCTAssertEqual(share(sergey), 1.25, accuracy: 0.0001)
+        XCTAssertEqual(share(ester), 1.0, accuracy: 0.0001)
+        XCTAssertEqual(share(beatrice), 0.65 * 1.25, accuracy: 0.0001)
+        XCTAssertEqual(people.map { share($0) }.reduce(0, +), 4.125, accuracy: 0.0001, "about four servings for the family, not eight")
         XCTAssertEqual(share(beatrice) / share(sergey), 0.65, accuracy: 0.0001)
         XCTAssertEqual(PersonalPortions.profileDailyEnergy(beatrice) ?? 0, 1300, accuracy: 0.001)
+        // A hearty menu still shrinks the plate to the day's energy.
+        let hearty = portionMeal(kcal: 800)
+        let heartyDay = (0..<3).map { MealSlot(id: "0-\($0)", day: 0, kind: $0, recipeID: hearty.id, memberIDs: people.map(\.id)) }
+        XCTAssertEqual(share(sergey, in: heartyDay, recipes: PersonalPortions.recipeIndex([hearty])), 2000.0 / 2400, accuracy: 0.0001)
         // A missed school lunch does not inflate the other meals.
         slots[1].memberIDs = [maria.id, sergey.id]
-        XCTAssertEqual(share(ester), 1600.0 / 900, accuracy: 0.0001)
+        XCTAssertEqual(share(ester), 1.0, accuracy: 0.0001)
         // A day without a planned dinner borrows the average of complete days.
         slots += (0..<2).map { MealSlot(id: "1-\($0)", day: 1, kind: $0, recipeID: food.id, memberIDs: people.map(\.id)) }
-        XCTAssertEqual(share(sergey, day: 1), 2000.0 / 900, accuracy: 0.0001)
+        XCTAssertEqual(share(sergey, day: 1), 1.25, accuracy: 0.0001)
         // Without any planned day the stored age share stays as it was.
         XCTAssertEqual(PersonalPortions.multiplier(member: beatrice, recipe: food, day: 0, slots: [], byID: byID, skippedIDs: []), 0.65, accuracy: 0.0001)
         var manual = beatrice
@@ -845,14 +851,14 @@ final class PlanningCoreTests: XCTestCase {
 
     func testPersonalFoodPortionsMatchEnergyAndNeverIncreaseDrinks() throws {
         let member = portionProfile()
-        let food = portionMeal()
+        let food = portionMeal(kcal: 600)
         let wine = try XCTUnwrap(CourseBeverages.all.first { $0.id == "course-drink-red-wine" })
         var slots = portionDay(food)
         slots[1].setBeverages([wine.id])
         let recipes = [food, wine]
         let factor = try XCTUnwrap(PersonalPortions.foodMultiplier(member: member, day: 0, slots: slots,
                                                                   recipes: recipes, skippedIDs: []))
-        XCTAssertEqual(factor, (2021 - 85) / 1500, accuracy: 0.0001)
+        XCTAssertEqual(factor, (2021 - 85) / 1800, accuracy: 0.0001)
         let total = slots.reduce(0.0) { result, slot in
             result + slot.allRecipeIDs.compactMap { id in recipes.first { $0.id == id } }.reduce(0) {
                 $0 + Double($1.kcal ?? 0) * PersonalPortions.multiplier(member: member, recipe: $1, day: 0,
@@ -866,6 +872,11 @@ final class PlanningCoreTests: XCTestCase {
         let stock = PlanningCore.resolvePlan(slots: slots, members: [member], recipes: recipes, pantry: [], startDate: future)
         XCTAssertEqual(try XCTUnwrap(stock.shoppingNeeds.first { $0.name == "Яйцо" }).required, 300 * factor, accuracy: 0.001)
         XCTAssertEqual(try XCTUnwrap(stock.shoppingNeeds.first { $0.name == "Красное сухое вино" }).required, 100)
+        // A light menu is not stretched past a quarter over the profile plate.
+        let light = portionMeal(kcal: 300)
+        XCTAssertEqual(PersonalPortions.multiplier(member: member, recipe: light, day: 0, slots: portionDay(light),
+                                                   recipes: [light], skippedIDs: []),
+                       PersonalPortions.profileShare(member) * 1.25, accuracy: 0.0001)
     }
 
     func testIncompleteMenuAndUnknownCaloriesKeepManualPortions() {
@@ -930,7 +941,12 @@ final class PlanningCoreTests: XCTestCase {
                                                              recipeID: $0.element.id, memberIDs: [member.id]) }
         let day = store.dayRecipes(for: member, day: 0)
         let total = day.reduce(0.0) { $0 + Double($1.recipe.kcal!) * $1.portion }
-        XCTAssertEqual(total, try XCTUnwrap(PersonalPortions.energyTarget(member)), accuracy: 0.001)
+        let menu = chosen.reduce(0.0) { $0 + Double($1.kcal!) }
+        let fitted = try XCTUnwrap(PersonalPortions.foodMultiplier(member: member, day: 0, slots: store.state.slots,
+                                                                  byID: store.recipesByID, skippedIDs: []))
+        XCTAssertEqual(fitted * menu, try XCTUnwrap(PersonalPortions.energyTarget(member)), accuracy: 0.001)
+        // The plate follows the energy target, up to a quarter over the profile plate.
+        XCTAssertEqual(total, menu * min(fitted, PersonalPortions.menuCeiling(member)), accuracy: 0.001)
         XCTAssertEqual(day[0].portion, store.portion(for: member, recipe: chosen[0], slot: store.state.slots[0]))
         var child = member
         child.ageYears = 12
@@ -3313,7 +3329,8 @@ extension PlanningCoreTests {
         reducing.goal = "Снижение"
         let fitted = try XCTUnwrap(PersonalPortions.foodMultiplier(member: reducing, day: 0, slots: portionDay(food), recipes: [food], skippedIDs: []))
         XCTAssertEqual(fitted, 2021 / 1350, accuracy: 0.0001)
-        XCTAssertEqual(PersonalPortions.multiplier(member: reducing, recipe: food, day: 0, slots: portionDay(food), recipes: [food], skippedIDs: []), fitted * 0.85, accuracy: 0.0001)
+        XCTAssertEqual(PersonalPortions.multiplier(member: reducing, recipe: food, day: 0, slots: portionDay(food), recipes: [food], skippedIDs: []),
+                       min(fitted * 0.85, PersonalPortions.menuCeiling(reducing)), accuracy: 0.0001)
         XCTAssertEqual(try XCTUnwrap(PersonalPortions.energyTarget(reducing)), 2021, accuracy: 0.01)
         var incomplete = portionDay(food)
         incomplete.removeLast()

@@ -2085,7 +2085,7 @@
 "Готовим на %d чел. — количества ниже уже умножены ×%@" = "Cooking for %d people: the amounts below are already ×%@";
 "%@ порц. · ~%d ккал" = "%@ serv. · ~%d kcal";
 "%@ порц. · ккал неизвестны" = "%@ serv. · kcal unknown";
-"Порция подстроена под калорийность меню этого дня, возраст и цель каждого. Ручной размер задаётся в профиле." = "Each plate follows the calories of this day's menu and each person's age and goal. A fixed size can be set in the profile.";
+"Порция следует за возрастом и целью каждого. Под лёгкое меню она растёт не больше чем на четверть, остальное дадут перекус или фрукты. Ручной размер задаётся в профиле." = "Each plate follows the person's age and goal. A light menu raises it by a quarter at most; a snack or fruit covers the rest. A fixed size can be set in the profile.";
 "На всех за столом: %d чел." = "For everyone at the table: %d people";
 "За одну порцию рецепта" = "For one recipe serving";
 "%d за столом · %@" = "%d at the table · %@";
