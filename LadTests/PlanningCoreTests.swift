@@ -331,7 +331,13 @@ final class PlanningCoreTests: XCTestCase {
 
     func testPricingKeepsRawAndCookedProductsDistinctAndRejectsInvalidPack() {
         let dryPrice = IngredientPrice(productName: "Рис", packagePrice: 10, packageQuantity: 1, packageUnit: "кг", currency: "UAH")
-        XCTAssertNil(FoodCost.price(for: "Рис варёный", prices: [dryPrice]))
+        // Cooked rice is priced from the dry pack by its yield, not gram for gram.
+        let cooked = Ingredient(name: "Рис варёный", amount: 280, unit: "г", category: "Бакалея")
+        let cookedCost = FoodCost.ingredient(cooked, prices: [dryPrice])
+        XCTAssertEqual(cookedCost?.amount ?? 0, 10 * 0.1, accuracy: 0.0001)
+        XCTAssertEqual(cookedCost?.approximate, true)
+        let ownCookedPrice = IngredientPrice(productName: "Рис варёный", packagePrice: 12, packageQuantity: 1, packageUnit: "кг", currency: "UAH")
+        XCTAssertEqual(FoodCost.ingredient(cooked, prices: [dryPrice, ownCookedPrice])?.amount ?? 0, 12 * 0.28, accuracy: 0.0001)
         let broken = IngredientPrice(productName: "Рис", packagePrice: 10, packageQuantity: 0, packageUnit: "кг", currency: "UAH")
         XCTAssertFalse(broken.isValid)
         XCTAssertNil(FoodCost.price(for: "Рис", prices: [broken]))
@@ -2743,7 +2749,8 @@ final class PlanningCoreTests: XCTestCase {
 
     func testProductSearchFindsAlternateLabelWithoutChangingDisplayName() {
         let suggestions = PlanningCore.ingredientSuggestions(recipes: Recipe.all, pantry: [], query: "помидор")
-        XCTAssertEqual(Set(suggestions.map(\.name)), ["Томаты", "Томаты черри"])
+        // Sun-dried tomatoes joined the course; they are tomatoes too, but a separate product.
+        XCTAssertEqual(Set(suggestions.map(\.name)), ["Томаты", "Томаты черри", "Вяленые томаты"])
         XCTAssertTrue(ProductNames.matches("Томаты", query: "помид"))
         XCTAssertTrue(ProductNames.matches("Томаты", query: "tomatoes"))
         XCTAssertTrue(ProductNames.matches("Томаты черри", query: "помидоры черри"))
@@ -2766,7 +2773,9 @@ final class PlanningCoreTests: XCTestCase {
         XCTAssertEqual(PlanningCore.stock(for: tomato, pantry: pantry).known, 100)
         XCTAssertEqual(PlanningCore.key("Томаты", "г"), PlanningCore.key("Помидоры", "г"))
         XCTAssertNotEqual(PlanningCore.key("Томаты", "г"), PlanningCore.key("Томатная паста", "г"))
-        XCTAssertEqual(PlanningCore.ingredientSuggestions(recipes: Recipe.all, pantry: pantry, query: "помидор").map(\.name), ["Томаты черри"])
+        XCTAssertNotEqual(PlanningCore.key("Томаты", "г"), PlanningCore.key("Вяленые томаты", "г"))
+        XCTAssertEqual(Set(PlanningCore.ingredientSuggestions(recipes: Recipe.all, pantry: pantry, query: "помидор").map(\.name)),
+                       ["Томаты черри", "Вяленые томаты"])
     }
 
     func testShoppingCombinesSynonymousNamesAcrossRecipes() {

@@ -130,6 +130,12 @@ enum FoodCost {
         ]
         return Dictionary(uniqueKeysWithValues: pairs.map { (ProductNames.normalized($0.key), $0.value) })
     }()
+    /// Grams of the cooked food one gram of the dry pack makes, for cooked
+    /// products priced from their dry pack. Rice: USDA FoodData Central gives
+    /// about 365 kcal per 100 g raw and 130 cooked, so 1 g dry makes about 2.8 g.
+    /// Without it 280 g of cooked rice was billed as 280 g of dry rice.
+    private static let cookedYield: [String: Double] = [ProductNames.normalized("рис вареный"): 2.8]
+
     static func price(for name: String, prices: [IngredientPrice]) -> IngredientPrice? {
         func match(_ name: String) -> IngredientPrice? {
             prices.filter { $0.id == ProductNames.canonical(name) }.max { $0.updatedAt < $1.updatedAt }
@@ -147,7 +153,7 @@ enum FoodCost {
                                                             unit: price.packageUnit, category: source.category))
         guard let used = food.amount, used.isFinite, used > 0,
               let paid = pack.amount, paid.isFinite, paid > 0 else { return nil }
-        let ratio: Double
+        var ratio: Double
         var approximate = food.aiEstimated == true || pack.aiEstimated == true || price.reference != nil ||
             ProductNames.canonical(price.productName) != ProductNames.canonical(source.name)
         if food.unit == pack.unit { ratio = used / paid }
@@ -157,6 +163,10 @@ enum FoodCost {
             approximate = approximate || ProductNames.canonical(source.name) != ProductNames.canonical("Вода")
         }
         else { return nil }
+        if ProductNames.canonical(price.productName) != ProductNames.canonical(source.name),
+           let yield = cookedYield[ProductNames.normalized(source.name)] {
+            ratio /= yield
+        }
         let total = price.packagePrice * ratio * multiplier
         let maximum = total * max(1, (food.amountMax ?? used) / used)
         guard total.isFinite, maximum.isFinite else { return nil }
