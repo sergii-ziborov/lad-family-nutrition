@@ -885,10 +885,12 @@ struct AvoidedRecipe: Equatable {
                 func person(_ id: String, _ name: String, age: Int, goal: String) -> FamilyMember {
                     FamilyMember(id: id, name: name, goal: goal, portion: 1, allergies: [], ageYears: age)
                 }
-                state.members = [person("maria", "Мария", age: 35, goal: "Снижение"),
-                                 person("sergey", "Сергей", age: 39, goal: "Без цели по весу"),
-                                 person("ester", "Естер", age: 10, goal: "Без цели по весу"),
-                                 person("bea", "Беатрис", age: 5, goal: "Без цели по весу")]
+                let names = L10n.languageCode == "en" ? ["Maria", "Sergey", "Ester", "Beatrice"] :
+                    L10n.languageCode == "uk" ? ["Марія", "Сергій", "Естер", "Беатріс"] : ["Мария", "Сергей", "Естер", "Беатрис"]
+                state.members = [person("maria", names[0], age: 35, goal: "Снижение"),
+                                 person("sergey", names[1], age: 39, goal: "Без цели по весу"),
+                                 person("ester", names[2], age: 10, goal: "Без цели по весу"),
+                                 person("bea", names[3], age: 5, goal: "Без цели по весу")]
                 state.selectedMemberID = "maria"
                 for index in state.slots.indices { state.slots[index].memberIDs = state.members.map(\.id) }
             }
