@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-26",
+  "brand": "Menudaro",
+  "sourceRevision": "75a90c4019674e0d821f11304cd0cc7a-combined-2-expanded-20261025",
+  "newRevision": "menudaro-editorial-20261026-3dad0499215978b6",
+  "fullCount": 150,
+  "independentlyWrittenRecipeBodies": 106,
+  "originalMainMealBodiesReplaced": 103,
+  "retainedPreviouslyAuthoredBodies": 44,
+  "mealCounts": {
+    "breakfast": 27,
+    "lunch": 71,
+    "dinner": 52
+  },
+  "unchangedFacts": [
+    "id",
+    "ingredients",
+    "estimatedServings",
+    "mealKinds",
+    "kcal",
+    "protein",
+    "nutrients",
+    "nutrientPreparations",
+    "nutritionEdibleYield",
+    "allergens",
+    "allergensVerified",
+    "courseRole",
+    "unquantifiedIngredients"
+  ],
+  "factsPreservedForAllRecipes": true,
+  "freeRecipeIDsPreserved": true,
+  "freeCount": 50,
+  "oldMainRecipeBodiesRetained": 0,
+  "newPairCount": 56,
+  "oldCompleteMainPairsReused": 0,
+  "oldDayOrderReused": false,
+  "ruleParametersPreserved": true,
+  "ruleTextRewritten": 8,
+  "timeEstimatesCorrected": {
+    "photo_beef_paprika_goulash": {
+      "before": 65,
+      "after": 80
+    },
+    "photo3_apple_curd_souffle": {
+      "before": 140,
+      "after": 160
+    },
+    "photo4_brown_rice_fruit": {
+      "before": 35,
+      "after": 50
+    },
+    "photo5_beef_pilaf": {
+      "before": 75,
+      "after": 105
+    },
+    "photo5_beef_liver_chops": {
+      "before": 15,
+      "after": 20
+    },
+    "photo5_baked_apple_mandarin_yogurt": {
+      "before": 20,
+      "after": 30
+    },
+    "photo7_lightly_salted_cucumbers": {
+      "before": 10,
+      "after": 130
+    },
+    "photo8_beef_turkey_aspic": {
+      "before": 420,
+      "after": 600
+    },
+    "photo9_eggplant_chicken_plum_rolls": {
+      "before": 35,
+      "after": 50
+    }
+  },
+  "userRightsStatement": "User supplies a mixed collection: personal material, internet, books and prior AI contributions. This is not evidence of licences for every third-party item.",
+  "editorialMethod": "New RU/EN/UK cooking instructions composed from ingredient/preparation facts; factual ingredient captions; separately generated illustrations; independently assembled pairing examples.",
+  "globalUniquenessClaim": false,
+  "exclusiveCopyrightClaim": false,
+  "sourceCollectionRightsCleared": false,
+  "publicationStatus": "Signed local candidate 1.0.0 (5). No server import, TestFlight upload or App Store submission.",
+  "primarySources": [
+    "https://www.copyright.gov/circs/circ33.pdf",
+    "https://developer.apple.com/app-store/review/guidelines/#intellectual-property",
+    "https://www.foodsafety.gov/food-safety-charts/safe-minimum-internal-temperatures",
+    "https://ask.fsis.usda.gov/article/To-what-temperature-should-I-cook-beef"
+  ],
+  "legacyRecordsUpdated": 60,
+  "legacyFactsPreserved": true,
+  "translationEntriesReplacedOrRemoved": {
+    "en": 391,
+    "uk": 391
+  },
+  "allInputFactsAggregateSHA256": "0d0eff1a68bc926ee32b8333a800092a5d2b6e3e54e8eac0b1f5e63c6700cf90",
+  "imageChecks": {
+    "resolvedDishImages": 150,
+    "distinctFileHashes": 150,
+    "newOriginalGeneratedImages": 1,
+    "newImageMethod": "Built-in imagegen, no reference image. Exact prompt and path in ignored workspace provenance record.",
+    "olderImageProvenance": "Earlier generation logs retained; distinct hashes alone do not establish ownership or worldwide uniqueness."
+  },
+  "validation": {
+    "iosTests": 178,
+    "iosFailures": 0,
+    "backendTests": 39,
+    "backendFailures": 0,
+    "finalLegalResourceChecks": 2,
+    "finalLegalResourceFailures": 0,
+    "backendOwnerManifest": "Actual 150-recipe file accepted by LaunchCatalog; free=50/full=150, breakfasts=18/27",
+    "duplicateInstructionBodies": 0,
+    "signedArchive": "Menudaro 1.0.0 (5), verified with codesign --verify --deep --strict",
+    "ipaExport": "Succeeded; 83,321,250 bytes; updated free recipe copy checked; owner fixtures and StoreKit test configuration absent",
+    "testNotes": "The first new assertion incorrectly required optional step-image arrays; corrected to validate arrays when present. Existing pantry replan test now explicitly selects an affected lunch rather than depending on generated dinner order. First failed diagnostic import also ran out of disk space; owned temporary build/report caches were removed before the successful run."
+  },
+  "remainingRightsReview": "No blanket licences for mixed input origins are evidenced. Newly authored expression and reassembled examples reduce reuse of source expression; rights in any remaining protected material, attribution or contractual restrictions require item-specific review. Culinary facts are not claimed as exclusive rights."
+}

@@ -1,0 +1,765 @@
+[
+  {
+    "id": "bf-savory-oat-pancake",
+    "title": "Овсяноблин с творогом и томатами",
+    "caption": "Несладкий завтрак: овсяная основа, творожная начинка и свежие томаты. На одну порцию.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 20,
+    "difficulty": "easy",
+    "allergens": [
+      "Овёс",
+      "Яйцо",
+      "Молоко"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-savory-oat-pancake",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Овсяные хлопья",
+        "amount": 40,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Яйцо",
+        "amount": 50,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Творог",
+        "amount": 80,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Томаты",
+        "amount": 120,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Оливковое масло",
+        "amount": 5,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Вода",
+        "amount": 40,
+        "unit": "мл",
+        "category": "Напитки"
+      }
+    ],
+    "steps": [
+      "Измельчите хлопья, смешайте с яйцом и водой. Оставьте на 5 минут.",
+      "Смажьте сковороду отмеренным маслом. Испеките блин на среднем огне с двух сторон до полной готовности яйца.",
+      "Наполните творогом и нарезанными томатами, сложите пополам."
+    ],
+    "nutrientPreparations": {
+      "Овсяные хлопья": "sauteed",
+      "Яйцо": "sauteed",
+      "Творог": "raw",
+      "Томаты": "raw",
+      "Оливковое масло": "raw",
+      "Вода": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Savory oat pancake with cottage cheese and tomatoes",
+      "uk": "Вівсяномлинець із кисломолочним сиром і томатами"
+    },
+    "protein": 22
+  },
+  {
+    "id": "bf-buckwheat-egg-mushrooms",
+    "title": "Гречка с яйцом, грибами и шпинатом",
+    "caption": "Тёплая миска с крупой, яйцом и овощами. Масса гречки — до варки; на одну порцию.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 25,
+    "difficulty": "easy",
+    "allergens": [
+      "Яйцо",
+      "Молоко"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-buckwheat-egg-mushrooms",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Гречка",
+        "amount": 55,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Яйцо",
+        "amount": 50,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Шампиньоны",
+        "amount": 120,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Шпинат",
+        "amount": 40,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Йогурт натуральный",
+        "amount": 50,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Оливковое масло",
+        "amount": 5,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Вода",
+        "amount": 130,
+        "unit": "мл",
+        "category": "Напитки"
+      }
+    ],
+    "steps": [
+      "Промойте гречку и сварите в воде по инструкции упаковки. Масса крупы указана в сухом виде.",
+      "Грибы нарежьте, приготовьте с отмеренным маслом. Добавьте шпинат и прогрейте до мягкости.",
+      "Яйцо отварите до полной готовности. Соберите гречку, овощи и яйцо в миске, подайте с йогуртом."
+    ],
+    "nutrientPreparations": {
+      "Гречка": "simmered",
+      "Яйцо": "boiledDrained",
+      "Шампиньоны": "sauteed",
+      "Шпинат": "sauteed",
+      "Йогурт натуральный": "raw",
+      "Оливковое масло": "raw",
+      "Вода": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Buckwheat with egg, mushrooms and spinach",
+      "uk": "Гречка з яйцем, грибами та шпинатом"
+    },
+    "protein": 19
+  },
+  {
+    "id": "bf-overnight-apple-oats",
+    "title": "Ночная овсянка с йогуртом и яблоком",
+    "caption": "Готовится с вечера: хлопья, густой йогурт, яблоко и немного орехов. Охлаждение — от 6 часов; на одну порцию.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 5,
+    "difficulty": "easy",
+    "allergens": [
+      "Овёс",
+      "Молоко",
+      "Орехи"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-overnight-apple-oats",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Овсяные хлопья",
+        "amount": 45,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Йогурт греческий",
+        "amount": 150,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Молоко",
+        "amount": 120,
+        "unit": "мл",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Яблоко",
+        "amount": 120,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Грецкие орехи",
+        "amount": 10,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Корица",
+        "amount": 0.5,
+        "unit": "г",
+        "category": "Специи и приправы"
+      }
+    ],
+    "steps": [
+      "Смешайте хлопья, йогурт, молоко и корицу в закрывающемся контейнере.",
+      "Уберите в холодильник минимум на 6 часов. Время в карточке — только активная подготовка.",
+      "Утром добавьте вымытое нарезанное яблоко и отмеренные орехи."
+    ],
+    "nutrientPreparations": {
+      "Овсяные хлопья": "raw",
+      "Йогурт греческий": "raw",
+      "Молоко": "raw",
+      "Яблоко": "raw",
+      "Грецкие орехи": "raw",
+      "Корица": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Overnight oats with yogurt and apple",
+      "uk": "Нічна вівсянка з йогуртом та яблуком"
+    },
+    "protein": 28
+  },
+  {
+    "id": "bf-baked-curd-oats",
+    "title": "Запечённая овсянка с творогом и яблоком",
+    "caption": "Одна порция запечённой овсянки с творогом и фруктами, без добавленного сахара.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 35,
+    "difficulty": "easy",
+    "allergens": [
+      "Овёс",
+      "Молоко",
+      "Яйцо"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-baked-curd-oats",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Овсяные хлопья",
+        "amount": 40,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Творог",
+        "amount": 120,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Яйцо",
+        "amount": 50,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Яблоко",
+        "amount": 120,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Молоко",
+        "amount": 50,
+        "unit": "мл",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Корица",
+        "amount": 0.5,
+        "unit": "г",
+        "category": "Специи и приправы"
+      }
+    ],
+    "steps": [
+      "Смешайте хлопья, творог, яйцо, молоко и корицу. Яблоко вымойте и нарежьте кубиками.",
+      "Переложите смесь с яблоком в небольшую форму на пергамент.",
+      "Запекайте при 180 °C около 25–30 минут, пока середина полностью не схватится. Дайте немного остыть."
+    ],
+    "nutrientPreparations": {
+      "Овсяные хлопья": "baked",
+      "Творог": "baked",
+      "Яйцо": "baked",
+      "Яблоко": "baked",
+      "Молоко": "baked",
+      "Корица": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Baked oats with cottage cheese and apple",
+      "uk": "Запечена вівсянка з кисломолочним сиром та яблуком"
+    },
+    "protein": 27
+  },
+  {
+    "id": "bf-curd-herb-toast",
+    "title": "Тосты с творогом, огурцом и зеленью",
+    "caption": "Несладкие тосты с творогом. Предпочтителен цельнозерновой хлеб; на одну порцию.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 10,
+    "difficulty": "easy",
+    "allergens": [
+      "Молоко",
+      "Пшеница"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-curd-herb-toast",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Творог",
+        "amount": 150,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Хлеб",
+        "amount": 60,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Огурец",
+        "amount": 100,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Укроп",
+        "amount": 10,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Оливковое масло",
+        "amount": 5,
+        "unit": "г",
+        "category": "Бакалея"
+      }
+    ],
+    "steps": [
+      "Подсушите хлеб; по возможности выберите цельнозерновой. Огурец и зелень вымойте.",
+      "Разомните творог с отмеренным оливковым маслом и рубленым укропом.",
+      "Распределите творог по тостам, добавьте нарезанный огурец."
+    ],
+    "nutrientPreparations": {
+      "Творог": "raw",
+      "Хлеб": "toasted",
+      "Огурец": "raw",
+      "Укроп": "raw",
+      "Оливковое масло": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Cottage cheese toasts with cucumber and herbs",
+      "uk": "Тости з кисломолочним сиром, огірком і зеленню"
+    },
+    "protein": 22
+  },
+  {
+    "id": "bf-chickpea-egg-skillet",
+    "title": "Нут с яйцом, томатами и тостом",
+    "caption": "Одна порция нута с яйцом и овощами. Нут удобно сварить заранее; замачивание не входит во время.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 90,
+    "difficulty": "easy",
+    "allergens": [
+      "Яйцо",
+      "Пшеница"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-chickpea-egg-skillet",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Нут",
+        "amount": 50,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Яйцо",
+        "amount": 50,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Томаты",
+        "amount": 120,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Шпинат",
+        "amount": 40,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Оливковое масло",
+        "amount": 5,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Хлеб",
+        "amount": 30,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Вода",
+        "amount": 400,
+        "unit": "мл",
+        "category": "Напитки"
+      }
+    ],
+    "steps": [
+      "Нут замочите заранее в холодильнике, промойте и сварите в воде до мягкости по упаковке. Масса нута указана сухая.",
+      "Прогрейте томаты с отмеренным маслом, добавьте готовый нут и шпинат.",
+      "Сделайте углубление, добавьте яйцо и готовьте под крышкой до полностью схватившихся белка и желтка. Подайте с подсушенным хлебом."
+    ],
+    "nutrientPreparations": {
+      "Нут": "boiledDrained",
+      "Яйцо": "sauteed",
+      "Томаты": "sauteed",
+      "Шпинат": "sauteed",
+      "Оливковое масло": "raw",
+      "Хлеб": "toasted",
+      "Вода": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Chickpea and egg skillet with tomatoes and toast",
+      "uk": "Нут із яйцем, томатами й тостом"
+    },
+    "protein": 21
+  },
+  {
+    "id": "bf-red-lentil-pancakes",
+    "title": "Чечевичные блинчики с йогуртом и огурцом",
+    "caption": "Блинчики из красной чечевицы с густым йогуртом и свежими овощами. На одну порцию.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 25,
+    "difficulty": "easy",
+    "allergens": [
+      "Молоко"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-red-lentil-pancakes",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Чечевица красная",
+        "amount": 60,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Йогурт греческий",
+        "amount": 120,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Огурец",
+        "amount": 120,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Петрушка",
+        "amount": 10,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Чеснок",
+        "amount": 3,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Оливковое масло",
+        "amount": 5,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Вода",
+        "amount": 90,
+        "unit": "мл",
+        "category": "Напитки"
+      }
+    ],
+    "steps": [
+      "Красную чечевицу промойте, залейте водой и оставьте на 2 часа в холодильнике. Слейте воду; время замачивания не входит в активное время.",
+      "Измельчите чечевицу с 90 мл свежей воды и чесноком. Испеките тонкие блинчики на отмеренном масле с двух сторон, чтобы внутри не осталось сырой массы.",
+      "Смешайте йогурт с рубленой петрушкой, подайте с блинчиками и вымытым нарезанным огурцом."
+    ],
+    "nutrientPreparations": {
+      "Чечевица красная": "sauteed",
+      "Йогурт греческий": "raw",
+      "Огурец": "raw",
+      "Петрушка": "raw",
+      "Чеснок": "sauteed",
+      "Оливковое масло": "raw",
+      "Вода": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Red lentil pancakes with yogurt and cucumber",
+      "uk": "Сочевичні млинці з йогуртом та огірком"
+    },
+    "protein": 28
+  },
+  {
+    "id": "bf-mozzarella-egg-toast",
+    "title": "Горячие тосты с яйцом и моцареллой",
+    "caption": "Горячие тосты с полностью приготовленным яйцом и моцареллой. На одну порцию.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 20,
+    "difficulty": "easy",
+    "allergens": [
+      "Пшеница",
+      "Яйцо",
+      "Молоко"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-mozzarella-egg-toast",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Хлеб",
+        "amount": 70,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Яйцо",
+        "amount": 50,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Моцарелла",
+        "amount": 50,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Томаты",
+        "amount": 100,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Оливковое масло",
+        "amount": 3,
+        "unit": "г",
+        "category": "Бакалея"
+      }
+    ],
+    "steps": [
+      "Разогрейте духовку до 180 °C. Хлеб слегка смажьте отмеренным маслом; предпочтителен цельнозерновой.",
+      "Яйцо взбейте. Распределите по хлебу вместе с нарезанными томатами и моцареллой на противне с пергаментом.",
+      "Запекайте около 12–15 минут до полной готовности яйца и расплавления сыра."
+    ],
+    "nutrientPreparations": {
+      "Хлеб": "toasted",
+      "Яйцо": "baked",
+      "Моцарелла": "baked",
+      "Томаты": "baked",
+      "Оливковое масло": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Warm egg and mozzarella toasts",
+      "uk": "Гарячі тости з яйцем і моцарелою"
+    },
+    "protein": 24
+  },
+  {
+    "id": "bf-millet-pumpkin-yogurt",
+    "title": "Пшённая каша с тыквой и йогуртом",
+    "caption": "Тёплая каша с тыквой, йогуртом и небольшой порцией орехов. На одну порцию.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 30,
+    "difficulty": "easy",
+    "allergens": [
+      "Молоко",
+      "Орехи"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-millet-pumpkin-yogurt",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Пшено",
+        "amount": 50,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Молоко",
+        "amount": 150,
+        "unit": "мл",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Тыква",
+        "amount": 150,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Йогурт греческий",
+        "amount": 100,
+        "unit": "г",
+        "category": "Молочные продукты"
+      },
+      {
+        "name": "Грецкие орехи",
+        "amount": 10,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Вода",
+        "amount": 150,
+        "unit": "мл",
+        "category": "Напитки"
+      }
+    ],
+    "steps": [
+      "Пшено тщательно промойте. Тыкву очистите и нарежьте маленькими кубиками; крупа указана сухая, тыква — очищенная.",
+      "Сварите пшено с тыквой в воде и молоке на слабом огне до мягкости, около 20–25 минут. При необходимости долейте воду.",
+      "Дайте каше немного остыть, добавьте йогурт и отмеренные орехи."
+    ],
+    "nutrientPreparations": {
+      "Пшено": "simmered",
+      "Молоко": "simmered",
+      "Тыква": "simmered",
+      "Йогурт греческий": "raw",
+      "Грецкие орехи": "raw",
+      "Вода": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Millet porridge with pumpkin and yogurt",
+      "uk": "Пшоняна каша з гарбузом та йогуртом"
+    },
+    "protein": 23
+  },
+  {
+    "id": "bf-salmon-avocado-toast",
+    "title": "Тосты с запечённым лососем и авокадо",
+    "caption": "Тосты со свежим запечённым лососем, авокадо и огурцом. На одну порцию.",
+    "cuisine": "Средиземноморская (вариация)",
+    "minutes": 25,
+    "difficulty": "easy",
+    "allergens": [
+      "Рыба",
+      "Пшеница"
+    ],
+    "allergensVerified": true,
+    "mealKinds": [
+      0
+    ],
+    "estimatedServings": 1,
+    "imageId": "Breakfast-bf-salmon-avocado-toast",
+    "imageSource": "bundled",
+    "ingredients": [
+      {
+        "name": "Лосось",
+        "amount": 70,
+        "unit": "г",
+        "category": "Рыба и мясо"
+      },
+      {
+        "name": "Хлеб",
+        "amount": 60,
+        "unit": "г",
+        "category": "Бакалея"
+      },
+      {
+        "name": "Авокадо",
+        "amount": 50,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Огурец",
+        "amount": 100,
+        "unit": "г",
+        "category": "Овощи и зелень"
+      },
+      {
+        "name": "Лимонный сок",
+        "amount": 10,
+        "unit": "мл",
+        "category": "Овощи и зелень"
+      }
+    ],
+    "steps": [
+      "Лосось запеките при 180 °C до полной готовности: мякоть должна легко разделяться на волокна. Удалите кости.",
+      "Подсушите хлеб; предпочтителен цельнозерновой. Авокадо разомните с лимонным соком.",
+      "Распределите авокадо и приготовленную рыбу по тостам, подайте с вымытым нарезанным огурцом."
+    ],
+    "nutrientPreparations": {
+      "Лосось": "baked",
+      "Хлеб": "toasted",
+      "Авокадо": "raw",
+      "Огурец": "raw",
+      "Лимонный сок": "raw"
+    },
+    "nutrients": {},
+    "editorialTitles": {
+      "en": "Baked salmon and avocado toasts",
+      "uk": "Тости із запеченим лососем та авокадо"
+    },
+    "protein": 21
+  }
+]

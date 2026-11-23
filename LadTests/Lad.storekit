@@ -1,0 +1,16 @@
+{
+  "identifier": "71B7175C-5EBD-4F96-9EBE-5C876C9BB9AA",
+  "nonRenewingSubscriptions": [],
+  "products": [{
+    "displayPrice": "3.00",
+    "familyShareable": false,
+    "internalID": "8C972D1D-C45D-4549-BECC-4D0B82AE6B77",
+    "localizations": [{"description": "Full course and no advertising", "displayName": "Lad Complete", "locale": "en_US"}],
+    "productID": "app.lad.complete",
+    "referenceName": "Complete course and no ads",
+    "type": "NonConsumable"
+  }],
+  "settings": {"_failTransactionsEnabled": false, "_locale": "en_US", "_storefront": "USA"},
+  "subscriptionGroups": [],
+  "version": {"major": 3, "minor": 0}
+}

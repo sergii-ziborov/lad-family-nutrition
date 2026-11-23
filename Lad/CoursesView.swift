@@ -1,5 +1,106 @@
 import SwiftUI
 
+struct CollapsibleInfo<Content: View>: View {
+    let title: String
+    var icon = "info.circle"
+    var tint: Color = Palette.sage
+    @ViewBuilder let content: () -> Content
+    @State private var expanded = false
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $expanded) {
+            content().padding(.top, 10)
+        } label: {
+            Label(title, systemImage: icon)
+                .font(.system(size: 13, weight: .semibold))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .tint(tint).foregroundStyle(tint)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(tint.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+struct ExpandableCourseText: View {
+    let text: String
+    @State private var expanded = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(text).font(.system(size: 13)).foregroundStyle(Palette.muted)
+                .multilineTextAlignment(.leading)
+                .lineLimit(expanded || text.count <= 100 ? nil : 2)
+                .fixedSize(horizontal: false, vertical: true)
+            if text.count > 100 {
+                Button { expanded.toggle() } label: {
+                    Label(L10n.text(expanded ? "Свернуть" : "Читать полностью"),
+                          systemImage: expanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
+                }.buttonStyle(.plain)
+                    .accessibilityValue(L10n.text(expanded ? "Развёрнуто" : "Свёрнуто"))
+            }
+        }
+    }
+}
+
+struct CourseTimingCard: View {
+    let courses: [LadCourse]
+    private var timedCourses: [LadCourse] { courses.filter { !$0.generalTimingRules.isEmpty } }
+    private let kinds = ["Завтрак", "Обед", "Ужин"]
+    private let icons = ["sunrise", "sun.max", "moon"]
+    var body: some View {
+        if !timedCourses.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Label(L10n.text("Рекомендуемые часы курса"), systemImage: "clock")
+                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
+                ForEach(timedCourses) { course in
+                    if courses.count > 1 {
+                        Text(course.title).font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Palette.ink).fixedSize(horizontal: false, vertical: true)
+                    }
+                    ForEach(0..<3, id: \.self) { kind in
+                        let rules = course.generalTimingRules.filter { $0.mealKind == kind }
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                Label(L10n.text(kinds[kind]), systemImage: icons[kind])
+                                    .foregroundStyle(Palette.ink)
+                                Spacer(minLength: 6)
+                                Text(rules.isEmpty ? L10n.text("час не указан") : rules.compactMap(\.recommendedTimingLabel).joined(separator: " · "))
+                                    .foregroundStyle(rules.isEmpty ? Palette.muted : Palette.sage)
+                                    .multilineTextAlignment(.trailing)
+                            }.font(.system(size: 13, weight: .medium))
+                        }
+                    }
+                }
+            }.padding(15).frame(maxWidth: .infinity, alignment: .leading)
+                .background(.white, in: RoundedRectangle(cornerRadius: 18))
+        }
+    }
+}
+
+struct CourseRuleWarningPanel: View {
+    @EnvironmentObject var store: LadStore
+    let warnings: [CourseRuleWarning]
+
+    var body: some View {
+        if !warnings.isEmpty {
+            CollapsibleInfo(title: L10n.format("Рекомендации для меню: %d", warnings.count),
+                            icon: "info.circle", tint: Palette.terracotta) {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(warnings) { warning in
+                    Text("\(warning.day.map { store.dateLabel($0) + " · " } ?? "")\(warning.scope == "week" ? L10n.text("Неделя") + " · " : "")\(warning.text)")
+                        .font(.system(size: 11))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text("Это рекомендации источников, а не запрет: меню можно изменить или применить всё равно.")
+                    .font(.system(size: 11)).foregroundStyle(Palette.muted)
+            }
+            .foregroundStyle(Palette.terracotta)
+            }
+        }
+    }
+}
+
 struct CatalogHubView: View {
     @State private var section = 0
 
@@ -23,49 +124,34 @@ struct CatalogHubView: View {
 
 struct CoursesView: View {
     @EnvironmentObject var store: LadStore
-    @State private var showServer = false
     @State private var confirmDeselectAll = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             LazyVStack(alignment: .leading, spacing: 18) {
-                PageTitle(eyebrow: "ПРОГРАММЫ ПИТАНИЯ", title: "Курсы для вашего стола")
-                Text("Курс объединяет блюда и тему: домашняя кухня, кухни мира или индивидуальная программа. Выбранные курсы служат источником будущего меню; уже составленная неделя меняется только после подтверждения.")
-                    .font(.system(size: 13)).foregroundStyle(Palette.muted)
-                    .fixedSize(horizontal: false, vertical: true)
+                PageTitle(eyebrow: "ОДНА КУХНЯ", title: "Здоровое питание")
+                if store.courses.contains(where: \.isCombinedDefaultMenu) { CompleteCourseOffer() }
                 if store.selectedCourses.isEmpty {
                     Label("Ничего не выбрано · меню дня и недели пустое", systemImage: "circle.dashed")
                         .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
-                } else {
-                    Label(L10n.format("Выбрано курсов: %d · %@", store.selectedCourses.count,
-                                      store.selectedCourses.map(\.title).joined(separator: ", ")),
-                          systemImage: "checkmark.circle.fill")
-                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
                 if !store.courses.isEmpty {
-                    HStack(spacing: 12) {
-                        Button("Выбрать все") { store.selectAllCourses() }
-                            .disabled(store.selectedCourses.count == store.courses.count)
-                        Button("Снять весь выбор") { confirmDeselectAll = true }
-                            .disabled(store.selectedCourses.isEmpty)
-                    }
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Palette.sage)
-                }
-                Button { showServer = true } label: {
-                    HStack(spacing: 11) {
-                        Image(systemName: "server.rack").foregroundStyle(Palette.sage)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Каталог программ").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
-                            Text(L10n.text(store.courseCatalogStatus)).font(.system(size: 11)).foregroundStyle(Palette.muted)
+                    CollapsibleInfo(title: L10n.format("Выбрано курсов: %d", store.selectedCourses.count),
+                                    icon: "checkmark.circle") {
+                        VStack(alignment: .leading, spacing: 14) {
+                            ForEach(store.selectedCourses) { course in
+                                Text(course.title).font(.system(size: 13)).foregroundStyle(Palette.ink)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            HStack(spacing: 12) {
+                                Button("Выбрать все") { store.selectAllCourses() }
+                                    .disabled(store.selectedCourses.count == store.courses.count)
+                                Button("Снять весь выбор") { confirmDeselectAll = true }
+                                    .disabled(store.selectedCourses.isEmpty)
+                            }.font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
                         }
-                        Spacer(minLength: 4)
-                        Image(systemName: "chevron.right").foregroundStyle(Palette.sage)
                     }
-                    .padding(15)
-                    .background(Palette.paleSage.opacity(0.75), in: RoundedRectangle(cornerRadius: 18))
-                }.buttonStyle(.plain)
+                }
                 if store.courses.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Image(systemName: "books.vertical").font(.system(size: 27)).foregroundStyle(Palette.sage)
@@ -78,51 +164,7 @@ struct CoursesView: View {
                     .padding(20)
                     .background(.white, in: RoundedRectangle(cornerRadius: 20))
                 } else {
-                    if !store.activeCourseIDs.isEmpty {
-                        Button { store.proposeWeekMenu() } label: {
-                            Label("Пересчитать всё меню недели из выбранных курсов", systemImage: "calendar.badge.plus")
-                                .font(.system(size: 14, weight: .semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(16)
-                                .foregroundStyle(.white)
-                                .background(Palette.sage, in: RoundedRectangle(cornerRadius: 16))
-                        }.buttonStyle(.plain)
-                    }
-                    ForEach(store.courses) { course in
-                        let isSelected = store.activeCourseIDs.contains(course.id)
-                        NavigationLink { CourseDetailView(courseID: course.id) } label: {
-                            VStack(alignment: .leading, spacing: 10) {
-                                HStack(alignment: .top, spacing: 12) {
-                                    VStack(alignment: .leading, spacing: 5) {
-                                        Text(course.isFree ? "БЕСПЛАТНО" : "ПО ДОСТУПУ")
-                                            .font(.system(size: 10, weight: .bold)).tracking(1.2)
-                                            .foregroundStyle(Palette.terracotta)
-                                        Text(course.title)
-                                            .font(.system(size: 22, weight: .semibold, design: .serif))
-                                            .foregroundStyle(Palette.ink)
-                                            .multilineTextAlignment(.leading)
-                                            .fixedSize(horizontal: false, vertical: true)
-                                    }
-                                    Spacer(minLength: 4)
-                                    Image(systemName: "chevron.right").foregroundStyle(Palette.sage)
-                                }
-                                Label(isSelected ? "Выбрано" : "Не выбрано",
-                                      systemImage: isSelected ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(isSelected ? Palette.sage : Palette.muted)
-                                Text(course.summary)
-                                    .font(.system(size: 13)).foregroundStyle(Palette.muted)
-                                    .multilineTextAlignment(.leading)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Text(L10n.format("Блюд в программе: %d", course.recipeIDs.count))
-                                    .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.sage)
-                            }
-                            .padding(19)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(.white, in: RoundedRectangle(cornerRadius: 20))
-                            .overlay(RoundedRectangle(cornerRadius: 20).stroke(isSelected ? Palette.sage : .clear, lineWidth: 1.5))
-                        }.buttonStyle(.plain)
-                    }
+                    ForEach(store.courses) { course in CourseCatalogueCard(course: course) }
                 }
             }
             .padding(.horizontal, 21)
@@ -130,7 +172,6 @@ struct CoursesView: View {
             .padding(.bottom, 34)
         }
         .refreshable { await store.refreshCourseCatalog() }
-        .sheet(isPresented: $showServer) { CourseServerSheet() }
         .sheet(item: $store.replanPreview) { preview in ReplanPreviewSheet(preview: preview) }
         .confirmationDialog("Убрать все курсы из меню?", isPresented: $confirmDeselectAll) {
             Button("Очистить меню дня и недели") { store.deselectAllCourses() }
@@ -138,6 +179,41 @@ struct CoursesView: View {
         } message: {
             Text("Меню и покупки очистятся; уже отмеченные съеденными блюда останутся в истории.")
         }
+    }
+}
+
+struct CourseCatalogueCard: View {
+    @EnvironmentObject var store: LadStore
+    let course: LadCourse
+    private var isSelected: Bool { store.activeCourseIDs.contains(course.id) }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(spacing: 12) {
+                Label(course.availabilityLabel, systemImage: course.isFree ? "gift" : "checkmark.shield")
+                Spacer(minLength: 4)
+                Label(L10n.text(isSelected ? "Выбрано" : "Не выбрано"),
+                      systemImage: isSelected ? "checkmark.circle.fill" : "circle")
+            }.font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(isSelected ? Palette.sage : Palette.muted)
+            NavigationLink { CourseDetailView(courseID: course.id) } label: {
+                HStack(alignment: .top, spacing: 12) {
+                    Text(course.title).font(.system(size: 22, weight: .semibold, design: .serif))
+                        .foregroundStyle(Palette.ink).multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 4)
+                    Image(systemName: "chevron.right").foregroundStyle(Palette.sage).padding(.top, 5)
+                }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+            }.buttonStyle(.plain)
+            if !course.isCombinedDefaultMenu {
+                Text(course.summary)
+                    .font(.system(size: 13)).foregroundStyle(Palette.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text(L10n.format("Блюд в программе: %d", course.recipeIDs.count))
+                .font(.system(size: 12)).foregroundStyle(Palette.muted)
+        }.padding(19).frame(maxWidth: .infinity, alignment: .leading)
+            .background(.white, in: RoundedRectangle(cornerRadius: 20))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(isSelected ? Palette.sage : .clear, lineWidth: 1.5))
     }
 }
 
@@ -157,36 +233,11 @@ struct CourseDetailView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 17) {
                 if let course {
-                    Text(course.isFree ? "БЕСПЛАТНЫЙ КУРС" : "КУРС ПО ДОСТУПУ")
-                        .font(.system(size: 11, weight: .bold)).tracking(1.5).foregroundStyle(Palette.terracotta)
+                    Label(course.availabilityLabel, systemImage: course.isFree ? "gift" : "checkmark.shield")
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.sage)
                     Text(course.title)
                         .font(.system(size: 32, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(course.summary)
-                        .font(.system(size: 15)).foregroundStyle(Palette.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if course.category == "weight-management" {
-                        Label("Недостающие граммовки, выход и калорийность оценены ИИ. Проверяйте их и аллергены перед использованием курса для похудения.",
-                              systemImage: "info.circle")
-                            .font(.system(size: 12))
-                            .foregroundStyle(Palette.terracotta)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(14)
-                            .background(Palette.peach.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
-                    }
-                    if course.hasSourceBreakfastTiming {
-                        VStack(alignment: .leading, spacing: 7) {
-                            Label("Время завтрака из исходных страниц", systemImage: "clock")
-                                .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
-                            Text(WeightCourseBreakfastTiming.sourceText)
-                                .font(.system(size: 12)).foregroundStyle(Palette.ink)
-                            Text("Время обеда и ужина в источнике не задано; личные часы настраиваются в разделе «Семья» и отображаются в меню.")
-                                .font(.system(size: 11)).foregroundStyle(Palette.muted)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(14)
-                        .background(Palette.paleSage.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
-                    }
                     Button {
                         if store.activeCourseIDs.contains(course.id) { confirmRemoval = true }
                         else { store.toggleCourse(course.id) }
@@ -199,10 +250,12 @@ struct CourseDetailView: View {
                             .foregroundStyle(.white)
                             .background(Palette.sage, in: RoundedRectangle(cornerRadius: 16))
                     }.buttonStyle(.plain)
+                    Text(course.isCombinedDefaultMenu
+                         ? L10n.text("Одна кухня на всю семью. Порции у каждого свои.")
+                         : course.summary)
+                        .font(.system(size: 14)).foregroundStyle(Palette.muted)
                     Text("Блюда программы")
                         .font(.system(size: 23, weight: .semibold, design: .serif)).foregroundStyle(Palette.ink)
-                    Text("Завтрак, обед и ужин — теги блюд; курс не закрепляет блюда за конкретным днём.")
-                        .font(.system(size: 12)).foregroundStyle(Palette.muted)
                     ForEach(0..<3, id: \.self) { kind in
                         let tagged = recipes.filter { $0.mealKinds.contains(kind) }
                         if !tagged.isEmpty {
@@ -212,7 +265,7 @@ struct CourseDetailView: View {
                             ForEach(tagged) { recipe in
                                 NavigationLink { RecipeDetailView(recipe: recipe) } label: {
                                     HStack(spacing: 13) {
-                                        RecipePicture(recipe: recipe).frame(width: 78, height: 78)
+                                        RecipePicture(recipe: recipe, thumbnail: true).frame(width: 78, height: 78)
                                             .clipShape(RoundedRectangle(cornerRadius: 13))
                                         VStack(alignment: .leading, spacing: 5) {
                                             Text(L10n.text(recipe.title))
@@ -222,10 +275,10 @@ struct CourseDetailView: View {
                                                 .fixedSize(horizontal: false, vertical: true)
                                             Text(L10n.format("%d мин", recipe.minutes))
                                                 .font(.system(size: 12)).foregroundStyle(Palette.muted)
-                                            Text(L10n.text(recipe.cuisine))
+                                            Text(L10n.text(DishVoice.cuisine(for: recipe)))
                                                 .font(.system(size: 11)).foregroundStyle(Palette.sage)
                                             if !recipe.isPlanEligible {
-                                                Text("Количества или аллергены требуют проверки")
+                                                Text("Уточните количества ингредиентов")
                                                     .font(.system(size: 11)).foregroundStyle(Palette.terracotta)
                                             }
                                         }

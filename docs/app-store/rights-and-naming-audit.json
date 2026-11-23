@@ -1,0 +1,355 @@
+{
+  "date": "2026-10-25",
+  "brand": {
+    "workingName": "Menudaro",
+    "sameLatinSpellingIn": [
+      "en",
+      "ru",
+      "uk"
+    ],
+    "suggestedPronunciation": {
+      "en": "menu-DAH-roh",
+      "ru": "менюда́ро",
+      "uk": "менюда́ро"
+    },
+    "publicStoreSearch": {
+      "us": {
+        "returnedResults": 172,
+        "exactBrandMatches": [],
+        "query": "https://itunes.apple.com/search?term=Menudaro&entity=software&country=us&limit=200"
+      },
+      "ua": {
+        "returnedResults": 0,
+        "exactBrandMatches": [],
+        "query": "https://itunes.apple.com/search?term=Menudaro&entity=software&country=ua&limit=200"
+      },
+      "il": {
+        "returnedResults": 0,
+        "exactBrandMatches": [],
+        "query": "https://itunes.apple.com/search?term=Menudaro&entity=software&country=il&limit=200"
+      },
+      "ru": {
+        "returnedResults": 0,
+        "exactBrandMatches": [],
+        "query": "https://itunes.apple.com/search?term=Menudaro&entity=software&country=ru&limit=200"
+      }
+    },
+    "israelOfficialRegister": {
+      "dataset": "https://data.gov.il/he/datasets/ministry_of_justice/simaneymisahr",
+      "datasetUpdatedAt": "2026-10-25T11:23:01.778508",
+      "approximateRecordCount": 363783,
+      "method": "Official public CKAN DataStore full-text search; no class/status restriction. Exact terms and several near spellings checked. This is not a comprehensive phonetic or legal clearance.",
+      "searches": [
+        {
+          "term": "Menudaro",
+          "total": 0,
+          "queryURL": "https://data.gov.il/api/3/action/datastore_search?resource_id=6284d4a9-fdd4-45c9-a1d6-58143c7d8127&q=Menudaro&fields=%D7%9E%D7%A1%D7%A4%D7%A8+%D7%94%D7%A1%D7%99%D7%9E%D7%9F%2C%D7%AA%D7%99%D7%90%D7%95%D7%A8+%D7%A1%D7%99%D7%9E%D7%9F+%D7%90%D7%A0%D7%92%D7%9C%D7%99%D7%AA%2C%D7%9E%D7%A6%D7%91%2C%D7%A1%D7%95%D7%92%D7%99+%D7%A0%D7%99%D7%A6%D7%94+%D7%9C%D7%91%D7%A7%D7%A9%D7%94&limit=100"
+        },
+        {
+          "term": "Menudora",
+          "total": 0,
+          "queryURL": "https://data.gov.il/api/3/action/datastore_search?resource_id=6284d4a9-fdd4-45c9-a1d6-58143c7d8127&q=Menudora&fields=%D7%9E%D7%A1%D7%A4%D7%A8+%D7%94%D7%A1%D7%99%D7%9E%D7%9F%2C%D7%AA%D7%99%D7%90%D7%95%D7%A8+%D7%A1%D7%99%D7%9E%D7%9F+%D7%90%D7%A0%D7%92%D7%9C%D7%99%D7%AA%2C%D7%9E%D7%A6%D7%91%2C%D7%A1%D7%95%D7%92%D7%99+%D7%A0%D7%99%D7%A6%D7%94+%D7%9C%D7%91%D7%A7%D7%A9%D7%94&limit=100"
+        },
+        {
+          "term": "Menu Daro",
+          "total": 0,
+          "queryURL": "https://data.gov.il/api/3/action/datastore_search?resource_id=6284d4a9-fdd4-45c9-a1d6-58143c7d8127&q=Menu+Daro&fields=%D7%9E%D7%A1%D7%A4%D7%A8+%D7%94%D7%A1%D7%99%D7%9E%D7%9F%2C%D7%AA%D7%99%D7%90%D7%95%D7%A8+%D7%A1%D7%99%D7%9E%D7%9F+%D7%90%D7%A0%D7%92%D7%9C%D7%99%D7%AA%2C%D7%9E%D7%A6%D7%91%2C%D7%A1%D7%95%D7%92%D7%99+%D7%A0%D7%99%D7%A6%D7%94+%D7%9C%D7%91%D7%A7%D7%A9%D7%94&limit=100"
+        },
+        {
+          "term": "מנודארו",
+          "total": 0,
+          "queryURL": "https://data.gov.il/api/3/action/datastore_search?resource_id=6284d4a9-fdd4-45c9-a1d6-58143c7d8127&q=%D7%9E%D7%A0%D7%95%D7%93%D7%90%D7%A8%D7%95&fields=%D7%9E%D7%A1%D7%A4%D7%A8+%D7%94%D7%A1%D7%99%D7%9E%D7%9F%2C%D7%AA%D7%99%D7%90%D7%95%D7%A8+%D7%A1%D7%99%D7%9E%D7%9F+%D7%90%D7%A0%D7%92%D7%9C%D7%99%D7%AA%2C%D7%9E%D7%A6%D7%91%2C%D7%A1%D7%95%D7%92%D7%99+%D7%A0%D7%99%D7%A6%D7%94+%D7%9C%D7%91%D7%A7%D7%A9%D7%94&limit=100"
+        }
+      ]
+    },
+    "trademarkClearance": "NOT COMPLETE; Israel official exact-word and several near-spelling searches returned zero; comprehensive similarity searches, US and Ukraine register checks remain pending. Browser unavailable on locked Mac.",
+    "comDomain": "Registered to another/unknown holder; ownership or availability is NOT claimed.",
+    "appDomain": "RDAP lookup returned HTTP 404 for menudaro.app on 2026-10-25. No registration or purchase was made; registrar availability and trademark rights are not established.",
+    "rankGuarantee": false,
+    "rejectedCandidate": {
+      "name": "Menulivo",
+      "reason": "Too close to the active Menulio food/menu brands and Menul.io app. Changed before publication.",
+      "primaryEvidence": [
+        "https://www.menulio.app/",
+        "https://apps.apple.com/es/app/menul-io/id6803276028"
+      ],
+      "earlierChecks": {
+        "us": {
+          "returnedResults": 25,
+          "exactBrandMatches": [],
+          "query": "https://itunes.apple.com/search?term=Menulivo&entity=software&country=us&limit=25"
+        },
+        "ua": {
+          "returnedResults": 0,
+          "exactBrandMatches": [],
+          "query": "https://itunes.apple.com/search?term=Menulivo&entity=software&country=ua&limit=25"
+        },
+        "il": {
+          "returnedResults": 0,
+          "exactBrandMatches": [],
+          "query": "https://itunes.apple.com/search?term=Menulivo&entity=software&country=il&limit=25"
+        }
+      }
+    }
+  },
+  "sourceCourseRights": {
+    "originalMealRecipes": 103,
+    "permissionEvidence": "Owner clarified on 2026-10-26 that inputs mix personal material, internet, books and AI contributions. This does not establish licences to all external expression. See current editorial audit.",
+    "authorIdentity": "Not established from supplied catalogue metadata; original photographed pages are not available in current attachments.",
+    "sourceCourseLegallyCleared": false
+  },
+  "course": {
+    "total": 150,
+    "breakfast": 27,
+    "lunch": 71,
+    "dinner": 52,
+    "existingRecipesUnchanged": 121,
+    "originalMainMealRecipesRetained": 103,
+    "freeSelectionUnchanged": 50,
+    "freeBreakfasts": 18,
+    "newVariants": {
+      "breakfast": 9,
+      "lunch": 10,
+      "dinner": 10
+    },
+    "oldPairingsUnchanged": 48,
+    "newPairingsDerivedFromBaseRecipes": 20,
+    "mealRoleMismatches": 0,
+    "recipesWithoutPositiveIngredientAmounts": 0,
+    "optionalSnacksCountedIn150": false
+  },
+  "illustrations": {
+    "newFinalImages": 29,
+    "method": "Built-in imagegen, no external reference images supplied. Independent generation does not establish exclusive copyright.",
+    "uniqueFileHashes": true,
+    "images": [
+      {
+        "recipeID": "bf-spinach-mozzarella-oat-wrap",
+        "sha256": "794801f4a5d63ef9f270149578ebaaf9d7b452d169fdfb48f97e9c239b8ea040",
+        "jpegBytes": 436739
+      },
+      {
+        "recipeID": "bf-banana-oat-pancakes",
+        "sha256": "e6879ba69634e43738f1020222b2c69f4d3f65571a94346e5345dc499c74d1c2",
+        "jpegBytes": 366073
+      },
+      {
+        "recipeID": "bf-buckwheat-apple-yogurt",
+        "sha256": "d542781ad90830a964fa6b37f9af2b3fefb61f797d815af6b1b3739ee4fc2821",
+        "jpegBytes": 424072
+      },
+      {
+        "recipeID": "bf-savory-bulgur-egg",
+        "sha256": "6fc01932a8043188e31f15bd3d7acc9daf8022a3169c9c79ec0866dea213657c",
+        "jpegBytes": 364275
+      },
+      {
+        "recipeID": "bf-millet-curd-plum-bake",
+        "sha256": "c1350c512df89205057d3521db6a8e9118e09b67cafa13dfb8481c057ad9bf0a",
+        "jpegBytes": 418559
+      },
+      {
+        "recipeID": "bf-zucchini-curd-frittata",
+        "sha256": "266ee5a4ebef1e6420f991b0b52c5d12dbe0b83a79edf155a5a0140c4850f83a",
+        "jpegBytes": 452413
+      },
+      {
+        "recipeID": "bf-rye-yogurt-berry-pancakes",
+        "sha256": "6b603abfe9f4b5a8eb955b8590fded575436099aad1db470f3b8922721070ad7",
+        "jpegBytes": 406229
+      },
+      {
+        "recipeID": "bf-chickpea-feta-toast",
+        "sha256": "990522a3507f42c7ce039e9a31bfb60493ddadfbcf52dfdbc2c4314fdbebaf97",
+        "jpegBytes": 412130
+      },
+      {
+        "recipeID": "bf-lentil-carrot-egg-patties",
+        "sha256": "4998824a976e9195cfeb7f35ee2b7b945be60fe0fc6ba5ddfb03e76330db21a7",
+        "jpegBytes": 372906
+      },
+      {
+        "recipeID": "lunch-turkey-cauliflower-balls",
+        "sha256": "d4b2dfffe36cd6da212085974c32e586c533e7e84afc4ac1dfa5de7bdf69f057",
+        "jpegBytes": 484246
+      },
+      {
+        "recipeID": "lunch-chicken-millet-soup",
+        "sha256": "ec072bd351eb2ffea4d56df4e8004d4e031c2f2441074e19bdaacbe8f5b5cb56",
+        "jpegBytes": 376837
+      },
+      {
+        "recipeID": "lunch-pollock-broccoli-bake",
+        "sha256": "13058a7cdbf08fced0b9ba8078c9869d0540a571b3963f479a06c0dad31bdb32",
+        "jpegBytes": 392462
+      },
+      {
+        "recipeID": "lunch-beef-zucchini-stew",
+        "sha256": "6b28e655266233a6b94674378a6c8756879885320b1325755bc921d3de947415",
+        "jpegBytes": 473940
+      },
+      {
+        "recipeID": "lunch-lentil-pumpkin-soup",
+        "sha256": "56c3bdd82825c28a874f2a193f57d870d0c564c61138f66a4659a85b8712ec16",
+        "jpegBytes": 353051
+      },
+      {
+        "recipeID": "lunch-turkey-cabbage-rolls",
+        "sha256": "d8f891efcd52ddad20e7fb06e901a38ca208b7bb208d0f346d7b3ad80674255d",
+        "jpegBytes": 406139
+      },
+      {
+        "recipeID": "lunch-chicken-buckwheat-zucchini-boats",
+        "sha256": "f3ea961e1488f6fa9a54791492ac2eb15e1147cdb747a0dc3cf5f510ee3b2478",
+        "jpegBytes": 435860
+      },
+      {
+        "recipeID": "lunch-beef-bulgur-pepper-pot",
+        "sha256": "8ff1ec03abafb29badee553833e466de50cb3ce51e5321f1b42b2e94ad2c85a8",
+        "jpegBytes": 449046
+      },
+      {
+        "recipeID": "lunch-chicken-pumpkin-rice-bake",
+        "sha256": "6344e0c45e0a6d609a6024622ca7eca8fa473395e786cf38b56af5f783c482d9",
+        "jpegBytes": 390408
+      },
+      {
+        "recipeID": "lunch-chicken-spinach-rolls",
+        "sha256": "e0888402f84e194dc8cfac71f47f02c79a01b3379888335887f55425b6c6ab93",
+        "jpegBytes": 418198
+      },
+      {
+        "recipeID": "dinner-turkey-kefir-zucchini",
+        "sha256": "0e70440dff6904790d3c2cbdc849ac6f6e3c4872db19bdf0a5d6da0caa835e38",
+        "jpegBytes": 420078
+      },
+      {
+        "recipeID": "dinner-hake-spinach-lemon",
+        "sha256": "1f007a333d210fd012258c25f8fe2c0c0bb409ace486cc78bb72416e7851909b",
+        "jpegBytes": 358664
+      },
+      {
+        "recipeID": "dinner-curd-broccoli-bake",
+        "sha256": "1686a78010836dfd27b9d3071e554b60ffed9847a78032ca48ddc7150afe1c7e",
+        "jpegBytes": 454842
+      },
+      {
+        "recipeID": "dinner-buckwheat-mushroom-beans",
+        "sha256": "a128853cf104849e3d9d852212782382b60311933dc85d4fddf373a0f3985658",
+        "jpegBytes": 422028
+      },
+      {
+        "recipeID": "dinner-beet-curd-crispbreads",
+        "sha256": "df4af1d206094977fabe3bbb23d60ce02f367c2a2bc52f9db23b211de5de0f23",
+        "jpegBytes": 410667
+      },
+      {
+        "recipeID": "dinner-curd-walnut-baked-apple",
+        "sha256": "faac7a0ae9c7d8655557086623196011abb59591d959932eaa33548d28d90369",
+        "jpegBytes": 423070
+      },
+      {
+        "recipeID": "dinner-rice-zucchini-egg-bake",
+        "sha256": "4a560bd7a8df161c1f42c4622ef037f00cbc2061e952fc357a1aa73bdd98e7ea",
+        "jpegBytes": 388033
+      },
+      {
+        "recipeID": "dinner-nori-egg-curd-rolls",
+        "sha256": "6c0fa8759c1369805f49a650f7730a5226657c6eef51308cedcc33e14626038f",
+        "jpegBytes": 407835
+      },
+      {
+        "recipeID": "dinner-lentil-zucchini-soup",
+        "sha256": "dc8eb6bb966a36c89aeaed6a0015293596d26d51ef73bafb99cee61b102e27ca",
+        "jpegBytes": 382149
+      },
+      {
+        "recipeID": "dinner-fish-zucchini-steamed-patties",
+        "sha256": "d8eb04fbfb68f4bb318f6da70e2d9e243fa1ce04df53fde819fe77fbdc9d0f10",
+        "jpegBytes": 396892
+      }
+    ]
+  },
+  "priceReferences": {
+    "countryCategoryCounts": {
+      "IL": 33,
+      "UA": 20,
+      "US": 13
+    },
+    "periods": [
+      "2026-09"
+    ],
+    "licenses": {
+      "IL": "CBS commercial/noncommercial reuse license with attribution and no implied endorsement",
+      "UA": "CC BY 4.0, as linked by the official statistics portal",
+      "US": "BLS public-domain data, excluding unrelated third-party illustrations"
+    },
+    "sourceURLs": {
+      "IL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+      "UA": "https://stat.gov.ua/uk/development-api",
+      "US": "https://www.bls.gov/opub/copyright-information.htm"
+    },
+    "ownPricesOverrideReferences": true,
+    "missingPricesAreZero": false,
+    "currencyConversion": false,
+    "retailerScraping": false,
+    "backendDeploymentConfirmed": false
+  },
+  "privacyAndDependencies": {
+    "appManifest": "UserDefaults CA92.1 declared",
+    "adSDKManifests": "Bundled vendor manifests present for Google Mobile Ads and UMP",
+    "spmWrapperNotices": "Full Apache 2.0 notices copied into Legal/third-party/ThirdPartyNotices.txt; binary SDK uses vendor terms",
+    "newFeedSendsHealthProfiles": false
+  },
+  "localizedMetadataLengths": {
+    "en-US": {
+      "name": 29,
+      "subtitle": 29,
+      "keywords": 99,
+      "promotionalText": 153,
+      "description": 2145
+    },
+    "ru": {
+      "name": 24,
+      "subtitle": 26,
+      "keywords": 98,
+      "promotionalText": 150,
+      "description": 2041
+    },
+    "uk": {
+      "name": 25,
+      "subtitle": 27,
+      "keywords": 100,
+      "promotionalText": 146,
+      "description": 2043
+    }
+  },
+  "validation": {
+    "iosTests": 176,
+    "backendTests": 39,
+    "physicalIPhoneReleaseBuild": "Succeeded, code signing disabled; not an uploaded TestFlight build",
+    "additionalLegalResourceChecks": "2 passed, EN/RU/UK resources and narrow-phone layout",
+    "actualFullManifest": "150 recipes validated with LaunchCatalog; free/full breakfast filtering verified",
+    "localImageImport": "29 images imported into local QA database; SQLite integrity_check=ok",
+    "ownedQASimulator": "Shut down and deleted after verification",
+    "currentSignedArchive": "Menudaro 1.0.0 (4), signature verified, IPA exported; no upload.",
+    "appStoreExport": "Succeeded; 83,486,583-byte IPA, Menudaro build 4, 66 price records, library notices bundled, no StoreKit test configuration."
+  },
+  "publication": {
+    "newTestFlightUpload": false,
+    "publicAppStoreSubmission": false,
+    "fullCourseOrPriceBackendDeployed": false,
+    "appStoreConnectRecordFound": false,
+    "appStoreConnectCheck": "2026-10-25: authenticated API /v1/apps filter bundleId=app.lad.family returned HTTP 200 and zero records."
+  },
+  "primarySources": [
+    "https://developer.apple.com/app-store/search/",
+    "https://developer.apple.com/app-store/review/guidelines/#intellectual-property",
+    "https://www.copyright.gov/circs/circ33.pdf",
+    "https://www.wipo.int/en/web/global-brand-database/faqs_branddb",
+    "https://openai.com/policies/row-terms-of-use/",
+    "https://data.gov.il/he/datasets/ministry_of_justice/simaneymisahr",
+    "https://www.uspto.gov/trademarks/search/likelihood-confusion"
+  ],
+  "supersededByContentAudit": "content-origin-audit-20261026.json"
+}

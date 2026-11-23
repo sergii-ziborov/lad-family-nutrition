@@ -1,0 +1,1130 @@
+{
+  "schemaVersion": 1,
+  "retrievedAt": "2026-11-20",
+  "prices": [
+    {
+      "productName": "Хлеб",
+      "packagePrice": 7.95,
+      "packageQuantity": 750.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160015",
+        "sourceLabel": "לחם כהה אחיד פרוס וארוז",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Мука",
+      "packagePrice": 5.16,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160050",
+        "sourceLabel": "קמח לבן",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Макароны",
+      "packagePrice": 6.14,
+      "packageQuantity": 500.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160070",
+        "sourceLabel": "פסטה, ספגטי",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Рис",
+      "packagePrice": 12.1,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160083",
+        "sourceLabel": "אורז רגיל ארוז",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Чечевица",
+      "packagePrice": 10.0,
+      "packageQuantity": 500.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "161020",
+        "sourceLabel": "עדשים",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Говядина",
+      "packagePrice": 75.28,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160137",
+        "sourceLabel": "בשר בקר טרי לבישול ארוך / לתנור, 1 ק\"ג",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Куриное филе",
+      "packagePrice": 45.41,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160190",
+        "sourceLabel": "חזה עוף",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Куриный фарш",
+      "packagePrice": 47.51,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160197",
+        "sourceLabel": "עוף טחון",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Оливковое масло",
+      "packagePrice": 34.04,
+      "packageQuantity": 750.0,
+      "packageUnit": "мл",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160095",
+        "sourceLabel": "שמן זית",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Молоко",
+      "packagePrice": 7.34,
+      "packageQuantity": 1000.0,
+      "packageUnit": "мл",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160255",
+        "sourceLabel": "חלב מפוסטר לא מועשר בקרטון",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Йогурт натуральный",
+      "packagePrice": 4.37,
+      "packageQuantity": 200.0,
+      "packageUnit": "мл",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160260",
+        "sourceLabel": "יוגורט טבעי במיכל פלסטיק",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Сметана",
+      "packagePrice": 3.21,
+      "packageQuantity": 200.0,
+      "packageUnit": "мл",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160270",
+        "sourceLabel": "שמנת חמוצה",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Творог",
+      "packagePrice": 6.48,
+      "packageQuantity": 250.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160305",
+        "sourceLabel": "גבינת קוטג'",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Сыр",
+      "packagePrice": 6.02,
+      "packageQuantity": 100.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160310",
+        "sourceLabel": "גבינה צהובה קשה מחלב בקר",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Яйцо",
+      "packagePrice": 14.26,
+      "packageQuantity": 12.0,
+      "packageUnit": "шт.",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160243",
+        "sourceLabel": "ביצים L",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Кофе",
+      "packagePrice": 11.93,
+      "packageQuantity": 100.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160330",
+        "sourceLabel": "קפה שחור",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Сладкий перец",
+      "packagePrice": 10.76,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "161130",
+        "sourceLabel": "פלפל אדום מתוק",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Морковь",
+      "packagePrice": 5.6,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160520",
+        "sourceLabel": "גזר",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Томаты",
+      "packagePrice": 10.75,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160550",
+        "sourceLabel": "עגבניות עגולות רגילות",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Томаты черри",
+      "packagePrice": 23.88,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160560",
+        "sourceLabel": "עגבניות - שרי",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Огурец",
+      "packagePrice": 8.29,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160570",
+        "sourceLabel": "מלפפונים",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Капуста",
+      "packagePrice": 5.7,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160600",
+        "sourceLabel": "כרוב לבן",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Цветная капуста",
+      "packagePrice": 13.98,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160610",
+        "sourceLabel": "כרובית",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Баклажан",
+      "packagePrice": 9.34,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160620",
+        "sourceLabel": "חצילים",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Цукини",
+      "packagePrice": 12.58,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160630",
+        "sourceLabel": "קישואים",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Картофель",
+      "packagePrice": 6.1,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160640",
+        "sourceLabel": "תפוחי אדמה",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Лук",
+      "packagePrice": 5.89,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160650",
+        "sourceLabel": "בצל יבש",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Мандарин",
+      "packagePrice": 9.24,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160680",
+        "sourceLabel": "קלמנטינות",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Лимон",
+      "packagePrice": 10.47,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160710",
+        "sourceLabel": "לימונים",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Яблоко",
+      "packagePrice": 13.04,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160800",
+        "sourceLabel": "תפוחים - דלישס זהוב",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Сливы",
+      "packagePrice": 15.32,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160840",
+        "sourceLabel": "שזיפים סגולים",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Банан",
+      "packagePrice": 12.46,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160870",
+        "sourceLabel": "בננות",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Авокадо",
+      "packagePrice": 11.38,
+      "packageQuantity": 1000.0,
+      "packageUnit": "г",
+      "currency": "ILS",
+      "reference": {
+        "country": "IL",
+        "period": "2026-10",
+        "publisher": "Israel Central Bureau of Statistics",
+        "sourceURL": "https://www.cbs.gov.il/he/publications/Madad/DocLib/2026/price10a/a5_6_h.xlsx",
+        "licenseURL": "https://www.cbs.gov.il/he/cbsNewBrand/Pages/רישיון-שימוש.aspx",
+        "seriesID": "160880",
+        "sourceLabel": "אבוקדו",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Рис",
+      "packagePrice": 56.41,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_1_1_1",
+        "sourceLabel": "Rice",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Хлеб",
+      "packagePrice": 67.34,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_1_2_2",
+        "sourceLabel": "Bread wheaten from flour of the highest grade",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Макароны",
+      "packagePrice": 42.13,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_1_3_9",
+        "sourceLabel": "Pasta products from soft wheat varieties",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Мука",
+      "packagePrice": 23.6,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_1_5_18",
+        "sourceLabel": "Wheat flour",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Гречка",
+      "packagePrice": 79.19,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_1_5_20",
+        "sourceLabel": "Buckwheat",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Пшено",
+      "packagePrice": 59.21,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_1_5_23",
+        "sourceLabel": "Millet",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Говядина",
+      "packagePrice": 388.75,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_2_1_25",
+        "sourceLabel": "Beef",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Свинина",
+      "packagePrice": 236.08,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_2_2_28",
+        "sourceLabel": "Pork",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Куриное филе",
+      "packagePrice": 217.05,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_2_4_33",
+        "sourceLabel": "Chicken fillet",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Молоко",
+      "packagePrice": 52.75,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_4_1_59",
+        "sourceLabel": "Pasteurized milk with a fat content of up to 2.6% inclusive",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Творог",
+      "packagePrice": 246.2,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_4_5_68",
+        "sourceLabel": "Fat cottage cheese",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Сметана",
+      "packagePrice": 151.22,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_4_6_70",
+        "sourceLabel": "Sour cream with fat content up to 15% inclusive",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Яйцо",
+      "packagePrice": 60.88,
+      "packageQuantity": 10,
+      "packageUnit": "шт.",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_4_7_73",
+        "sourceLabel": "Eggs",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Растительное масло",
+      "packagePrice": 102.4,
+      "packageQuantity": 1000,
+      "packageUnit": "мл",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_5_4_78",
+        "sourceLabel": "Sunflower oil",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Яблоко",
+      "packagePrice": 39.32,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_6_3_83",
+        "sourceLabel": "Apples",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Капуста",
+      "packagePrice": 22.78,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_7_2_90",
+        "sourceLabel": "Cabbage White",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Лук",
+      "packagePrice": 21.37,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_7_4_96",
+        "sourceLabel": "Onion",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Свёкла",
+      "packagePrice": 15.5,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_7_4_97",
+        "sourceLabel": "Beet",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Морковь",
+      "packagePrice": 19.45,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_7_4_98",
+        "sourceLabel": "Carrot",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Картофель",
+      "packagePrice": 16.39,
+      "packageQuantity": 1000,
+      "packageUnit": "г",
+      "currency": "UAH",
+      "reference": {
+        "country": "UA",
+        "period": "2026-09",
+        "publisher": "State Statistics Service of Ukraine",
+        "sourceURL": "https://stat.gov.ua/sdmx/workspaces/default:integration/registry/sdmx/3.0/data/dataflow/SSSU/DF_PRICE_CHANGE_CONSUMER_GOODS_SERVICE/27.2.0/AVG_CONS_PRCS",
+        "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+        "seriesID": "01_1_7_7_103",
+        "sourceLabel": "Potato",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Мука",
+      "packagePrice": 0.545,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000701111",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000701111",
+        "sourceLabel": "Flour, white, all purpose, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Хлеб",
+      "packagePrice": 1.83,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000702111",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000702111",
+        "sourceLabel": "Bread, white, pan, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Рис",
+      "packagePrice": 1.118,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000701312",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000701312",
+        "sourceLabel": "Rice, white, long grain, uncooked, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Куриное филе",
+      "packagePrice": 4.203,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000FF1101",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000FF1101",
+        "sourceLabel": "Chicken breast, boneless, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Яйцо",
+      "packagePrice": 2.272,
+      "packageQuantity": 12,
+      "packageUnit": "шт.",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000708111",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000708111",
+        "sourceLabel": "Eggs, grade A, large, per dozen",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Молоко",
+      "packagePrice": 4.106,
+      "packageQuantity": 3785.411784,
+      "packageUnit": "мл",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000709112",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000709112",
+        "sourceLabel": "Milk, fresh, whole, fortified, per US gallon",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Сыр",
+      "packagePrice": 6.133,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000710212",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000710212",
+        "sourceLabel": "Cheddar cheese, natural, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Банан",
+      "packagePrice": 0.656,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000711211",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000711211",
+        "sourceLabel": "Bananas, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Апельсин",
+      "packagePrice": 1.723,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000711311",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000711311",
+        "sourceLabel": "Oranges, Navel, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Картофель",
+      "packagePrice": 0.989,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000712112",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000712112",
+        "sourceLabel": "Potatoes, white, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Листья салата",
+      "packagePrice": 1.636,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000712211",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000712211",
+        "sourceLabel": "Lettuce, iceberg, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Томаты",
+      "packagePrice": 1.992,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000712311",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000712311",
+        "sourceLabel": "Tomatoes, field grown, per lb.",
+        "method": "statistical-category-average"
+      }
+    },
+    {
+      "productName": "Кофе",
+      "packagePrice": 9.332,
+      "packageQuantity": 453.59237,
+      "packageUnit": "г",
+      "currency": "USD",
+      "reference": {
+        "country": "US",
+        "period": "2026-09",
+        "publisher": "U.S. Bureau of Labor Statistics",
+        "sourceURL": "https://api.bls.gov/publicAPI/v2/timeseries/data/APU0000717311",
+        "licenseURL": "https://www.bls.gov/opub/copyright-information.htm",
+        "seriesID": "APU0000717311",
+        "sourceLabel": "Coffee, ground roast, per lb.",
+        "method": "statistical-category-average"
+      }
+    }
+  ],
+  "coverage": "Selected statistical food categories; missing items are not estimated.",
+  "interpretation": "Reference averages, not store quotations. Brand, variety and fat content may differ. No currency conversion."
+}

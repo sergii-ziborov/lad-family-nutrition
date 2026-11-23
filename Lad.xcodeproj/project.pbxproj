@@ -7,20 +7,48 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02511F9B419963D58F0D2844 /* nutrient-reference.json in Resources */ = {isa = PBXBuildFile; fileRef = 988633A586A6A7F59615775A /* nutrient-reference.json */; };
+		06F3105AEAF77D2C08683C4F /* DishVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECED4D806305B96F8CAA4D56 /* DishVoice.swift */; };
+		094B0556466CE826B895AA77 /* FoodDiaryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC4473FB7A9B8ABCD1663F56 /* FoodDiaryViews.swift */; };
+		1BB4AEEB4068248D1A499186 /* CourseExpansionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA916D17F8E7246FEE8B8C6 /* CourseExpansionTests.swift */; };
+		1D685EA7F0217D8CBD3636B2 /* CommerceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37892FD6C1AF2D2F099BAF27 /* CommerceTests.swift */; };
+		1F2A0EFC37F48CB393EB7AEA /* Advertising.swift in Sources */ = {isa = PBXBuildFile; fileRef = 613821ED751F143FE3B73041 /* Advertising.swift */; };
+		2E620E024BB781532A7F4A7A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 26F70F485EF1B507DCC10031 /* InfoPlist.strings */; };
+		2F8C53EAEA0AC28E551EA3C6 /* Lad.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 5A1FE91D0BD8A906122E2C16 /* Lad.storekit */; };
+		2FF06795B1977EC61FD28086 /* IngredientCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0199C07ED4E6686817A5060A /* IngredientCatalog.swift */; };
+		3557F330F6C4801617F4D406 /* Legal in Resources */ = {isa = PBXBuildFile; fileRef = 7663C6EBA55F31E0816CD9EF /* Legal */; };
+		3867D625359E3D58C3EE5019 /* ReferencePricesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FADD2AD44E8589E2D358E2E /* ReferencePricesTests.swift */; };
 		3D311F052B483713F61ACADB /* public-recipes.json in Resources */ = {isa = PBXBuildFile; fileRef = 68592DF387E2921AEC89DA26 /* public-recipes.json */; };
+		3E17D89B4C77A8D209A4298A /* EditorialCourseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1476C97C7129FAD7AADA4D91 /* EditorialCourseTests.swift */; };
 		3FCBA5EA08AD55CC6EDD7916 /* PrivateRecipes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771AFA1CAE7FFB760A4E4047 /* PrivateRecipes.swift */; };
+		45BEB34B158971F4D9D5792D /* Commerce.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E6EFA7DBBA654A43C9EA4E /* Commerce.swift */; };
+		4966402423B24652F252167F /* Fixtures in Resources */ = {isa = PBXBuildFile; fileRef = B028926E435194A5F318F249 /* Fixtures */; };
 		5460FA1A748961D7C0F39F77 /* PlanningCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EC9B287E7DAFD2026279AA0 /* PlanningCoreTests.swift */; };
+		58C4AC0EE69D9F7F5516D682 /* ingredient-catalog.json in Resources */ = {isa = PBXBuildFile; fileRef = 2E76DE52A0AA7239F4510F82 /* ingredient-catalog.json */; };
+		5CF98137EF527EDF1E850D32 /* OptionalSnack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67D04208055407CF79D4E177 /* OptionalSnack.swift */; };
+		5D62F53AA8C4A5930E0E35AD /* FoodDiary.swift in Sources */ = {isa = PBXBuildFile; fileRef = F991702CECE230C6ECE76827 /* FoodDiary.swift */; };
+		5D870284FFE16E99BB45EBCF /* NutritionStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6D9C7BD4E2D5B345F2BC1D /* NutritionStats.swift */; };
 		61E3A08A47218F8692B7B117 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B5FEDF2079982A77F11FE7 /* Models.swift */; };
 		65344FDD23EBA6EED927EA1C /* PlanningCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4623EF829C48DC96B4A68E91 /* PlanningCore.swift */; };
+		6563F70710A07EEC6DE14255 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = F3FD67CA0AE4421759F5A5AB /* GoogleMobileAds */; };
 		6701D9E68DA0409E358B9494 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30D7B3F16164271BDB590DDD /* Assets.xcassets */; };
 		69F0F75935F50E449A50EE90 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1781618B8D2C648D0C027B20 /* PrivacyInfo.xcprivacy */; };
+		776B9477DC1B3C83535CCE56 /* NutrientEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07033D02F5FBD76ACE5B68AB /* NutrientEstimator.swift */; };
 		9B1906B5B67673182496FEF0 /* LadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFC94D7A6F19A46FE100887 /* LadApp.swift */; };
 		B8810B799DE851BCF3299150 /* CoursesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D95D663E9AA4C07946640D84 /* CoursesView.swift */; };
+		B964D4D34C5269417BB5069E /* ReferencePrices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1A60D9E07D82EAB307A606 /* ReferencePrices.swift */; };
+		BC1807003E5E79C6E0CB211D /* legacy-recipes.json in Resources */ = {isa = PBXBuildFile; fileRef = F93FD8121B0022D8285CA6D1 /* legacy-recipes.json */; };
 		CA31139AE4904F5F0D7041B9 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = DD494BF28DC421C7BA2967FD /* Localizable.strings */; };
+		CCD7D8D30C8FFD0BA20C3C97 /* reference-prices.json in Resources */ = {isa = PBXBuildFile; fileRef = 943A30589B659A4EC3957FCB /* reference-prices.json */; };
+		CE0C10A95E86CEC2F06EF7A3 /* IngredientViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EA335052A0B3BDEE34B2A4B /* IngredientViews.swift */; };
+		E247B536367EB9F5019D8F1D /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DFF771723B5CA0622F309D /* AppServices.swift */; };
 		E2B0FA662A5659107AEC1604 /* PlanningViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7A89682C45A9A37DD989FC /* PlanningViews.swift */; };
 		E600592C1357FDDADD45A5A3 /* PantryShoppingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55F050FE7C9068806AC41BE6 /* PantryShoppingViews.swift */; };
+		E9F82F89797FA580FB578A59 /* shelf-prices.json in Resources */ = {isa = PBXBuildFile; fileRef = B298F201D42F92705ABC99E8 /* shelf-prices.json */; };
+		F23BF2C914385F175E3F90F9 /* Lad.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 5A1FE91D0BD8A906122E2C16 /* Lad.storekit */; };
 		F877A76BBB7A6608615989B6 /* HouseholdViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D72C869EFC096975D43A1F /* HouseholdViews.swift */; };
 		FA5AD9C7F474F53B77C7FF17 /* CourseCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5408DB369F6A1C5F1BA97334 /* CourseCatalog.swift */; };
+		FBCCC8176E82AE4F56A6F43C /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; productRef = 773B5DDDC97C74CF183BE322 /* GoogleUserMessagingPlatform */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,24 +62,67 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0199C07ED4E6686817A5060A /* IngredientCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientCatalog.swift; sourceTree = "<group>"; };
 		050F8A8CE05199A1A25A0EA8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		07033D02F5FBD76ACE5B68AB /* NutrientEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutrientEstimator.swift; sourceTree = "<group>"; };
+		1476C97C7129FAD7AADA4D91 /* EditorialCourseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorialCourseTests.swift; sourceTree = "<group>"; };
 		1781618B8D2C648D0C027B20 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		2B6D9C7BD4E2D5B345F2BC1D /* NutritionStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionStats.swift; sourceTree = "<group>"; };
+		2E76DE52A0AA7239F4510F82 /* ingredient-catalog.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "ingredient-catalog.json"; sourceTree = "<group>"; };
+		2EA335052A0B3BDEE34B2A4B /* IngredientViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientViews.swift; sourceTree = "<group>"; };
 		30D7B3F16164271BDB590DDD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		37892FD6C1AF2D2F099BAF27 /* CommerceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommerceTests.swift; sourceTree = "<group>"; };
 		3EC9B287E7DAFD2026279AA0 /* PlanningCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningCoreTests.swift; sourceTree = "<group>"; };
+		3FADD2AD44E8589E2D358E2E /* ReferencePricesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferencePricesTests.swift; sourceTree = "<group>"; };
 		42EED19FD4008AC9B3F23923 /* Lad.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Lad.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4623EF829C48DC96B4A68E91 /* PlanningCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningCore.swift; sourceTree = "<group>"; };
 		4801382B23D574244F3F3BC3 /* LadTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LadTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5408DB369F6A1C5F1BA97334 /* CourseCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseCatalog.swift; sourceTree = "<group>"; };
 		55F050FE7C9068806AC41BE6 /* PantryShoppingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PantryShoppingViews.swift; sourceTree = "<group>"; };
+		5A1FE91D0BD8A906122E2C16 /* Lad.storekit */ = {isa = PBXFileReference; path = Lad.storekit; sourceTree = "<group>"; };
+		610256C05D06A5C77672CF5A /* AppStore.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppStore.entitlements; sourceTree = "<group>"; };
+		613821ED751F143FE3B73041 /* Advertising.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Advertising.swift; sourceTree = "<group>"; };
+		664BDCCFF0560226A6D76698 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		66658A030041B649EF324DEE /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		67D04208055407CF79D4E177 /* OptionalSnack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionalSnack.swift; sourceTree = "<group>"; };
 		68592DF387E2921AEC89DA26 /* public-recipes.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "public-recipes.json"; sourceTree = "<group>"; };
+		7663C6EBA55F31E0816CD9EF /* Legal */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Legal; sourceTree = SOURCE_ROOT; };
+		76B75EC8773ADAA85F869D12 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		771AFA1CAE7FFB760A4E4047 /* PrivateRecipes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivateRecipes.swift; sourceTree = "<group>"; };
 		78B5FEDF2079982A77F11FE7 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		79355B7FB69E8FBEFC844885 /* Lad.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lad.entitlements; sourceTree = "<group>"; };
 		87D513B262D880BEF33E3501 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		87DFF771723B5CA0622F309D /* AppServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppServices.swift; sourceTree = "<group>"; };
+		8B1A60D9E07D82EAB307A606 /* ReferencePrices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferencePrices.swift; sourceTree = "<group>"; };
+		8CA916D17F8E7246FEE8B8C6 /* CourseExpansionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseExpansionTests.swift; sourceTree = "<group>"; };
+		91C2103A6A17232EB2CD70BE /* AppInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = AppInfo.plist; sourceTree = "<group>"; };
 		91D72C869EFC096975D43A1F /* HouseholdViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdViews.swift; sourceTree = "<group>"; };
+		943A30589B659A4EC3957FCB /* reference-prices.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "reference-prices.json"; sourceTree = "<group>"; };
+		988633A586A6A7F59615775A /* nutrient-reference.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "nutrient-reference.json"; sourceTree = "<group>"; };
+		B028926E435194A5F318F249 /* Fixtures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Fixtures; path = LadTests/Fixtures; sourceTree = SOURCE_ROOT; };
+		B298F201D42F92705ABC99E8 /* shelf-prices.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "shelf-prices.json"; sourceTree = "<group>"; };
 		BC7A89682C45A9A37DD989FC /* PlanningViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningViews.swift; sourceTree = "<group>"; };
+		CC4473FB7A9B8ABCD1663F56 /* FoodDiaryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDiaryViews.swift; sourceTree = "<group>"; };
+		CE92D4FD4AB334F88BBBFE83 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		CEFC94D7A6F19A46FE100887 /* LadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LadApp.swift; sourceTree = "<group>"; };
 		D95D663E9AA4C07946640D84 /* CoursesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoursesView.swift; sourceTree = "<group>"; };
+		E5E6EFA7DBBA654A43C9EA4E /* Commerce.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Commerce.swift; sourceTree = "<group>"; };
+		ECED4D806305B96F8CAA4D56 /* DishVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DishVoice.swift; sourceTree = "<group>"; };
+		F93FD8121B0022D8285CA6D1 /* legacy-recipes.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "legacy-recipes.json"; sourceTree = "<group>"; };
+		F991702CECE230C6ECE76827 /* FoodDiary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodDiary.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A8B6E635352B30ECEBA1C480 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6563F70710A07EEC6DE14255 /* GoogleMobileAds in Frameworks */,
+				FBCCC8176E82AE4F56A6F43C /* GoogleUserMessagingPlatform in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		8BF6080FC17AAE4EB2BFCE46 /* Products */ = {
@@ -66,7 +137,12 @@
 		ACF0F24232FC3EFEBEC187D0 /* LadTests */ = {
 			isa = PBXGroup;
 			children = (
+				37892FD6C1AF2D2F099BAF27 /* CommerceTests.swift */,
+				8CA916D17F8E7246FEE8B8C6 /* CourseExpansionTests.swift */,
+				1476C97C7129FAD7AADA4D91 /* EditorialCourseTests.swift */,
+				5A1FE91D0BD8A906122E2C16 /* Lad.storekit */,
 				3EC9B287E7DAFD2026279AA0 /* PlanningCoreTests.swift */,
+				3FADD2AD44E8589E2D358E2E /* ReferencePricesTests.swift */,
 			);
 			path = LadTests;
 			sourceTree = "<group>";
@@ -75,6 +151,8 @@
 			isa = PBXGroup;
 			children = (
 				30D7B3F16164271BDB590DDD /* Assets.xcassets */,
+				B028926E435194A5F318F249 /* Fixtures */,
+				7663C6EBA55F31E0816CD9EF /* Legal */,
 				FFD200B0B48694B2D546C967 /* Lad */,
 				ACF0F24232FC3EFEBEC187D0 /* LadTests */,
 				8BF6080FC17AAE4EB2BFCE46 /* Products */,
@@ -84,17 +162,38 @@
 		FFD200B0B48694B2D546C967 /* Lad */ = {
 			isa = PBXGroup;
 			children = (
+				613821ED751F143FE3B73041 /* Advertising.swift */,
+				91C2103A6A17232EB2CD70BE /* AppInfo.plist */,
+				87DFF771723B5CA0622F309D /* AppServices.swift */,
+				610256C05D06A5C77672CF5A /* AppStore.entitlements */,
+				E5E6EFA7DBBA654A43C9EA4E /* Commerce.swift */,
 				5408DB369F6A1C5F1BA97334 /* CourseCatalog.swift */,
 				D95D663E9AA4C07946640D84 /* CoursesView.swift */,
+				ECED4D806305B96F8CAA4D56 /* DishVoice.swift */,
+				F991702CECE230C6ECE76827 /* FoodDiary.swift */,
+				CC4473FB7A9B8ABCD1663F56 /* FoodDiaryViews.swift */,
 				91D72C869EFC096975D43A1F /* HouseholdViews.swift */,
+				2E76DE52A0AA7239F4510F82 /* ingredient-catalog.json */,
+				0199C07ED4E6686817A5060A /* IngredientCatalog.swift */,
+				2EA335052A0B3BDEE34B2A4B /* IngredientViews.swift */,
+				79355B7FB69E8FBEFC844885 /* Lad.entitlements */,
 				CEFC94D7A6F19A46FE100887 /* LadApp.swift */,
+				F93FD8121B0022D8285CA6D1 /* legacy-recipes.json */,
 				78B5FEDF2079982A77F11FE7 /* Models.swift */,
+				988633A586A6A7F59615775A /* nutrient-reference.json */,
+				07033D02F5FBD76ACE5B68AB /* NutrientEstimator.swift */,
+				2B6D9C7BD4E2D5B345F2BC1D /* NutritionStats.swift */,
+				67D04208055407CF79D4E177 /* OptionalSnack.swift */,
 				55F050FE7C9068806AC41BE6 /* PantryShoppingViews.swift */,
 				4623EF829C48DC96B4A68E91 /* PlanningCore.swift */,
 				BC7A89682C45A9A37DD989FC /* PlanningViews.swift */,
 				1781618B8D2C648D0C027B20 /* PrivacyInfo.xcprivacy */,
 				771AFA1CAE7FFB760A4E4047 /* PrivateRecipes.swift */,
 				68592DF387E2921AEC89DA26 /* public-recipes.json */,
+				943A30589B659A4EC3957FCB /* reference-prices.json */,
+				8B1A60D9E07D82EAB307A606 /* ReferencePrices.swift */,
+				B298F201D42F92705ABC99E8 /* shelf-prices.json */,
+				26F70F485EF1B507DCC10031 /* InfoPlist.strings */,
 				DD494BF28DC421C7BA2967FD /* Localizable.strings */,
 			);
 			path = Lad;
@@ -109,6 +208,7 @@
 			buildPhases = (
 				B2A1BE1DE539067F9F7BA763 /* Sources */,
 				E9DAFEB4D9EE186DB1BE129A /* Resources */,
+				A8B6E635352B30ECEBA1C480 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -116,6 +216,8 @@
 			);
 			name = Lad;
 			packageProductDependencies = (
+				F3FD67CA0AE4421759F5A5AB /* GoogleMobileAds */,
+				773B5DDDC97C74CF183BE322 /* GoogleUserMessagingPlatform */,
 			);
 			productName = Lad;
 			productReference = 42EED19FD4008AC9B3F23923 /* Lad.app */;
@@ -126,6 +228,7 @@
 			buildConfigurationList = 932B64F54A79C2E29CE60D33 /* Build configuration list for PBXNativeTarget "LadTests" */;
 			buildPhases = (
 				F9FAB3D0E909B7365FE937BD /* Sources */,
+				B45D5D17232121BE240969D8 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -149,8 +252,9 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					5FCFCB0DA48985BE4894A3B7 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = XMS5ZC28UJ;
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = "[\"com.apple.InAppPurchase\": [\"enabled\": 1]]";
 					};
 				};
 			};
@@ -161,9 +265,14 @@
 				Base,
 				en,
 				ru,
+				uk,
 			);
 			mainGroup = E86CCDE5754D9A142D7F3027;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				92F67AA7A2DF7D77B919A81E /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				04BE94A6ACFDB3F891AAA018 /* XCRemoteSwiftPackageReference "swift-package-manager-google-user-messaging-platform" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8BF6080FC17AAE4EB2BFCE46 /* Products */;
 			projectDirPath = "";
@@ -176,14 +285,31 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B45D5D17232121BE240969D8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4966402423B24652F252167F /* Fixtures in Resources */,
+				2F8C53EAEA0AC28E551EA3C6 /* Lad.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E9DAFEB4D9EE186DB1BE129A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				6701D9E68DA0409E358B9494 /* Assets.xcassets in Resources */,
+				2E620E024BB781532A7F4A7A /* InfoPlist.strings in Resources */,
+				F23BF2C914385F175E3F90F9 /* Lad.storekit in Resources */,
+				3557F330F6C4801617F4D406 /* Legal in Resources */,
 				CA31139AE4904F5F0D7041B9 /* Localizable.strings in Resources */,
 				69F0F75935F50E449A50EE90 /* PrivacyInfo.xcprivacy in Resources */,
+				58C4AC0EE69D9F7F5516D682 /* ingredient-catalog.json in Resources */,
+				BC1807003E5E79C6E0CB211D /* legacy-recipes.json in Resources */,
+				02511F9B419963D58F0D2844 /* nutrient-reference.json in Resources */,
 				3D311F052B483713F61ACADB /* public-recipes.json in Resources */,
+				CCD7D8D30C8FFD0BA20C3C97 /* reference-prices.json in Resources */,
+				E9F82F89797FA580FB578A59 /* shelf-prices.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -194,15 +320,27 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F2A0EFC37F48CB393EB7AEA /* Advertising.swift in Sources */,
+				E247B536367EB9F5019D8F1D /* AppServices.swift in Sources */,
+				45BEB34B158971F4D9D5792D /* Commerce.swift in Sources */,
 				FA5AD9C7F474F53B77C7FF17 /* CourseCatalog.swift in Sources */,
 				B8810B799DE851BCF3299150 /* CoursesView.swift in Sources */,
+				06F3105AEAF77D2C08683C4F /* DishVoice.swift in Sources */,
+				5D62F53AA8C4A5930E0E35AD /* FoodDiary.swift in Sources */,
+				094B0556466CE826B895AA77 /* FoodDiaryViews.swift in Sources */,
 				F877A76BBB7A6608615989B6 /* HouseholdViews.swift in Sources */,
+				2FF06795B1977EC61FD28086 /* IngredientCatalog.swift in Sources */,
+				CE0C10A95E86CEC2F06EF7A3 /* IngredientViews.swift in Sources */,
 				9B1906B5B67673182496FEF0 /* LadApp.swift in Sources */,
 				61E3A08A47218F8692B7B117 /* Models.swift in Sources */,
+				776B9477DC1B3C83535CCE56 /* NutrientEstimator.swift in Sources */,
+				5D870284FFE16E99BB45EBCF /* NutritionStats.swift in Sources */,
+				5CF98137EF527EDF1E850D32 /* OptionalSnack.swift in Sources */,
 				E600592C1357FDDADD45A5A3 /* PantryShoppingViews.swift in Sources */,
 				65344FDD23EBA6EED927EA1C /* PlanningCore.swift in Sources */,
 				E2B0FA662A5659107AEC1604 /* PlanningViews.swift in Sources */,
 				3FCBA5EA08AD55CC6EDD7916 /* PrivateRecipes.swift in Sources */,
+				B964D4D34C5269417BB5069E /* ReferencePrices.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -210,7 +348,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1D685EA7F0217D8CBD3636B2 /* CommerceTests.swift in Sources */,
+				1BB4AEEB4068248D1A499186 /* CourseExpansionTests.swift in Sources */,
+				3E17D89B4C77A8D209A4298A /* EditorialCourseTests.swift in Sources */,
 				5460FA1A748961D7C0F39F77 /* PlanningCoreTests.swift in Sources */,
+				3867D625359E3D58C3EE5019 /* ReferencePricesTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -225,11 +367,22 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		26F70F485EF1B507DCC10031 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				664BDCCFF0560226A6D76698 /* en */,
+				66658A030041B649EF324DEE /* ru */,
+				CE92D4FD4AB334F88BBBFE83 /* uk */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
 		DD494BF28DC421C7BA2967FD /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
 				050F8A8CE05199A1A25A0EA8 /* en */,
 				87D513B262D880BEF33E3501 /* ru */,
+				76B75EC8773ADAA85F869D12 /* uk */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -288,7 +441,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -307,12 +460,12 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Лад";
+				INFOPLIST_KEY_CFBundleDisplayName = Ladlekin;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -329,9 +482,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Lad/Lad.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = XMS5ZC28UJ;
+				ICLOUD_CONTAINER_ENVIRONMENT = Development;
+				INFOPLIST_FILE = Lad/AppInfo.plist;
+				LAD_ADMOB_APP_ID = "ca-app-pub-3940256099942544~1458002511";
+				LAD_ADMOB_BANNER_ID = "ca-app-pub-3940256099942544/2435281174";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -346,9 +504,18 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Lad/AppStore.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = XMS5ZC28UJ;
+				EXCLUDED_SOURCE_FILE_NAMES = (
+					Lad.storekit,
+					"legacy-recipes.json",
+				);
+				ICLOUD_CONTAINER_ENVIRONMENT = Production;
+				INFOPLIST_FILE = Lad/AppInfo.plist;
+				LAD_ADMOB_APP_ID = "ca-app-pub-3940256099942544~1458002511";
+				LAD_ADMOB_BANNER_ID = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -410,7 +577,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -423,12 +590,12 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Лад";
+				INFOPLIST_KEY_CFBundleDisplayName = Ladlekin;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -471,6 +638,38 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		04BE94A6ACFDB3F891AAA018 /* XCRemoteSwiftPackageReference "swift-package-manager-google-user-messaging-platform" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-user-messaging-platform.git";
+			requirement = {
+				kind = exactVersion;
+				version = 3.1.0;
+			};
+		};
+		92F67AA7A2DF7D77B919A81E /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			requirement = {
+				kind = exactVersion;
+				version = 13.11.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		773B5DDDC97C74CF183BE322 /* GoogleUserMessagingPlatform */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04BE94A6ACFDB3F891AAA018 /* XCRemoteSwiftPackageReference "swift-package-manager-google-user-messaging-platform" */;
+			productName = GoogleUserMessagingPlatform;
+		};
+		F3FD67CA0AE4421759F5A5AB /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 92F67AA7A2DF7D77B919A81E /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = DEC8D4483A9F6D5DC16DD624 /* Project object */;
 }

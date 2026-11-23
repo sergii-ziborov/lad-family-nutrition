@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "optionalOwnerFixtures": ["ExpandedCourseFixture.json"],
+  "note": "Paid recipe authoring fixtures are generated locally and are not published with the source."
+}

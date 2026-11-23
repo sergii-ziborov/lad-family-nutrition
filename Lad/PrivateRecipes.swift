@@ -24,7 +24,10 @@ struct PrivateRecipePayload: Codable {
     let steps: [String]
     let allergensVerified: Bool
     let mealKinds: [Int]?
+    let courseRole: String?
     let nutrients: [String: NutrientValue]?
+    let nutrientPreparations: [String: String]?
+    let nutritionEdibleYield: [String: Double]?
     let imageId: String?
     let imageSource: String?
     let stepImageIDs: [String?]?
@@ -37,6 +40,7 @@ struct PrivateRecipePayload: Codable {
         guard (kcal.map { $0 >= 0 } ?? true), (protein.map { $0 >= 0 } ?? true),
               !steps.isEmpty, steps.allSatisfy({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }),
               mealKinds?.allSatisfy({ (0...2).contains($0) }) ?? true,
+              courseRole.map({ ["main", "side"].contains($0) }) ?? true,
               imageId.map({ $0.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil }) ?? true,
               stepImageIDs.map({ $0.count == steps.count && $0.allSatisfy { $0 == nil || $0?.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil } }) ?? true,
               ingredients.allSatisfy({ ingredient in
@@ -46,11 +50,18 @@ struct PrivateRecipePayload: Codable {
               }),
               unquantifiedIngredients?.allSatisfy({ !$0.name.isEmpty && $0.amount == nil && !$0.unit.isEmpty }) ?? true,
               nutrients?.values.allSatisfy({ $0.amount.isFinite && $0.amount >= 0 && $0.coverage.isFinite && (0...1).contains($0.coverage) && !$0.unit.isEmpty && !$0.source.isEmpty }) ?? true else { return nil }
+        guard nutrientPreparations?.allSatisfy({ entry in
+            !entry.key.isEmpty && ["raw", "baked", "sauteed", "simmered", "boiledDrained", "fried", "heated", "toasted"].contains(entry.value)
+        }) ?? true else { return nil }
+        guard nutritionEdibleYield?.allSatisfy({ entry in
+            ingredients.contains(where: { $0.name == entry.key }) && entry.value.isFinite &&
+                entry.value > 0 && entry.value <= 1
+        }) ?? true else { return nil }
         guard estimatedServings.map({ $0.isFinite && (1...12).contains($0) }) ?? true else { return nil }
         let completeIngredients = ingredients + (unquantifiedIngredients ?? [])
-        let estimate = EnergyEstimator.evaluate(completeIngredients)
-        let calculatedPublicKcal = !privateAccess && imageSource == "bundled" && estimate.unresolvedNames.isEmpty
-            ? estimate.knownBatchKcal : nil
+        let estimate = EnergyEstimator.evaluate(completeIngredients, edibleYield: nutritionEdibleYield ?? [:])
+        let calculatedPublicKcal = !privateAccess && (remoteImage == false || imageSource == "bundled" || estimatedServings != nil) && estimate.unresolvedNames.isEmpty
+            ? Int((Double(estimate.knownBatchKcal) / (estimatedServings ?? 1)).rounded()) : nil
         let calculatedPrivateKcal = privateAccess && estimatedServings != nil && estimate.unresolvedNames.isEmpty
             ? Int((Double(estimate.knownBatchKcal) / estimatedServings!).rounded()) : nil
         var recipe = Recipe(id: privateAccess ? "private:\(id)" : id, title: title, caption: caption,
@@ -62,8 +73,12 @@ struct PrivateRecipePayload: Codable {
                             stepImageIDs: stepImageIDs ?? [], difficulty: difficulty)
         recipe.energyEstimate = estimate
         recipe.baseServings = estimatedServings ?? 1
+        recipe.isCourseSide = courseRole == "side"
+        recipe.nutrientPreparationByIngredient = nutrientPreparations ?? [:]
+        recipe.nutritionEdibleYield = nutritionEdibleYield ?? [:]
         recipe.servingsEstimated = estimatedServings != nil
-        recipe.kcalEstimated = calculatedPrivateKcal != nil
+        recipe.kcalEstimated = calculatedPrivateKcal != nil || (calculatedPublicKcal != nil && estimatedServings != nil)
+        recipe.nutrients = NutrientEstimator.estimate(recipe, supplied: nutrients ?? [:])
         return recipe
     }
 }
@@ -95,6 +110,7 @@ enum PrivateRecipeAccess {
     static var savedURL: String? { UserDefaults.standard.string(forKey: urlKey) }
     static var catalogToken: String? { isConfigured ? token() : nil }
     static var isConfigured: Bool {
+        guard !ReleasePolicy.isStoreRelease else { return false }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--screenshots") { return false }
         #endif
@@ -230,15 +246,25 @@ enum PrivateRecipeAccess {
         return profile.members
     }
 
-    static func fetchImage(id: String) async throws -> UIImage {
+    static func fetchImage(id: String, thumbnail: Bool = false) async throws -> UIImage {
         guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil else { throw PrivateCatalogError.invalidURL }
-        if let cached = cachedImage(id: id) { return cached }
+        let cacheID = thumbnail ? id + "_thumb" : id
+        if let cached = cachedImage(id: cacheID) { return cached }
         let requestedURL = savedURL
         let requestedToken = token()
-        let data = try await request(path: "/v1/recipe-images/\(id)", maxBytes: 1_500_000, accept: "image/jpeg")
+        let path = "/v1/recipe-images/\(id)" + (thumbnail ? "?variant=thumbnail" : "")
+        let data: Data
+        do {
+            data = try await request(path: path, maxBytes: 1_500_000, accept: "image/jpeg")
+        } catch {
+            if case PrivateCatalogError.unauthorized = error { throw error }
+            if case PrivateCatalogError.configurationChanged = error { throw error }
+            try await Task.sleep(for: .seconds(1))
+            data = try await request(path: path, maxBytes: 1_500_000, accept: "image/jpeg")
+        }
         guard savedURL == requestedURL, token() == requestedToken else { throw PrivateCatalogError.configurationChanged }
         guard data.starts(with: [0xff, 0xd8, 0xff]), let image = UIImage(data: data) else { throw PrivateCatalogError.invalidResponse }
-        if let imageURL = imageCacheURL(id: id) {
+        if let imageURL = imageCacheURL(id: cacheID) {
             try? FileManager.default.createDirectory(at: imageURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? data.write(to: imageURL, options: [.atomic, .completeFileProtection])
             var directoryURL = imageURL.deletingLastPathComponent()
@@ -250,7 +276,7 @@ enum PrivateRecipeAccess {
     }
 
     private static func imageCacheURL(id: String) -> URL? {
-        guard id.range(of: "^[A-Za-z0-9_-]{1,80}$", options: .regularExpression) != nil,
+        guard id.range(of: "^[A-Za-z0-9_-]{1,90}$", options: .regularExpression) != nil,
               let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return nil }
         return support.appendingPathComponent("recipe-images", isDirectory: true).appendingPathComponent("\(id).jpg")
     }
@@ -268,8 +294,10 @@ enum PrivateRecipeAccess {
     }
 
     private static func request(path: String, maxBytes: Int, accept: String = "application/json") async throws -> Data {
+        guard !ReleasePolicy.isStoreRelease else { throw PrivateCatalogError.unauthorized }
         guard let base = savedURL, let token = token(), let url = URL(string: base + path) else { throw PrivateCatalogError.invalidURL }
-        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData,
+                                 timeoutInterval: accept == "image/jpeg" ? 30 : 15)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue(accept, forHTTPHeaderField: "Accept")
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -288,11 +316,12 @@ enum PrivateRecipeAccess {
 
 struct RecipePicture: View {
     let recipe: Recipe
+    var thumbnail = false
     @State private var remoteImage: UIImage?
     @State private var loadFailed = false
     @State private var retry = 0
     private var imageContext: String {
-        "\(recipe.id)|\(recipe.image)|\(CourseCatalogAccess.savedURL ?? "")|\(PrivateRecipeAccess.catalogGeneration)|\(retry)"
+        "\(recipe.id)|\(recipe.image)|\(thumbnail)|\(CourseCatalogAccess.savedURL ?? "")|\(PrivateRecipeAccess.catalogGeneration)|\(retry)"
     }
     var body: some View {
         GeometryReader { bounds in
@@ -302,8 +331,14 @@ struct RecipePicture: View {
                 } else if recipe.image.isEmpty || recipe.remoteImage || recipe.isUnavailable {
                     ZStack {
                         LinearGradient(colors: [Palette.paleSage, Palette.peach], startPoint: .topLeading, endPoint: .bottomTrailing)
-                        Image(systemName: recipe.isUnavailable ? "lock.slash" : "fork.knife")
+                        Image(systemName: recipe.isUnavailable ? "lock.slash" :
+                              (recipe.isBeverage ? "cup.and.saucer" : "fork.knife"))
                             .font(.system(size: 38, weight: .ultraLight)).foregroundStyle(Palette.sage)
+                        if !loadFailed && !recipe.image.isEmpty && recipe.remoteImage {
+                            ProgressView().tint(Palette.sage)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                                .padding(8)
+                        }
                         if loadFailed {
                             Button { retry += 1 } label: {
                                 Label("Повторить загрузку фото", systemImage: "arrow.clockwise")
@@ -330,7 +365,7 @@ struct RecipePicture: View {
             guard recipe.remoteImage else { return }
             do {
                 let result = try await (recipe.isPrivate
-                    ? PrivateRecipeAccess.fetchImage(id: recipe.image)
+                    ? PrivateRecipeAccess.fetchImage(id: recipe.image, thumbnail: thumbnail)
                     : CourseCatalogAccess.fetchPublicImage(id: recipe.image))
                 if !Task.isCancelled { remoteImage = result }
             } catch {
@@ -349,9 +384,11 @@ struct RecipeStepPicture: View {
     let imageID: String
     let privateAccess: Bool
     @State private var image: UIImage?
+    @State private var loadFailed = false
+    @State private var retry = 0
 
     private var imageContext: String {
-        "\(imageID)|\(privateAccess)|\(CourseCatalogAccess.savedURL ?? "")|\(PrivateRecipeAccess.catalogGeneration)"
+        "\(imageID)|\(privateAccess)|\(CourseCatalogAccess.savedURL ?? "")|\(PrivateRecipeAccess.catalogGeneration)|\(retry)"
     }
 
     var body: some View {
@@ -365,6 +402,17 @@ struct RecipeStepPicture: View {
                         Image(systemName: "photo")
                             .font(.system(size: 32, weight: .ultraLight))
                             .foregroundStyle(Palette.sage)
+                        if loadFailed {
+                            Button { retry += 1 } label: {
+                                Label(L10n.text("Повторить загрузку фото"), systemImage: "arrow.clockwise")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            .padding(8)
+                            .background(.regularMaterial, in: Capsule())
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        } else {
+                            ProgressView().tint(Palette.sage)
+                        }
                     }
                 }
             }
@@ -373,10 +421,19 @@ struct RecipeStepPicture: View {
         }
         .task(id: imageContext) {
             image = nil
-            let result = try? await (privateAccess
-                ? PrivateRecipeAccess.fetchImage(id: imageID)
-                : CourseCatalogAccess.fetchPublicImage(id: imageID))
-            if !Task.isCancelled { image = result }
+            loadFailed = false
+            if let bundled = UIImage(named: imageID) {
+                image = bundled
+                return
+            }
+            do {
+                let result = try await (privateAccess
+                    ? PrivateRecipeAccess.fetchImage(id: imageID)
+                    : CourseCatalogAccess.fetchPublicImage(id: imageID))
+                if !Task.isCancelled { image = result }
+            } catch {
+                if !Task.isCancelled { loadFailed = true }
+            }
         }
     }
 }

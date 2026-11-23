@@ -1,0 +1,30 @@
+{
+  "en-US": {
+    "name": "Ladlekin: Family Meal Planner",
+    "subtitle": "One meal, different portions",
+    "promotionalText": "One kitchen, different portions. What's home for dinner tonight? One pot, a different plate for everyone. All 163 dishes work offline.",
+    "keywords": "portions,recipes,shopping,diary,calories,breakfast,lunch,dinner,healthy,offline,grocery,cuisine",
+    "description": "One kitchen, different portions. Ladlekin plans breakfast, lunch and dinner for the people who are actually home, then lets each person take a different plate from the same pot.\n\nTODAY\nWhat's home for dinner tonight? The day shows the next meals. When a meal time passes, that dish moves to Eaten today. You can still mark it.\n\nONE COURSE\nHealthy eating is on by default and can be turned off. It holds 163 dishes from home cooking and cuisines around the world, and they work offline. Advertising is off in this version. There is no subscription.\n\nPORTIONS AND COST\nSet a portion for each person, or use an optional adult estimate from age, height, weight and activity. Each ingredient can show an approximate cost. Choose Israel, Ukraine or the United States for reference prices, or type your own. Your price wins. A missing price is not treated as zero.\n\nTHE REST\nShopping list, pantry, food diary and a weight journal. English, Russian and Ukrainian. Optional reminders. In this App Store version, health records stay on the phone.\n\nLadlekin plans meals and keeps your records. It is not medical advice, and it does not promise weight loss."
+  },
+  "ru": {
+    "name": "Ladlekin: Меню для семьи",
+    "subtitle": "Одна кухня, разные порции",
+    "promotionalText": "Одна кухня, разные порции. Что сегодня дома к ужину? Одна кастрюля и своя тарелка каждому. Все 163 блюда работают офлайн.",
+    "keywords": "порции,рецепты,покупки,дневник,калории,завтрак,обед,ужин,пп,кухня,рацион",
+    "description": "Одна кухня, разные порции. Ladlekin собирает завтрак, обед и ужин для тех, кто сегодня дома, и даёт каждому свою тарелку из одной кастрюли.\n\nСЕГОДНЯ\nЧто сегодня дома к ужину? День показывает ближайшие блюда. Когда время приёма проходит, блюдо уходит в «Съедено за день». Отметить его всё ещё можно.\n\nОДИН КУРС\n«Здоровое питание» включено по умолчанию, и его можно снять. В курсе 163 блюда домашней кухни и кухонь мира, и они работают офлайн. Реклама в этой версии выключена. Подписки нет.\n\nПОРЦИИ И ЦЕНА\nПорция задаётся каждому отдельно. Можно включить взрослый ориентир по возрасту, росту, весу и активности. У ингредиента видна примерная стоимость. Выберите Израиль, Украину или США для справочных цен или впишите свою. Ваша цена важнее. Пропуск не считается нулём.\n\nОСТАЛЬНОЕ\nСписок покупок, запасы, дневник еды и график веса. Русский, английский и украинский. Напоминания по желанию. В версии App Store записи о здоровье остаются на телефоне.\n\nLadlekin планирует меню и хранит ваши записи. Это не медицинская консультация и не обещание похудения."
+  },
+  "uk": {
+    "name": "Ladlekin: Меню для родини",
+    "subtitle": "Одна кухня, різні порції",
+    "promotionalText": "Одна кухня, різні порції. Що сьогодні вдома на вечерю? Одна каструля і своя тарілка кожному. Усі 163 страви працюють офлайн.",
+    "keywords": "порції,рецепти,покупки,щоденник,калорії,сніданок,обід,вечеря,раціон",
+    "description": "Одна кухня, різні порції. Ladlekin збирає сніданок, обід і вечерю для тих, хто сьогодні вдома, і дає кожному свою тарілку з однієї каструлі.\n\nСЬОГОДНІ\nЩо сьогодні вдома на вечерю? День показує найближчі страви. Коли час прийому минає, страва йде в «З'їдено за день». Позначити її все ще можна.\n\nОДИН КУРС\n«Здорове харчування» увімкнено за замовчуванням, і його можна зняти. У курсі 163 страви домашньої кухні та кухонь світу, і вони працюють офлайн. Реклама в цій версії вимкнена. Підписки немає.\n\nПОРЦІЇ Й ЦІНА\nПорцію задають кожному окремо. Можна ввімкнути дорослий орієнтир за віком, зростом, вагою й активністю. Біля інгредієнта видно приблизну вартість. Оберіть Ізраїль, Україну або США для довідкових цін або впишіть свою. Ваша ціна важливіша. Пропуск не вважається нулем.\n\nРЕШТА\nСписок покупок, запаси, щоденник їжі та графік ваги. Українська, англійська й російська. Нагадування за бажанням. У версії App Store записи про здоров'я залишаються на телефоні.\n\nLadlekin планує меню й зберігає ваші записи. Це не медична консультація і не обіцянка схуднення."
+  },
+  "underIconName": "Ladlekin",
+  "screenshotHeadline": {
+    "en": "What's home for dinner tonight?",
+    "ru": "Что сегодня дома к ужину?",
+    "uk": "Що сьогодні вдома на вечерю?"
+  },
+  "subtitleNote": "The spoken line One kitchen, different portions is 31 characters and does not fit Apple's 30-character subtitle. The store subtitle uses One meal, different portions (28). The full line is the promotional text and the Russian and Ukrainian subtitles."
+}

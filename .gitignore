@@ -20,3 +20,10 @@ private-*.json
 *.key
 /preview-today.png
 /private-assets/
+# Owner-only recipe authoring and paid image sources.
+catalog-authoring/
+LadTests/Fixtures/ExpandedCourseFixture.json
+LadTests/Fixtures/EditorialCourseFixture.json
+LadTests/ExpandedCourseFixture.json
+# Local agent tool state.
+.cortex-loom/
