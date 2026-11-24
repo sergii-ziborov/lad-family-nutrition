@@ -1334,6 +1334,64 @@ final class PlanningCoreTests: XCTestCase {
         XCTAssertEqual(withYield, withoutYield * 0.6, accuracy: 0.0001)
     }
 
+    func testDietCautionsWarnWithoutBanningAndNameThePeople() throws {
+        let original = UserDefaults.standard.string(forKey: L10n.languageKey)
+        defer { UserDefaults.standard.set(original, forKey: L10n.languageKey) }
+        UserDefaults.standard.set("ru", forKey: L10n.languageKey)
+        func item(_ name: String) -> Ingredient { Ingredient(name: name, amount: 20, unit: "г", category: "Бакалея") }
+        let dish = Recipe(id: "cautions", title: "Блюдо", caption: "", image: "", cuisine: "", minutes: 30, kcal: nil, protein: nil,
+                          allergens: [], ingredients: ["Куриный окорочок", "Белое сухое вино", "Сыр с белой плесенью", "Печень индейки",
+                                                       "Сахар", "Чернослив", "Винный уксус", "Горчица", "Оливковое масло", "Сельдерей",
+                                                       "Фета", "Мясной бульон"].map(item), steps: ["Запеките 30 минут."])
+        var adult = FamilyMember(id: "a", name: "Мария", goal: "Баланс", portion: 1, allergies: [])
+        adult.ageYears = 35
+        var child = FamilyMember(id: "c", name: "Ester", goal: "Без цели по весу", portion: 0.8, allergies: [])
+        child.ageYears = 10
+        XCTAssertTrue(DietCautions.cautions(for: [dish], people: [adult]).isEmpty, "an adult without marks gets no warning")
+        let kids = DietCautions.cautions(for: [dish], people: [adult, child])
+        XCTAssertEqual(kids.map(\.reason), ["дети"])
+        XCTAssertEqual(kids.first?.products, ["Белое сухое вино"])
+        XCTAssertEqual(kids.first?.people, ["Ester"])
+        XCTAssertEqual(kids.first?.text, "Белое сухое вино — Ester (дети)")
+
+        adult.energyContext = .pregnancyOrLactation
+        XCTAssertEqual(DietCautions.cautions(for: [dish], people: [adult]).first?.products,
+                       ["Белое сухое вино", "Сыр с белой плесенью", "Печень индейки"])
+        adult.energyContext = nil
+        adult.dietConditions = [.noSugar, .stomach, .lowSalt, .gout, .eatingDisorder]
+        let marked = Dictionary(uniqueKeysWithValues: DietCautions.cautions(for: [dish], people: [adult]).map { ($0.reason, $0.products) })
+        XCTAssertEqual(marked["без сахара"], ["Сахар", "Чернослив"])
+        XCTAssertEqual(marked["язва или гастрит"], ["Белое сухое вино", "Винный уксус", "Горчица"])
+        XCTAssertEqual(marked["меньше соли"], ["Фета"], "olive oil and celery are not salty")
+        XCTAssertEqual(marked["подагра"], ["Белое сухое вино", "Печень индейки", "Мясной бульон"])
+        XCTAssertNil(marked["РПП"], "an eating disorder changes what is shown, not the dishes")
+        XCTAssertTrue(adult.hidesEnergyNumbers)
+
+        let data = try JSONEncoder().encode(adult)
+        XCTAssertEqual(try JSONDecoder().decode(FamilyMember.self, from: data).dietConditions, adult.dietConditions)
+        let legacy = #"{"id":"x","name":"Old","goal":"Баланс","portion":1,"allergies":[]}"#
+        XCTAssertNil(try JSONDecoder().decode(FamilyMember.self, from: Data(legacy.utf8)).dietConditions)
+    }
+
+    @MainActor
+    func testWineDishWithChildrenIsAWarningNotABan() throws {
+        let store = LadStore()
+        store.state = .initial()
+        store.refreshClock(store.state.startDate)
+        let wineDish = try XCTUnwrap(Recipe.launchRecipes.first { $0.containsAlcoholIngredient && $0.mealKinds.contains(1) })
+        for index in store.state.members.indices { store.state.members[index].ageYears = 35 }
+        let mila = try XCTUnwrap(store.state.members.firstIndex { $0.id == "mila" })
+        store.state.members[mila].ageYears = 6
+        let lunch = store.slot(0, 1)
+        XCTAssertTrue(store.participating(lunch).contains { $0.id == "mila" })
+        XCTAssertNil(store.incompatibility(lunch, recipe: wineDish))
+        XCTAssertNil(store.assign(wineDish, to: lunch, allowUnverifiedCourseDraft: true).flatMap { $0.contains("вин") ? $0 : nil })
+        XCTAssertEqual(store.dietCautions(lunch, recipe: wineDish).map(\.reason), ["дети"])
+        XCTAssertEqual(store.dietCautions(lunch, recipe: wineDish).first?.people, ["Мила"])
+        store.state.members[mila].ageYears = nil
+        XCTAssertEqual(store.dietCautions(lunch, recipe: wineDish).map(\.reason), ["возраст не указан"])
+    }
+
     func testWineInMarinadeIsRecognizedAsAlcoholIngredient() {
         let wine = Ingredient(name: "Белое сухое вино", amount: 30, unit: "мл", category: "Напитки")
         let chicken = Ingredient(name: "Куриный окорочок", amount: 500, unit: "г", category: "Рыба и мясо")
@@ -1788,7 +1846,9 @@ final class PlanningCoreTests: XCTestCase {
         let choices = store.chooserRecipes(for: store.slot(0, 0))
         XCTAssertFalse(choices.contains { $0.id == "oats" })
         XCTAssertFalse(choices.contains { $0.isBeverage })
-        XCTAssertTrue(choices.allSatisfy { !$0.containsAlcoholIngredient })
+        for dish in choices where dish.containsAlcoholIngredient {
+            XCTAssertFalse(store.dietCautions(store.slot(0, 0), recipe: dish).isEmpty, "a wine dish next to children carries a warning")
+        }
     }
 
     @MainActor

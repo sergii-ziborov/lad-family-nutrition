@@ -18,7 +18,8 @@ struct TodayDiaryCard: View {
                 Text("Запишите фактически съеденное — даже если этого не было в меню.")
                     .font(.system(size: 13)).foregroundStyle(Palette.muted)
             } else {
-                Text(L10n.format("Записей: %d · известно %.0f ккал", entries.count, entries.flatMap(\.foods).compactMap(\.kcal).reduce(0, +)))
+                Text(store.currentMember.hidesEnergyNumbers ? L10n.format("Записей: %d", entries.count) :
+                     L10n.format("Записей: %d · известно %.0f ккал", entries.count, entries.flatMap(\.foods).compactMap(\.kcal).reduce(0, +)))
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
                 if entries.flatMap(\.foods).contains(where: { $0.kcal == nil }) {
                     Text("Неизвестные значения не включены в сумму.").font(.caption).foregroundStyle(Palette.muted)
@@ -384,7 +385,6 @@ struct PreparedFoodView: View {
 struct DiaryExport: Identifiable {
     let id = UUID()
     let url: URL
-    let prompt: String?
 }
 
 struct FoodDiaryReport: View {
@@ -418,7 +418,7 @@ struct FoodDiaryReport: View {
                 Toggle("Все профили", isOn: $allPeople)
                 if !allPeople { Text(store.currentMember.name).font(.headline) }
                 reportSummary
-                Button { share(forAI: false) } label: { Label("CSV", systemImage: "square.and.arrow.up") }
+                Button { share() } label: { Label("CSV", systemImage: "square.and.arrow.up") }
                     .font(.system(size: 14, weight: .semibold)).disabled(entries.isEmpty)
                 Text("Файл содержит личный дневник. Приложение не отправляет его автоматически; получателя выбираете вы.")
                     .font(.caption).foregroundStyle(Palette.muted)
@@ -488,14 +488,13 @@ struct FoodDiaryReport: View {
             }
         }.padding(18).background(Palette.paleSage.opacity(0.65), in: RoundedRectangle(cornerRadius: 20))
     }
-    private func share(forAI: Bool) {
+    private func share() {
         do {
             let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lad-export-\(UUID().uuidString)", isDirectory: true)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true, attributes: [.protectionKey: FileProtectionType.complete])
             let url = folder.appendingPathComponent("Lad-food-diary.csv")
             try Data(DiaryCore.csv(entries).utf8).write(to: url, options: [.atomic, .completeFileProtection])
-            let prompt = forAI ? L10n.text("Проанализируй мой дневник питания из CSV: что и сколько я съел, итоги по дням, калории и нутриенты. Пустые ячейки означают отсутствие данных, не ноль. Учитывай отметки разогрева. Не делай диагнозов и не придумывай неизвестные значения. Дай краткое резюме и вопросы для уточнения.") : nil
-            export = DiaryExport(url: url, prompt: prompt)
+            export = DiaryExport(url: url)
         } catch { exportError = true }
     }
 }
@@ -503,9 +502,7 @@ struct FoodDiaryReport: View {
 struct DiaryShareSheet: UIViewControllerRepresentable {
     let export: DiaryExport
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        var items: [Any] = [export.url]
-        if let prompt = export.prompt { items.append(prompt) }
-        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let controller = UIActivityViewController(activityItems: [export.url], applicationActivities: nil)
         controller.completionWithItemsHandler = { _, _, _, _ in try? FileManager.default.removeItem(at: export.url.deletingLastPathComponent()) }
         return controller
     }

@@ -22,6 +22,7 @@ struct WeekView: View {
                         $0 + ($1.recipe.nutrients["protein"]?.amount ?? Double($1.recipe.protein ?? 0)) * $1.portion
                     }.rounded())
                     Text(dayRecipes.isEmpty ? L10n.format("В этот день %@ не участвует в плане", store.currentMember.name) :
+                         store.currentMember.hidesEnergyNumbers ? L10n.format("План для %@", store.currentMember.name) :
                          dayRecipes.allSatisfy { $0.kcal != nil && ($0.nutrients["protein"] != nil || $0.protein != nil) } ?
                          L10n.format("План для %@: ~%d ккал · белок ~%d г", store.currentMember.name, energy, protein) :
                          dayRecipes.allSatisfy { $0.kcal != nil } ?
@@ -129,6 +130,9 @@ struct WeekView: View {
                         if let issue = store.incompatibility(slot) {
                             Label(issue, systemImage: "exclamationmark.triangle.fill")
                                 .font(.system(size: 11)).foregroundStyle(Palette.terracotta).padding(.top, 9)
+                        }
+                        if !recipe.isUnplanned {
+                            DietCautionLines(cautions: store.dietCautions(slot)).padding(.top, 6)
                         }
                     }.padding(16).background(.white, in: RoundedRectangle(cornerRadius: 22))
                 }
@@ -272,7 +276,7 @@ struct DayNutrientSummary: View {
                         }
                     }
                 }
-                if let target = gapTargets?.energy, target > 0, consumedEnergy > 0 {
+                if let target = gapTargets?.energy, target > 0, consumedEnergy > 0, !store.currentMember.hidesEnergyNumbers {
                     let fitted = WeightGap.remainder(consumed: consumedEnergy, target: target)
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 8) {
@@ -290,7 +294,7 @@ struct DayNutrientSummary: View {
                             .accessibilityHidden(true)
                     }
                 }
-                if let peak = mealEnergy.map(\.kcal).max(), peak > 0 {
+                if let peak = mealEnergy.map(\.kcal).max(), peak > 0, !store.currentMember.hidesEnergyNumbers {
                     Text("Ккал по приёмам").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.muted)
                         .padding(.top, 2)
                     ForEach(mealEnergy, id: \.kind) { meal in
@@ -604,6 +608,12 @@ struct RecipeDetailView: View {
                         .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.terracotta)
                         .padding(15).background(Palette.peach.opacity(0.7), in: RoundedRectangle(cornerRadius: 15))
                 }
+                if let slot, case let cautions = store.dietCautions(slot, recipe: recipe), !cautions.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        DietCautionLines(cautions: cautions)
+                    }.padding(15).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Palette.peach.opacity(0.5), in: RoundedRectangle(cornerRadius: 15))
+                }
                 VStack(alignment: .leading, spacing: 14) {
                     SectionHeading(title: "Ингредиенты", trailing: slot == nil ? "1 ПОРЦИЯ" : "НА ВСЕХ")
                     if !recipe.knownAllergens.isEmpty {
@@ -782,7 +792,8 @@ struct RecipeDetailView: View {
                     HStack {
                         Text(member.name).font(.system(size: 14))
                         Spacer()
-                        Text(recipe.kcal.map { L10n.format("%@ порц. · ~%d ккал", amount, Int(Double($0) * factor)) } ??
+                        Text(member.hidesEnergyNumbers ? L10n.format("%@ порц.", amount) :
+                             recipe.kcal.map { L10n.format("%@ порц. · ~%d ккал", amount, Int(Double($0) * factor)) } ??
                              L10n.format("%@ порц. · ккал неизвестны", amount))
                             .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.sage)
                     }

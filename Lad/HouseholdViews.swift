@@ -174,6 +174,11 @@ struct FamilyView: View {
     }
 
     private func portionCaption(_ member: FamilyMember) -> String {
+        if member.hidesEnergyNumbers {
+            return PersonalPortions.isExplicitManual(member)
+                ? L10n.format("Ручная порция: %d%% базовой", PersonalPortions.percent(member.portion))
+                : L10n.text("Порция по возрасту")
+        }
         if member.automaticPortions == true, PersonalPortions.estimatedEnergy(member) != nil {
             return L10n.text("Порции по профилю и меню дня")
         }
@@ -449,7 +454,7 @@ struct WeightHistoryView: View {
                             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.protectionKey: FileProtectionType.complete])
                             let url = directory.appendingPathComponent("lad-weight.csv")
                             try Data(WeightJournal.csv(all, name: member.name).utf8).write(to: url, options: [.atomic, .completeFileProtection])
-                            export = DiaryExport(url: url, prompt: nil)
+                            export = DiaryExport(url: url)
                         } catch { exportFailed = true }
                     } label: { Label("Экспорт веса в CSV", systemImage: "square.and.arrow.up") }
                         .foregroundStyle(Palette.sage)
@@ -588,6 +593,7 @@ struct MemberEditor: View {
     @State private var showVitamins = false
     @State private var showCalculation = false
     @State private var showEnergyGoal = false
+    @State private var showHealth = false
     private let goals = ["Баланс", "Поддержание", "Снижение", "Набор", "Без цели по весу"]
     private let vitaminOptions: [(String, String)] = [
         ("vitamin_a", "Витамин A"), ("vitamin_c", "Витамин C"),
@@ -670,8 +676,9 @@ struct MemberEditor: View {
                     Text(member.allergies.isEmpty ? L10n.text("Не выбраны") : member.allergies.map(L10n.text).joined(separator: ", "))
                         .font(.system(size: 12)).foregroundStyle(member.allergies.isEmpty ? Palette.muted : Palette.terracotta)
                 }
+                healthSettings
                 portionSettings
-                if (Int(ageText) ?? 0) >= 18 {
+                if (Int(ageText) ?? 0) >= 18 && !member.hidesEnergyNumbers {
                     Section {
                         DisclosureGroup("Ориентир питания", isExpanded: $showEnergyGoal) {
                             Picker("Ориентир", selection: $member.goal) {
@@ -720,18 +727,61 @@ struct MemberEditor: View {
                             member.weightKg = quantity(weightText, range: 10...500)
                             if (member.ageYears ?? 0) < 19, member.automaticPortions == true { member.automaticPortions = nil }
                             if let age = member.ageYears, age < 18 { member.goal = "Без цели по весу" }
+                            if member.hidesEnergyNumbers {
+                                member.goal = "Без цели по весу"
+                                member.dailyEnergyTarget = nil
+                                if member.automaticPortions == true { member.automaticPortions = nil }
+                            }
+                            if member.dietConditions?.isEmpty == true { member.dietConditions = nil }
                             store.updateMember(member)
                             dismiss()
                         }.bold().disabled(measurementIssue != nil)
                     }
                 }
         }.onAppear {
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--screenshot-health") { showHealth = true }
+            #endif
             ageText = member.ageYears.map(String.init) ?? ""
             energyText = member.dailyEnergyTarget.map(String.init) ?? ""
             heightText = member.heightCm.map { String($0) } ?? ""
             weightText = member.weightKg.map { String($0) } ?? ""
         }.onChange(of: ageText) { _, value in
             if let age = Int(value), age < 18 { member.goal = "Без цели по весу" }
+        }
+    }
+    /// Conditions that change the diet for a long time. Each one only adds
+    /// warnings to the menu; celiac disease and lactose go to the allergens.
+    private var healthSettings: some View {
+        let age = Int(ageText)
+        let marked = DietCondition.allCases.filter { member.conditions.contains($0) }
+        return Section {
+            DisclosureGroup(isExpanded: $showHealth) {
+                ForEach(DietCondition.allCases) { condition in
+                    if condition != .pregnancy || (age ?? 18) >= 12 {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Toggle(L10n.text(condition.label), isOn: Binding(
+                                get: { member.conditions.contains(condition) },
+                                set: { enabled in
+                                    var selected = member.dietConditions ?? []
+                                    if enabled { selected.insert(condition) } else { selected.remove(condition) }
+                                    member.dietConditions = selected
+                                    if condition == .pregnancy, !enabled, member.energyContext == .pregnancyOrLactation {
+                                        member.energyContext = nil
+                                    }
+                                }
+                            )).tint(Palette.sage)
+                            Text(L10n.text(condition.hint)).font(.system(size: 12)).foregroundStyle(Palette.muted)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                Text("Отметки добавляют предупреждения к блюдам и ничего не запрещают. Целиакию и непереносимость лактозы отметьте в аллергенах. Питание при болезни согласуйте с врачом.")
+                    .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            } label: { Label("Здоровье и особенности питания", systemImage: "heart.text.square") }
+            Text(marked.isEmpty ? L10n.text("Не отмечено") : marked.map { L10n.text($0.label) }.joined(separator: ", "))
+                .font(.system(size: 12)).foregroundStyle(marked.isEmpty ? Palette.muted : Palette.terracotta)
         }
     }
     private var portionSettings: some View {
@@ -751,7 +801,10 @@ struct MemberEditor: View {
                 }
                 Slider(value: $member.portion, in: 0.5...1.6, step: 0.05)
             } else {
-                if let energy = PersonalPortions.profileDailyEnergy(preview) {
+                if preview.hidesEnergyNumbers {
+                    Text("Порция по возрасту. Калории для этого человека не показываются.")
+                        .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                } else if let energy = PersonalPortions.profileDailyEnergy(preview) {
                     Text(L10n.format("Порции по профилю: ~%d ккал в день", Int(energy.rounded())))
                         .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.sage)
                     Text("Размер тарелки подстраивается под калорийность меню каждого дня.")
@@ -779,7 +832,7 @@ struct MemberEditor: View {
                         ForEach(EnergyActivity.allCases, id: \.self) { Text(L10n.text($0.label)).tag(Optional($0)) }
                     }
                 }
-                if age >= 19 {
+                if age >= 19 && !preview.hidesEnergyNumbers {
                     Picker("Тип расчёта", selection: $member.energyContext) {
                         Text("Не указано").tag(nil as EnergyContext?)
                         ForEach(EnergyContext.allCases, id: \.self) { Text(L10n.text($0.label)).tag(Optional($0)) }

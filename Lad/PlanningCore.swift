@@ -609,6 +609,92 @@ enum ProductNames {
     }
 }
 
+/// One menu warning: which products in the dish, for whom, and why.
+struct DietCaution: Hashable, Identifiable {
+    let products: [String]
+    let people: [String]
+    let reason: String
+    var id: String { reason + "|" + products.joined(separator: ",") }
+    var text: String {
+        L10n.format("%@ — %@ (%@)", products.map { L10n.text($0) }.joined(separator: ", "),
+                    people.joined(separator: ", "), L10n.text(reason))
+    }
+}
+
+/// Warnings, never bans: a dish with wine still reaches a table with children
+/// if the family chooses it, but the card says so. The automatic menu prefers
+/// dishes without warnings for the people at that meal.
+enum DietCautions {
+    private static let alcohol: Set<String> = ["вино", "коньяк", "ликер", "пиво", "ром", "водка", "херес", "портвеин",
+                                               "бренди", "виски", "сидр", "шампанское", "мартини", "кальвадос"]
+    private static let liver: Set<String> = ["печень", "печени", "печенка"]
+
+    static func isAlcohol(_ name: String) -> Bool { words(name).contains { alcohol.contains($0) } }
+
+    /// Products of one dish that matter for a condition, in recipe order.
+    static func products(_ recipe: Recipe, for condition: DietCondition) -> [String] {
+        recipe.ingredients.map(\.name).filter { triggers(condition, $0) }
+    }
+
+    static func triggers(_ condition: DietCondition, _ name: String) -> Bool {
+        let tokens = words(name)
+        func starts(_ stems: [String]) -> Bool { tokens.contains { word in stems.contains { word.hasPrefix($0) } } }
+        switch condition {
+        case .pregnancy:
+            return isAlcohol(name) || tokens.contains { liver.contains($0) } ||
+                starts(["плесен", "горгонзол", "дорблю", "камамбер"]) || tokens.contains("бри")
+        case .noSugar:
+            return tokens.contains("мед") || starts(["сахар", "медов", "варень", "джем", "сироп", "сгущ", "шоколад", "мармелад",
+                                                     "повидл", "карамел", "изюм", "кураг", "финик", "чернослив", "сухофрукт", "нутелл"])
+        case .stomach:
+            return isAlcohol(name) || starts(["уксус", "горчиц", "аджик", "хрен", "чили", "табаско", "васаби"])
+        case .lowSalt:
+            // Exact words where a stem would catch olive oil or celery.
+            return tokens.contains { ["оливки", "маслины", "сельдь", "сельди"].contains($0) } ||
+                starts(["соев", "фета", "брынз", "солен", "квашен", "каперс", "анчоус", "бекон", "колбас", "ветчин",
+                        "пармезан", "аджик"])
+        case .gout:
+            return isAlcohol(name) || tokens.contains { liver.contains($0) } ||
+                tokens.contains { ["сельдь", "сельди"].contains($0) } ||
+                starts(["бульон", "скумбри", "сардин", "шпрот", "анчоус", "субпродукт"])
+        case .eatingDisorder:
+            return false
+        }
+    }
+
+    /// Warnings for the dishes of one meal and the people at it. Children are
+    /// people with a known age under 18; their only warning is alcohol, which
+    /// is also flagged for anyone whose age is not filled in.
+    static func cautions(for recipes: [Recipe], people: [FamilyMember]) -> [DietCaution] {
+        var result: [DietCaution] = []
+        let food = recipes.filter { !$0.isBeverage }
+        func unique(_ names: [String]) -> [String] {
+            var seen = Set<String>()
+            return names.filter { seen.insert($0).inserted }
+        }
+        let drinks = unique(food.flatMap { $0.ingredients.map(\.name) }.filter(isAlcohol))
+        let children = people.filter { ($0.ageYears ?? 99) < 18 }
+        let unknownAge = people.filter { $0.ageYears == nil }
+        if !drinks.isEmpty && !children.isEmpty {
+            result.append(DietCaution(products: drinks, people: children.map(\.name), reason: "дети"))
+        }
+        if !drinks.isEmpty && !unknownAge.isEmpty {
+            result.append(DietCaution(products: drinks, people: unknownAge.map(\.name), reason: "возраст не указан"))
+        }
+        for condition in DietCondition.allCases where condition != .eatingDisorder {
+            let marked = people.filter { $0.conditions.contains(condition) }
+            guard !marked.isEmpty else { continue }
+            let found = unique(food.flatMap { products($0, for: condition) })
+            if !found.isEmpty { result.append(DietCaution(products: found, people: marked.map(\.name), reason: condition.reason)) }
+        }
+        return result
+    }
+
+    private static func words(_ name: String) -> [String] {
+        ProductNames.normalized(name).split { !$0.isLetter }.map(String.init)
+    }
+}
+
 enum CookingGuide {
     /// Heat-cooked dishes name salt and pepper when the recipe left them unmeasured.
     /// The lines stay off the shopping list and do not invent a gram amount or a price.

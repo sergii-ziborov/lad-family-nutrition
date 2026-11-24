@@ -205,12 +205,18 @@ struct NutritionStatsView: View {
                 Picker("Источник", selection: $source) {
                     ForEach(IntakeSource.allCases) { Text(L10n.text($0.title)).tag($0) }
                 }.pickerStyle(.segmented)
-                energyCard(snapshot)
-                macroCard(snapshot)
+                if member.hidesEnergyNumbers {
+                    Text("Калории этого человека не показываются: в профиле отмечено расстройство пищевого поведения.")
+                        .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    energyCard(snapshot)
+                    macroCard(snapshot)
+                }
                 deficitCard(snapshot).id("deficits")
                 micronutrientCard(snapshot)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Нормы — RDA/AI Национальных академий США для возраста и пола (NIH ODS). Расчёт идёт по известным ингредиентам рецептов, это ориентир, а не анализ и не назначение добавок.")
+                    Text("Нормы — рекомендуемое или достаточное суточное потребление по данным Национальных академий США для возраста и пола (NIH ODS). Расчёт идёт по известным ингредиентам рецептов, это ориентир, а не анализ и не назначение добавок.")
                         .font(.system(size: 11)).foregroundStyle(Palette.muted)
                         .fixedSize(horizontal: false, vertical: true)
                     Link(L10n.text("Источник норм"), destination: NutrientNorms.sourceURL)

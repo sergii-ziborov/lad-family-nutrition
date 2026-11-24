@@ -426,12 +426,14 @@ struct MealRow: View {
             let outside = !recipe.isUnplanned && store.isOutsideSelectedCourses(slot.recipeID, for: slot)
             let notice = store.mealCardNotice(for: slot)
             let entry = store.diaryEntry(for: slot)
-            if (store.hasSelectedCourses && !recipe.isUnplanned) || outside || notice != nil || entry != nil {
+            let cautions = recipe.isUnplanned ? [] : store.dietCautions(slot)
+            if (store.hasSelectedCourses && !recipe.isUnplanned) || outside || notice != nil || entry != nil || !cautions.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     if store.hasSelectedCourses, !recipe.isUnplanned {
                         MealBeveragesView(slot: slot)
                             .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.sage)
                     }
+                    DietCautionLines(cautions: cautions)
                     if outside {
                         Label("Вне выбранных курсов", systemImage: "exclamationmark.circle")
                             .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.terracotta)
@@ -457,13 +459,27 @@ struct MealRow: View {
 
     private func mealSummary(dishes: [Recipe], foodDishes: [Recipe], kcal: Double, minutes: Int) -> String {
         var parts: [String] = []
-        if dishes.allSatisfy({ $0.kcal != nil }) {
+        if foodDishes.count > 1 && store.currentMember.hidesEnergyNumbers {
+            parts.append(L10n.format("Блюд: %d", foodDishes.count))
+        } else if dishes.allSatisfy({ $0.kcal != nil }) && !store.currentMember.hidesEnergyNumbers {
             parts.append(foodDishes.count > 1
                          ? L10n.format("Блюд: %d · ~%d ккал", foodDishes.count, Int(kcal.rounded()))
                          : L10n.format("~%d ккал", Int(kcal.rounded())))
         }
         if minutes > 0 { parts.append(L10n.format("%d мин", minutes)) }
         return parts.joined(separator: " · ")
+    }
+}
+
+/// Menu warnings in the shared terracotta style: product — names (reason).
+struct DietCautionLines: View {
+    let cautions: [DietCaution]
+    var body: some View {
+        ForEach(cautions) { caution in
+            Label(caution.text, systemImage: "exclamationmark.triangle")
+                .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.terracotta)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 

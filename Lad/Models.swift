@@ -465,6 +465,44 @@ extension LadStore {
     }
 }
 
+/// Health notes that change what a person should eat. They only add warnings
+/// to the menu: the app does not diagnose, ban dishes or replace a doctor.
+enum DietCondition: String, Codable, CaseIterable, Identifiable {
+    case pregnancy, noSugar, stomach, lowSalt, gout, eatingDisorder
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .pregnancy: return "Беременность или кормление грудью"
+        case .noSugar: return "Диабет или без сахара"
+        case .stomach: return "Язва или гастрит"
+        case .lowSalt: return "Давление или почки: меньше соли"
+        case .gout: return "Подагра"
+        case .eatingDisorder: return "Расстройство пищевого поведения"
+        }
+    }
+    var hint: String {
+        switch self {
+        case .pregnancy: return "Предупредит о вине, сыре с плесенью и печени."
+        case .noSugar: return "Предупредит о сахаре, мёде, варенье, шоколаде и сухофруктах."
+        case .stomach: return "Предупредит об уксусе, горчице, аджике, остром перце и вине."
+        case .lowSalt: return "Предупредит о соевом соусе, фете, брынзе, оливках и солениях."
+        case .gout: return "Предупредит о печени, мясном бульоне, скумбрии и вине."
+        case .eatingDisorder: return "Анорексия, булимия и другие. Калории этого человека не показываются, цель «Снижение» отключается."
+        }
+    }
+    /// Short reason printed after the names in a menu warning.
+    var reason: String {
+        switch self {
+        case .pregnancy: return "беременность или кормление"
+        case .noSugar: return "без сахара"
+        case .stomach: return "язва или гастрит"
+        case .lowSalt: return "меньше соли"
+        case .gout: return "подагра"
+        case .eatingDisorder: return "РПП"
+        }
+    }
+}
+
 struct FamilyMember: Identifiable, Codable, Equatable {
     var id: String
     var name: String
@@ -482,6 +520,17 @@ struct FamilyMember: Identifiable, Codable, Equatable {
     var energyContext: EnergyContext? = nil
     var measuredFatMassKg: Double? = nil
     var measuredMuscleMassKg: Double? = nil
+    /// Long-term conditions that change what this person should eat.
+    var dietConditions: Set<DietCondition>? = nil
+    /// Marked conditions, with pregnancy also read from the energy calculation type.
+    var conditions: Set<DietCondition> {
+        var marked = dietConditions ?? []
+        if energyContext == .pregnancyOrLactation { marked.insert(.pregnancy) }
+        return marked
+    }
+    /// With an eating disorder the app keeps calories and weight-loss goals
+    /// out of this person's views; the plan stays a family menu.
+    var hidesEnergyNumbers: Bool { conditions.contains(.eatingDisorder) }
     var fatPercent: Double? {
         guard let weightKg, let measuredFatMassKg, weightKg > 0,
               measuredFatMassKg >= 0, measuredFatMassKg <= weightKg else { return nil }
@@ -1141,9 +1190,6 @@ struct AvoidedRecipe: Equatable {
         }
         let people = participating(slot)
         guard !people.isEmpty else { return L10n.text("В этом приёме никто не участвует.") }
-        if recipe.containsAlcoholIngredient && people.contains(where: { ($0.ageYears ?? 0) < 18 }) {
-            return L10n.text("Блюдо с вином нельзя назначить несовершеннолетнему или участнику без подтверждённого возраста.")
-        }
         let incompatible = people.filter { AllergenMatching.conflicts(selected: $0.allergies, recipe: recipe.knownAllergens) }
         if !incompatible.isEmpty {
             return L10n.text("Блюдо противоречит ограничениям участников.")
@@ -1624,6 +1670,8 @@ struct AvoidedRecipe: Equatable {
         value -= Double(match.shortageCount) * 18
         value -= Double(match.ingredients.filter { $0.required == nil || $0.uncertain }.count) * 25
         if usedToday.contains(recipe.id) { value -= 35 }
+        // Dishes that would warn someone at this meal go last, but stay possible.
+        value -= Double(DietCautions.cautions(for: [recipe], people: participating(slot)).count) * 2_000
         if weightPlanningCourse != nil {
             value -= CourseWeekPreferences.recentRepeatPenalty(recipeID: recipe.id, day: slot.day, slots: plannedSlots)
         }
@@ -2372,12 +2420,14 @@ struct AvoidedRecipe: Equatable {
         state.slots[index].setBeverages(beverageIDs, manuallySelected: true)
         return nil
     }
-    func incompatibility(_ slot: MealSlot, recipe: Recipe? = nil) -> String? {
+    /// Warnings for the people at this meal: wine with children, sugar with
+    /// "no sugar", and so on. They never block a dish.
+    func dietCautions(_ slot: MealSlot, recipe: Recipe? = nil) -> [DietCaution] {
+        DietCautions.cautions(for: recipe.map { [$0] } ?? recipes(slot), people: participating(slot))
+    }
+        func incompatibility(_ slot: MealSlot, recipe: Recipe? = nil) -> String? {
         for dish in recipe.map({ [$0] }) ?? recipes(slot) {
             if dish.isUnavailable { return "Рецепт недоступен до подключения закрытого каталога." }
-            if dish.containsAlcoholIngredient && participating(slot).contains(where: { ($0.ageYears ?? 0) < 18 }) {
-                return L10n.text("Блюдо с вином нельзя назначить несовершеннолетнему или участнику без подтверждённого возраста.")
-            }
             let incompatible = participating(slot).filter { AllergenMatching.conflicts(selected: $0.allergies, recipe: dish.knownAllergens) }
             if !incompatible.isEmpty {
                 return L10n.format("Блюдо содержит %@. Ограничение у %@: выберите другое блюдо или измените участников.",
